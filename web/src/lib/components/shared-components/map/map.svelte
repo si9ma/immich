@@ -27,8 +27,8 @@
 
   export let mapMarkers: MapMarkerResponseDto[];
   export let showSettingsModal: boolean | undefined = undefined;
-  export let zoom: number | undefined = undefined;
-  export let center: LngLatLike | undefined = undefined;
+  export let zoom: number | undefined = 4;
+  export let center: LngLatLike | undefined = [108.89, 34.38];
   export let simplified = false;
   export let clickable = false;
   export let useLocationPin = false;
