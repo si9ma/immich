@@ -188,25 +188,13 @@ export class SearchService {
     let assets: AssetEntity[] = [];
     switch (strategy) {
       case SearchStrategy.SMART: {
-        const embedding = await this.machineLearning.encodeText(
-          machineLearning.url,
-          { text: query },
-          machineLearning.clip,
-        );
+        let smartDto = new SmartSearchDto();
+        smartDto.page = dto.page;
+        smartDto.size = dto.size;
+        smartDto.query = dto.query ?? '';
+        smartDto.withArchived = dto.withArchived;
 
-        const { hasNextPage, items } = await this.searchRepository.searchSmart(
-          { page, size: dto.size || 100 },
-          {
-            userIds,
-            embedding,
-            withArchived: !!dto.withArchived,
-          },
-        );
-        if (hasNextPage) {
-          nextPage = (page + 1).toString();
-        }
-        assets = items;
-        break;
+        return this.searchSmart(auth, smartDto);
       }
       case SearchStrategy.TEXT: {
         assets = await this.assetRepository.searchMetadata(query, userIds, { numResults: dto.size || 250 });
