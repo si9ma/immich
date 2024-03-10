@@ -117,7 +117,7 @@ export class SearchService {
       try {
         let checksum: Buffer | undefined;
 
-        const dates = dto.query.split('~').map((date) => new Date(this.convertDateString(date)));
+        const dates = dto.query.split('-').map((date) => new Date(this.convertDateString(date)));
         if (dates.length > 0) {
           this.logger.log(`search by dates: ${dates}`);
 
