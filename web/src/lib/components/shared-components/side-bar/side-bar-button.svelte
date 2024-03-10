@@ -15,25 +15,54 @@
     selected: void;
   }>();
   const onButtonClicked = () => dispatch('selected');
+
+  let hoverTimer = 0;
+
+  const handleMouseEnter = () => {
+    hoverTimer = setTimeout(() => {
+      showMoreInformation = true;
+    }, 300); // 0.3 seconds
+  };
+
+  const handleMouseLeave = () => {
+    clearTimeout(hoverTimer);
+    showMoreInformation = false;
+  };
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
   on:click={onButtonClicked}
   on:keydown={onButtonClicked}
-  class="flex w-full place-items-center justify-between gap-4 rounded-r-full py-3 transition-[padding] delay-100 duration-100 hover:cursor-pointer hover:bg-immich-gray hover:text-immich-primary dark:text-immich-dark-fg dark:hover:bg-immich-dark-gray dark:hover:text-immich-dark-primary
-    {isSelected
+  class="flex w-full place-items-start justify-start py-3 mx-3 rounded-lg transition-[padding] delay-100 duration-100 hover:cursor-pointer hover:bg-immich-gray hover:text-immich-primary dark:text-immich-dark-fg dark:hover:bg-immich-dark-gray dark:hover:text-immich-dark-primary
+  {isSelected
     ? 'bg-immich-primary/10 text-immich-primary hover:bg-immich-primary/25 dark:bg-immich-dark-primary/10 dark:text-immich-dark-primary'
     : ''}
-		pl-5 group-hover:sm:px-5 md:px-5
+  xt-immich-primary hork:text-immich-dark-primary'm:px-3 md:px-3
   "
 >
-  <div class="flex w-full place-items-center gap-4 overflow-hidden truncate">
-    <Icon path={icon} size="1.5em" class="shrink-0" flipped={flippedLogo} />
-    <p class="text-sm font-medium">{title}</p>
+  <div class="has-tooltip">
+    <div
+      class="flex place-items-center overflow-hidden truncate"
+      on:mouseenter={handleMouseEnter}
+      on:mouseleave={handleMouseLeave}
+    >
+      <Icon path={icon} size="1.2em" class="shrink-0" flipped={flippedLogo} />
+
+      {#if $$slots.moreInformation && showMoreInformation}
+        <div class="tooltip ml-10 z-50">
+          <div
+            class="flex place-content-center place-items-center whitespace-nowrap rounded-lg border bg-immich-bg px-1.5 py-2 text-xs text-immich-fg shadow-lg dark:border-immich-dark-gray dark:bg-gray-600 dark:text-immich-dark-fg"
+            transition:fade={{ duration: 200 }}
+          >
+            <slot name="moreInformation" />
+          </div>
+        </div>
+      {/if}
+    </div>
   </div>
 
-  <div
+  <!-- <div
     class="h-0 overflow-hidden transition-[height] delay-1000 duration-100 sm:group-hover:h-auto group-hover:sm:overflow-visible md:h-auto md:overflow-visible"
   >
     {#if $$slots.moreInformation}
@@ -59,5 +88,5 @@
         {/if}
       </div>
     {/if}
-  </div>
+  </div> -->
 </div>

@@ -34,7 +34,7 @@
   <a data-sveltekit-preload-data="off" href={AppRoute.ADMIN_REPAIR} draggable="false">
     <SideBarButton title="Repair" icon={mdiTools} isSelected={$page.route.id === AppRoute.ADMIN_REPAIR} />
   </a>
-  <div class="mb-6 mt-auto">
+  <!-- <div class="mb-6 mt-auto">
     <StatusBox />
-  </div>
+  </div> -->
 </SideBarSection>

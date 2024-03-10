@@ -16,12 +16,15 @@
     mdiMagnify,
     mdiMap,
     mdiTrashCanOutline,
+    mdiVideo,
+    mdiImageArea,
   } from '@mdi/js';
   import { AppRoute } from '../../../constants';
   import LoadingSpinner from '../loading-spinner.svelte';
   import StatusBox from '../status-box.svelte';
   import SideBarButton from './side-bar-button.svelte';
   import SideBarSection from './side-bar-section.svelte';
+  import Icon from '$lib/components/elements/icon.svelte';
 
   const getStats = (dto: Parameters<typeof getAssetStatistics>[0]) => getAssetStatistics(dto);
 
@@ -41,18 +44,20 @@
 
 <SideBarSection>
   <a data-sveltekit-preload-data="hover" data-sveltekit-noscroll href={AppRoute.PHOTOS} draggable="false">
-    <SideBarButton
-      title="Photos"
-      icon={isPhotosSelected ? mdiImageMultiple : mdiImageMultipleOutline}
-      isSelected={isPhotosSelected}
-    >
+    <SideBarButton icon={isPhotosSelected ? mdiImageMultiple : mdiImageMultipleOutline} isSelected={isPhotosSelected}>
       <svelte:fragment slot="moreInformation">
         {#await getStats({ isArchived: false })}
           <LoadingSpinner />
         {:then data}
           <div>
-            <p>{data.videos.toLocaleString($locale)} Videos</p>
-            <p>{data.images.toLocaleString($locale)} Photos</p>
+            <p>
+              {data.videos.toLocaleString($locale)}
+              <Icon path={mdiVideo} size="1.2em" class="inline-block shrink-0" /> | {data.images.toLocaleString(
+                $locale,
+              )}
+              <Icon path={mdiVideo} size="1.2em" class="inline-block shrink-0" />
+            </p>
+            <!-- <p>{data.images.toLocaleString($locale)} Photos</p> -->
           </div>
         {/await}
       </svelte:fragment>
@@ -93,10 +98,10 @@
     </a>
   {/if}
 
-  <div class="text-xs transition-all duration-200 dark:text-immich-dark-fg">
+  <!-- <div class="text-xs transition-all duration-200 dark:text-immich-dark-fg">
     <p class="hidden p-6 group-hover:sm:block md:block">LIBRARY</p>
     <hr class="mx-4 mb-[31px] mt-8 block group-hover:sm:hidden md:hidden" />
-  </div>
+  </div> -->
   <a data-sveltekit-preload-data="hover" href={AppRoute.FAVORITES} draggable="false">
     <SideBarButton
       title="Favorites"
@@ -108,8 +113,15 @@
           <LoadingSpinner />
         {:then data}
           <div>
-            <p>{data.videos.toLocaleString($locale)} Videos</p>
-            <p>{data.images.toLocaleString($locale)} Photos</p>
+            <p>
+              {data.videos.toLocaleString($locale)}
+              <Icon path={mdiVideo} size="1.2em" class="inline-block shrink-0" /> | {data.images.toLocaleString(
+                $locale,
+              )}
+              <Icon path={mdiVideo} size="1.2em" class="inline-block shrink-0" />
+            </p>
+            <!-- <p>{data.videos.toLocaleString($locale)} Videos</p>
+            <p>{data.images.toLocaleString($locale)} Photos</p> -->
           </div>
         {/await}
       </svelte:fragment>
@@ -140,8 +152,15 @@
           <LoadingSpinner />
         {:then data}
           <div>
-            <p>{data.videos.toLocaleString($locale)} Videos</p>
-            <p>{data.images.toLocaleString($locale)} Photos</p>
+            <p>
+              {data.videos.toLocaleString($locale)}
+              <Icon path={mdiVideo} size="1.2em" class="inline-block shrink-0" /> | {data.images.toLocaleString(
+                $locale,
+              )}
+              <Icon path={mdiVideo} size="1.2em" class="inline-block shrink-0" />
+            </p>
+            <!-- <p>{data.videos.toLocaleString($locale)} Videos</p>
+            <p>{data.images.toLocaleString($locale)} Photos</p> -->
           </div>
         {/await}
       </svelte:fragment>
@@ -156,8 +175,15 @@
             <LoadingSpinner />
           {:then data}
             <div>
-              <p>{data.videos.toLocaleString($locale)} Videos</p>
-              <p>{data.images.toLocaleString($locale)} Photos</p>
+              <p>
+                {data.videos.toLocaleString($locale)}
+                <Icon path={mdiVideo} size="1.2em" class="inline-block shrink-0" /> | {data.images.toLocaleString(
+                  $locale,
+                )}
+                <Icon path={mdiVideo} size="1.2em" class="inline-block shrink-0" />
+              </p>
+              <!-- <p>{data.videos.toLocaleString($locale)} Videos</p>
+              <p>{data.images.toLocaleString($locale)} Photos</p> -->
             </div>
           {/await}
         </svelte:fragment>
@@ -166,7 +192,7 @@
   {/if}
 
   <!-- Status Box -->
-  <div class="mb-6 mt-auto">
+  <!-- <div class="mb-6 mt-auto">
     <StatusBox />
-  </div>
+  </div> -->
 </SideBarSection>

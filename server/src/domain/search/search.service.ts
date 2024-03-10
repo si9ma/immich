@@ -96,10 +96,60 @@ export class SearchService {
     return this.mapResponse(items, hasNextPage ? (page + 1).toString() : null);
   }
 
+  convertDateString(dateString: String) {
+    const year = dateString.slice(0, 4);
+    const month = dateString.slice(4, 6);
+    const day = dateString.slice(6, 8);
+    const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
+    return date.toISOString();
+  }
+
   async searchSmart(auth: AuthDto, dto: SmartSearchDto): Promise<SearchResponseDto> {
     await this.configCore.requireFeature(FeatureFlag.SMART_SEARCH);
     const { machineLearning } = await this.configCore.getConfig();
     const userIds = await this.getUserIdsToSearch(auth);
+
+    const page = dto.page ?? 1;
+    const size = dto.size || 100;
+
+    // split dto.query to array by ~, then parse to date Array
+    if (dto.query) {
+      try {
+        let checksum: Buffer | undefined;
+
+        const dates = dto.query.split('~').map((date) => new Date(this.convertDateString(date)));
+        if (dates.length > 0) {
+          this.logger.log(`search by dates: ${dates}`);
+
+          let searchByDateDto = Object.assign(new MetadataSearchDto(), dto);
+          if (dates.length >= 2) {
+            searchByDateDto.takenAfter = dates[0];
+            searchByDateDto.takenBefore = dates[1];
+          } else {
+            searchByDateDto.takenAfter = dates[0];
+            let takenBefore = new Date(dates[0].getTime());
+            takenBefore.setDate(dates[0].getDate() + 1);
+            searchByDateDto.takenBefore = takenBefore;
+          }
+
+          this.logger.log(`dto: ${JSON.stringify(searchByDateDto)}`);
+
+          const { hasNextPage, items } = await this.searchRepository.searchMetadata(
+            { page, size },
+            {
+              ...searchByDateDto,
+              checksum,
+              userIds,
+              orderDirection: 'DESC',
+            },
+          );
+
+          return this.mapResponse(items, hasNextPage ? (page + 1).toString() : null);
+        }
+      } catch (error) {
+        this.logger.log(`Error parsing date: ${dto.query}`);
+      }
+    }
 
     const embedding = await this.machineLearning.encodeText(
       machineLearning.url,
@@ -107,8 +157,6 @@ export class SearchService {
       machineLearning.clip,
     );
 
-    const page = dto.page ?? 1;
-    const size = dto.size || 100;
     const { hasNextPage, items } = await this.searchRepository.searchSmart(
       { page, size },
       { ...dto, userIds, embedding },
