@@ -1,5 +1,13 @@
 from app.config import clean_name
 
+_CNCLIP_MODELS = {
+    "ViT-B-16",
+    "ViT-L-14",
+    "ViT-L-14-336",
+    "ViT-H-14",
+    "RN50",
+}
+
 _OPENCLIP_MODELS = {
     "RN50__openai",
     "RN50__yfcc15m",
@@ -50,12 +58,14 @@ _INSIGHTFACE_MODELS = {
     "buffalo_s",
 }
 
-
 SUPPORTED_PROVIDERS = ["CUDAExecutionProvider", "OpenVINOExecutionProvider", "CPUExecutionProvider"]
 
 
 def is_openclip(model_name: str) -> bool:
     return clean_name(model_name) in _OPENCLIP_MODELS
+
+def is_cnclip(model_name: str) -> bool:
+    return clean_name(model_name) in _CNCLIP_MODELS
 
 
 def is_mclip(model_name: str) -> bool:

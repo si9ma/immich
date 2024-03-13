@@ -32,7 +32,8 @@ RUN poetry config installer.max-workers 10 && \
 RUN python3 -m venv /opt/venv
 
 COPY poetry.lock pyproject.toml ./
-RUN poetry install --sync --no-interaction --no-ansi --no-root --with ${DEVICE} --without dev
+RUN poetry add cn_clip
+RUN poetry install -vvv --sync --no-interaction --no-ansi --no-root --with ${DEVICE} --without dev
 
 FROM python:3.11-slim-bookworm@sha256:ce81dc539f0aedc9114cae640f8352fad83d37461c24a3615b01f081d0c0583a as prod-cpu
 

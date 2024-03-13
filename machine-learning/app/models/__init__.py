@@ -3,17 +3,23 @@ from typing import Any
 from app.schemas import ModelType
 
 from .base import InferenceModel
-from .clip import MCLIPEncoder, OpenCLIPEncoder
-from .constants import is_insightface, is_mclip, is_openclip
+from .clip import MCLIPEncoder, OpenCLIPEncoder, CNCLIPEncoder
+from .constants import is_insightface, is_mclip, is_openclip, is_cnclip
 from .facial_recognition import FaceRecognizer
+from ..config import log
 
 
 def from_model_type(model_type: ModelType, model_name: str, **model_kwargs: Any) -> InferenceModel:
     match model_type:
         case ModelType.CLIP:
-            if is_openclip(model_name):
+            if is_cnclip(model_name):
+                log.info("Using CNCLIP")
+                return CNCLIPEncoder(model_name, **model_kwargs)
+            elif is_openclip(model_name):
+                log.info("Using OpenCLIP")
                 return OpenCLIPEncoder(model_name, **model_kwargs)
             elif is_mclip(model_name):
+                log.info("Using MCLIP")
                 return MCLIPEncoder(model_name, **model_kwargs)
         case ModelType.FACIAL_RECOGNITION:
             if is_insightface(model_name):

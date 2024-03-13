@@ -4,6 +4,7 @@ FROM ghcr.io/immich-app/base-server-dev:20240305@sha256:99ca204d84284dac24dbec59
 RUN apt-get install --no-install-recommends -yqq tini
 WORKDIR /usr/src/app
 COPY server/package.json server/package-lock.json ./
+RUN npm i sirv
 RUN npm ci && \
     # sharp-linux-x64 and sharp-linux-arm64 are the only ones we need
     # they're marked as optional dependencies, so we need to copy them manually after pruning

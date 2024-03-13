@@ -4,6 +4,7 @@ from functools import cached_property
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Literal
+import torch 
 
 import numpy as np
 from numpy.typing import NDArray
@@ -15,6 +16,8 @@ from app.models.transforms import crop, get_pil_resampling, normalize, resize, t
 from app.schemas import ModelType
 
 from .base import InferenceModel
+import cn_clip.clip as clip
+from cn_clip.clip import load_from_name, available_models
 
 
 class BaseCLIPEncoder(InferenceModel):
@@ -187,3 +190,41 @@ class MCLIPEncoder(OpenCLIPEncoder):
             "input_ids": np.array([tokens.ids], dtype=np.int32),
             "attention_mask": np.array([tokens.attention_mask], dtype=np.int32),
         }
+
+class CNCLIPEncoder(OpenCLIPEncoder):
+    def __init__(
+        self,
+        model_name: str,
+        cache_dir: Path | str | None = None,
+        mode: Literal["text", "vision"] | None = None,
+        **model_kwargs: Any,
+    ) -> None:
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model, self.preprocess = load_from_name("ViT-B-16", device=self.device, download_root='./')
+        self.model.eval()
+        self.mode = mode
+        self.loaded = True
+
+    def _predict(self, image_or_text: Image.Image | str) -> NDArray[np.float32]:
+        if isinstance(image_or_text, bytes):
+            image_or_text = Image.open(BytesIO(image_or_text))
+
+        match image_or_text:
+            case Image.Image():
+                if self.mode == "text":
+                    raise TypeError("Cannot encode image as text-only model")
+                image = self.preprocess(image_or_text).unsqueeze(0).to(self.device)
+                image_features = self.model.encode_image(image)
+                image_features /= image_features.norm(dim=-1, keepdim=True) 
+                outputs: NDArray[np.float32] = image_features.cpu().detach().numpy()
+            case str():
+                if self.mode == "vision":
+                    raise TypeError("Cannot encode text as vision-only model")
+                text = clip.tokenize(image_or_text).to(self.device)
+                text_features = self.model.encode_text(text)
+                text_features /= text_features.norm(dim=-1, keepdim=True) 
+                outputs = text_features.cpu().detach().numpy()
+            case _:
+                raise TypeError(f"Expected Image or str, but got: {type(image_or_text)}")
+
+        return outputs
