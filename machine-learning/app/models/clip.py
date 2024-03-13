@@ -200,7 +200,7 @@ class CNCLIPEncoder(OpenCLIPEncoder):
         **model_kwargs: Any,
     ) -> None:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model, self.preprocess = load_from_name("ViT-B-16", device=self.device, download_root='./')
+        self.model, self.preprocess = load_from_name(model_name, device=self.device, download_root='./')
         self.model.eval()
         self.mode = mode
         self.loaded = True
