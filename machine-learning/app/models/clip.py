@@ -200,7 +200,7 @@ class CNCLIPEncoder(OpenCLIPEncoder):
         **model_kwargs: Any,
     ) -> None:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model, self.preprocess = load_from_name(model_name, device=self.device, download_root='./')
+        self.model, self.preprocess = load_from_name(model_name, device=self.device, download_root='/cache')
         self.model.eval()
         self.mode = mode
         self.loaded = True
@@ -214,15 +214,17 @@ class CNCLIPEncoder(OpenCLIPEncoder):
                 if self.mode == "text":
                     raise TypeError("Cannot encode image as text-only model")
                 image = self.preprocess(image_or_text).unsqueeze(0).to(self.device)
-                image_features = self.model.encode_image(image)
-                image_features /= image_features.norm(dim=-1, keepdim=True) 
+                with torch.no_grad():
+                    image_features = self.model.encode_image(image)
+                    image_features /= image_features.norm(dim=-1, keepdim=True) 
                 outputs: NDArray[np.float32] = image_features.cpu().detach().numpy()
             case str():
                 if self.mode == "vision":
                     raise TypeError("Cannot encode text as vision-only model")
                 text = clip.tokenize(image_or_text).to(self.device)
-                text_features = self.model.encode_text(text)
-                text_features /= text_features.norm(dim=-1, keepdim=True) 
+                with torch.no_grad():
+                    text_features = self.model.encode_text(text)
+                    text_features /= text_features.norm(dim=-1, keepdim=True) 
                 outputs = text_features.cpu().detach().numpy()
             case _:
                 raise TypeError(f"Expected Image or str, but got: {type(image_or_text)}")
