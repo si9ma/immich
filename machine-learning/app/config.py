@@ -22,8 +22,8 @@ class PreloadModelData(BaseModel):
 
 class Settings(BaseSettings):
     cache_folder: str = "/cache"
-    model_ttl: int = 0
-    model_ttl_poll_s: int = 0
+    model_ttl: int = 300
+    model_ttl_poll_s: int = 10
     host: str = "0.0.0.0"
     port: int = 3003
     workers: int = 1
