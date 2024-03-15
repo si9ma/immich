@@ -108,6 +108,15 @@ export const CLIP_MODEL_INFO: Record<string, ModelInfo> = {
   'nllb-clip-large-siglip__v1': {
     dimSize: 1152,
   },
+  'RN50': {
+    dimSize: 1024,
+  },
+  'ViT-H-14': {
+    dimSize: 1024,
+  },
+  'ViT-B-16': {
+    dimSize: 512,
+  },
 };
 
 export function cleanModelName(modelName: string): string {
