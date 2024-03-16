@@ -1,7 +1,7 @@
-import { AssetEntity } from '@app/infra/entities';
 import { ImmichLogger } from '@app/infra/logger';
+import { AssetEntity, AssetOrder } from '@app/infra/entities';
 import { Inject, Injectable } from '@nestjs/common';
-import { AssetOrder, AssetResponseDto, mapAsset } from '../asset';
+import { AssetResponseDto, mapAsset } from '../asset';
 import { AuthDto } from '../auth';
 import { PersonResponseDto } from '../person';
 import {
@@ -62,7 +62,7 @@ export class SearchService {
       this.assetRepository.getAssetIdByTag(auth.user.id, options),
     ]);
     const assetIds = new Set<string>(results.flatMap((field) => field.items.map((item) => item.data)));
-    const assets = await this.assetRepository.getByIds([...assetIds]);
+    const assets = await this.assetRepository.getByIdsWithAllRelations([...assetIds]);
     const assetMap = new Map<string, AssetResponseDto>(assets.map((asset) => [asset.id, mapAsset(asset)]));
 
     return results.map(({ fieldName, items }) => ({
@@ -83,6 +83,7 @@ export class SearchService {
     const page = dto.page ?? 1;
     const size = dto.size || 250;
     const enumToOrder = { [AssetOrder.ASC]: 'ASC', [AssetOrder.DESC]: 'DESC' } as const;
+    this.logger.log(`fku page: ${page} size ${size}`);
     const { hasNextPage, items } = await this.searchRepository.searchMetadata(
       { page, size },
       {
@@ -110,7 +111,7 @@ export class SearchService {
     const userIds = await this.getUserIdsToSearch(auth);
 
     const page = dto.page ?? 1;
-    const size = dto.size || 100;
+    const size = dto.size || 500;
 
     // split dto.query to array by ~, then parse to date Array
     if (dto.query) {
@@ -197,7 +198,7 @@ export class SearchService {
         return this.searchSmart(auth, smartDto);
       }
       case SearchStrategy.TEXT: {
-        assets = await this.assetRepository.searchMetadata(query, userIds, { numResults: dto.size || 250 });
+        assets = await this.assetRepository.searchMetadata(query, userIds, { numResults: dto.size || 500 });
       }
       default: {
         break;
