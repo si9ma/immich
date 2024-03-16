@@ -20,7 +20,6 @@
   } from '@mdi/js';
   import LoadingSpinner from '../loading-spinner.svelte';
   import StatusBox from '../status-box.svelte';
-  import SideBarButton from './side-bar-button.svelte';
   import SideBarSection from './side-bar-section.svelte';
   import Icon from '$lib/components/elements/icon.svelte';
   import SideBarLink from './side-bar-link.svelte';
@@ -41,8 +40,6 @@
 </script>
 
 <SideBarSection>
-  <a data-sveltekit-preload-data="hover" data-sveltekit-noscroll href={AppRoute.PHOTOS} draggable="false">
-    <!-- <SideBarButton icon={isPhotosSelected ? mdiImageMultiple : mdiImageMultipleOutline} isSelected={isPhotosSelected}> -->
   <nav aria-label="Primary">
     <SideBarLink
       title="Photos"
@@ -101,8 +98,8 @@
     <p class="hidden p-6 group-hover:sm:block md:block">LIBRARY</p>
     <hr class="mx-4 mb-[31px] mt-8 block group-hover:sm:hidden md:hidden" />
   </div> -->
-  <a data-sveltekit-preload-data="hover" href={AppRoute.FAVORITES} draggable="false">
-    <SideBarButton
+  <!-- <a data-sveltekit-preload-data="hover" href={AppRoute.FAVORITES} draggable="false"> -->
+    <SideBarLink
       title="Favorites"
       routeId="/(user)/favorites"
       icon={isFavoritesSelected ? mdiHeartMultiple : mdiHeartMultipleOutline}

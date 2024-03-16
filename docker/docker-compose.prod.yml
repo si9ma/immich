@@ -47,7 +47,7 @@ services:
       context: ../machine-learning
       dockerfile: Dockerfile
       args:
-        - DEVICE=cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference
+        - DEVICE=cuda # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference
     volumes:
       - model-cache:/cache
     env_file:

@@ -7,33 +7,6 @@
 </script>
 
 <SideBarSection>
-  <a data-sveltekit-preload-data="hover" href={AppRoute.ADMIN_USER_MANAGEMENT} draggable="false">
-    <SideBarButton
-      title="Users"
-      icon={mdiAccountMultipleOutline}
-      isSelected={$page.route.id === AppRoute.ADMIN_USER_MANAGEMENT}
-    />
-  </a>
-  <a data-sveltekit-preload-data="hover" href={AppRoute.ADMIN_JOBS} draggable="false">
-    <SideBarButton title="Jobs" icon={mdiSync} isSelected={$page.route.id === AppRoute.ADMIN_JOBS} />
-  </a>
-  <a data-sveltekit-preload-data="hover" href={AppRoute.ADMIN_SETTINGS} draggable="false">
-    <SideBarButton title="Settings" icon={mdiCog} isSelected={$page.route.id === AppRoute.ADMIN_SETTINGS} />
-  </a>
-  <a data-sveltekit-preload-data="hover" href={AppRoute.ADMIN_LIBRARY_MANAGEMENT} draggable="false">
-    <SideBarButton
-      title="External Libraries"
-      icon={mdiBookshelf}
-      isSelected={$page.route.id === AppRoute.ADMIN_LIBRARY_MANAGEMENT}
-    />
-  </a>
-  <a data-sveltekit-preload-data="hover" href={AppRoute.ADMIN_STATS} draggable="false">
-    <SideBarButton title="Server Stats" icon={mdiServer} isSelected={$page.route.id === AppRoute.ADMIN_STATS} />
-  </a>
-  <a data-sveltekit-preload-data="off" href={AppRoute.ADMIN_REPAIR} draggable="false">
-    <SideBarButton title="Repair" icon={mdiTools} isSelected={$page.route.id === AppRoute.ADMIN_REPAIR} />
-  </a>
-  <!-- <div class="mb-6 mt-auto">
   <nav aria-label="Primary">
     <SideBarLink title="Users" routeId={AppRoute.ADMIN_USER_MANAGEMENT} icon={mdiAccountMultipleOutline} />
     <SideBarLink title="Jobs" routeId={AppRoute.ADMIN_JOBS} icon={mdiSync} />
@@ -43,7 +16,7 @@
     <SideBarLink title="Repair" routeId={AppRoute.ADMIN_REPAIR} icon={mdiTools} preloadData={false} />
   </nav>
 
-  <div class="mb-6 mt-auto">
+  <!-- <div class="mb-6 mt-auto">
     <StatusBox />
   </div> -->
 </SideBarSection>

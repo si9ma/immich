@@ -20,6 +20,7 @@ x-server-build: &server-common
     - ${UPLOAD_LOCATION}/photos/upload:/usr/src/app/upload/upload
     - /usr/src/app/node_modules
     - /etc/localtime:/etc/localtime:ro
+    - ${EXTERNAL_PATH}:/external
   env_file:
     - .env
   ulimits:

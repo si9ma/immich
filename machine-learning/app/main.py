@@ -116,9 +116,11 @@ async def predict(
     model = await load(await model_cache.get(model_name, model_type, ttl=settings.model_ttl, **kwargs))
     model.configure(**kwargs)
     outputs = await run(model.predict, inputs)
+    if not isinstance(outputs, list):
+        outputs = outputs.tolist()
     # log the output
-    log.info(f"Model '{model_name}' predicted: {len(outputs.tolist()[0])}")
-    return ORJSONResponse(outputs.tolist())
+    # log.info(f"Model '{model_name}' predicted: {len(outputs.tolist()[0])}")
+    return ORJSONResponse(outputs)
 
 
 async def run(func: Callable[..., Any], inputs: Any) -> Any:
