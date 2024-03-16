@@ -83,7 +83,6 @@ export class SearchService {
     const page = dto.page ?? 1;
     const size = dto.size || 250;
     const enumToOrder = { [AssetOrder.ASC]: 'ASC', [AssetOrder.DESC]: 'DESC' } as const;
-    this.logger.log(`fku page: ${page} size ${size}`);
     const { hasNextPage, items } = await this.searchRepository.searchMetadata(
       { page, size },
       {
@@ -111,7 +110,7 @@ export class SearchService {
     const userIds = await this.getUserIdsToSearch(auth);
 
     const page = dto.page ?? 1;
-    const size = dto.size || 500;
+    const size = dto.size || 250;
 
     // split dto.query to array by ~, then parse to date Array
     if (dto.query) {
@@ -198,7 +197,7 @@ export class SearchService {
         return this.searchSmart(auth, smartDto);
       }
       case SearchStrategy.TEXT: {
-        assets = await this.assetRepository.searchMetadata(query, userIds, { numResults: dto.size || 500 });
+        assets = await this.assetRepository.searchMetadata(query, userIds, { numResults: dto.size || 250 });
       }
       default: {
         break;
