@@ -153,7 +153,47 @@ export class MetadataRepository implements IMetadataRepository {
     await exiftool.end();
   }
 
+  async reverseGeocodeWithAmap(point: GeoPoint): Promise<ReverseGeocodeResult | null> {
+    this.logger.debug(`Request: ${point.latitude},${point.longitude}`);
+
+    // read key list from env,AMAP_GEOCODE_KEYS, then random select one key
+    const keys = process.env.AMAP_GEOCODE_KEYS?.split(',') ?? [];
+    const key = keys[Math.floor(Math.random() * keys.length)];
+    const url = `https://restapi.amap.com/v3/geocode/regeo`;
+    const params = {
+      key: key,
+      location: `${point.longitude},${point.latitude}`,
+      radius: "1000",
+      extensions: "base",
+      roadlevel: "0"
+    };
+  
+    const response = await fetch(`${url}?${new URLSearchParams(params)}`);
+    if (!response.ok) {
+      this.logger.error(`Request failed with status ${response.status}`);
+      return null;
+    }
+  
+    const data = await response.json();
+    const country = data.regeocode.addressComponent.country;
+    const state = data.regeocode.addressComponent.province;
+    let city = data.regeocode.addressComponent.city;
+    if (city == '' || city == null) {
+      city = data.regeocode.addressComponent.province;
+    }
+    const district = data.regeocode.addressComponent.district;
+    const address = data.regeocode.formatted_address;
+
+    return { country, state, city, district, address };
+  }
+
   async reverseGeocode(point: GeoPoint): Promise<ReverseGeocodeResult | null> {
+    // base on env GEOCODE_WITH_AMAP, if true, use amap to reverse geocode
+    if (process.env.GEOCODE_WITH_AMAP === 'true') {
+      this.logger.log('Using Amap for reverse geocoding');
+      return this.reverseGeocodeWithAmap(point);
+    }
+
     this.logger.debug(`Request: ${point.latitude},${point.longitude}`);
 
     const response = await this.geodataPlacesRepository
@@ -176,8 +216,10 @@ export class MetadataRepository implements IMetadataRepository {
     const country = getName(countryCode, 'en') ?? null;
     const stateParts = [admin2Name, admin1Name].filter((name) => !!name);
     const state = stateParts.length > 0 ? stateParts.join(', ') : null;
+    const district = null;
+    const address = null;
 
-    return { country, state, city };
+    return { country, state, city, district, address };
   }
 
   readTags(path: string): Promise<ImmichTags | null> {

@@ -68,7 +68,7 @@ export enum Orientation {
 
 type ExifEntityWithoutGeocodeAndTypeOrm = Omit<
   ExifEntity,
-  'city' | 'state' | 'country' | 'description' | 'exifTextSearchableColumn'
+  'city' | 'state' | 'country' | 'description' | 'exifTextSearchableColumn' | 'address' | 'district'
 > & { dateTimeOriginal: Date };
 
 const exifDate = (dt: ExifDateTime | string | undefined) => (dt instanceof ExifDateTime ? dt?.toDate() : null);

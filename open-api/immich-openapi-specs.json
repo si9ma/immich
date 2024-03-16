@@ -7856,6 +7856,11 @@
       },
       "ExifResponseDto": {
         "properties": {
+          "address": {
+            "default": null,
+            "nullable": true,
+            "type": "string"
+          },
           "city": {
             "default": null,
             "nullable": true,
@@ -7873,6 +7878,11 @@
             "type": "string"
           },
           "description": {
+            "default": null,
+            "nullable": true,
+            "type": "string"
+          },
+          "district": {
             "default": null,
             "nullable": true,
             "type": "string"

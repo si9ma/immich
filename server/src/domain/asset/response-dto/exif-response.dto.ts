@@ -23,6 +23,8 @@ export class ExifResponseDto {
   city?: string | null = null;
   state?: string | null = null;
   country?: string | null = null;
+  district?: string | null = null;
+  address?: string | null = null;
   description?: string | null = null;
   projectionType?: string | null = null;
 }
@@ -45,11 +47,14 @@ export function mapExif(entity: ExifEntity): ExifResponseDto {
     exposureTime: entity.exposureTime,
     latitude: entity.latitude,
     longitude: entity.longitude,
-    city: entity.city,
+    // TODO Interim solutions support Chinese addresses
+    city: entity.address ? entity.address : entity.city,
     state: entity.state,
     country: entity.country,
     description: entity.description,
     projectionType: entity.projectionType,
+    address: entity.address,
+    district: entity.district,
   };
 }
 

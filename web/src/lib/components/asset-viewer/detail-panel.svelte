@@ -512,17 +512,17 @@
           <div><Icon path={mdiMapMarkerOutline} size="24" /></div>
 
           <div>
-            <p>{asset.exifInfo.city}</p>
-            {#if asset.exifInfo?.state}
+            <p>{asset.exifInfo.address}</p>
+            <!-- {#if asset.exifInfo?.state}
               <div class="flex gap-2 text-sm">
                 <p>{asset.exifInfo.state}</p>
               </div>
-            {/if}
-            {#if asset.exifInfo?.country}
+            {/if} -->
+            <!-- {#if asset.exifInfo?.country}
               <div class="flex gap-2 text-sm">
                 <p>{asset.exifInfo.country}</p>
               </div>
-            {/if}
+            {/if} -->
           </div>
         </div>
 
@@ -556,17 +556,17 @@
           <div><Icon path={mdiMapMarkerOutline} size="24" /></div>
 
           <div>
-            <p>{asset.exifInfo.city}</p>
-            {#if asset.exifInfo?.state}
+            <p>{asset.exifInfo.address}</p>
+            <!-- {#if asset.exifInfo?.state}
               <div class="flex gap-2 text-sm">
                 <p>{asset.exifInfo.state}</p>
               </div>
-            {/if}
-            {#if asset.exifInfo?.country}
+            {/if} -->
+            <!-- {#if asset.exifInfo?.country}
               <div class="flex gap-2 text-sm">
                 <p>{asset.exifInfo.country}</p>
               </div>
-            {/if}
+            {/if} -->
           </div>
         </div>
       </div>

@@ -114,4 +114,10 @@ export class ExifEntity {
                          COALESCE("country", ''))`,
   })
   exifTextSearchableColumn!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  district!: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  address!: string | null;
 }

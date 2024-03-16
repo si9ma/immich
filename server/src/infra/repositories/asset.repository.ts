@@ -548,6 +548,8 @@ export class AssetRepository implements IAssetRepository {
       city: asset.exifInfo!.city,
       state: asset.exifInfo!.state,
       country: asset.exifInfo!.country,
+      address: asset.exifInfo!.address,
+      district: asset.exifInfo!.district,
     }));
   }
 
