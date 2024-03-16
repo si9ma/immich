@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import SideBarButton from '$lib/components/shared-components/side-bar/side-bar-button.svelte';
+  import SideBarLink from '$lib/components/shared-components/side-bar/side-bar-link.svelte';
   import SideBarSection from '$lib/components/shared-components/side-bar/side-bar-section.svelte';
   import StatusBox from '$lib/components/shared-components/status-box.svelte';
   import { AppRoute } from '$lib/constants';
@@ -35,6 +34,16 @@
     <SideBarButton title="Repair" icon={mdiTools} isSelected={$page.route.id === AppRoute.ADMIN_REPAIR} />
   </a>
   <!-- <div class="mb-6 mt-auto">
+  <nav aria-label="Primary">
+    <SideBarLink title="Users" routeId={AppRoute.ADMIN_USER_MANAGEMENT} icon={mdiAccountMultipleOutline} />
+    <SideBarLink title="Jobs" routeId={AppRoute.ADMIN_JOBS} icon={mdiSync} />
+    <SideBarLink title="Settings" routeId={AppRoute.ADMIN_SETTINGS} icon={mdiCog} />
+    <SideBarLink title="External Libraries" routeId={AppRoute.ADMIN_LIBRARY_MANAGEMENT} icon={mdiBookshelf} />
+    <SideBarLink title="Server Stats" routeId={AppRoute.ADMIN_STATS} icon={mdiServer} />
+    <SideBarLink title="Repair" routeId={AppRoute.ADMIN_REPAIR} icon={mdiTools} preloadData={false} />
+  </nav>
+
+  <div class="mb-6 mt-auto">
     <StatusBox />
   </div> -->
 </SideBarSection>
