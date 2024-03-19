@@ -6,6 +6,7 @@ import { TagResponseDto, mapTag } from '../../tag';
 import { UserResponseDto, mapUser } from '../../user/response-dto/user-response.dto';
 import { ExifResponseDto, mapExif } from './exif-response.dto';
 import { SmartInfoResponseDto, mapSmartInfo } from './smart-info-response.dto';
+import { parse } from 'node:path';
 
 export class SanitizedAssetResponseDto {
   id!: string;
@@ -98,7 +99,7 @@ export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): As
     libraryId: entity.libraryId,
     type: entity.type,
     originalPath: entity.originalPath,
-    originalFileName: entity.originalFileName,
+    originalFileName: parse(entity.originalPath).name + '.' + parse(entity.originalPath).ext,
     resized: !!entity.resizePath,
     thumbhash: entity.thumbhash?.toString('base64') ?? null,
     fileCreatedAt: entity.fileCreatedAt,
