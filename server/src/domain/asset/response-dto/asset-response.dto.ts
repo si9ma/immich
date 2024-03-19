@@ -99,7 +99,7 @@ export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): As
     libraryId: entity.libraryId,
     type: entity.type,
     originalPath: entity.originalPath,
-    originalFileName: parse(entity.originalPath).name + '.' + parse(entity.originalPath).ext,
+    originalFileName: parse(entity.originalPath).name + parse(entity.originalPath).ext,
     resized: !!entity.resizePath,
     thumbhash: entity.thumbhash?.toString('base64') ?? null,
     fileCreatedAt: entity.fileCreatedAt,
