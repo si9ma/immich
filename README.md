@@ -1,3 +1,19 @@
+> 这个fork中主要根据我的需求做了一些修改，但工作繁忙，暂时没空往官方仓库中提交pr，有需要的可以自行使用，后续也会持续合并主干中的修改进来。<br>
+> 主要修改如下：<br>
+> - machine learning模块支持cn_clip(https://github.com/OFA-Sys/Chinese-CLIP)
+> - geocode支持高德地图api(在.env中增加GEOCODE_WITH_AMAP=true AMAP_GEOCODE_KEYS=key1,key2)
+> - 页面侧边栏改为窄模式
+> - 修复了一些bug(ios移动端下载视频失败、移动端搜索展示数量太少等)
+> - 搜索支持日期搜索(20240202搜索某一天，20240202-20240302搜索一个区间)
+
+> This fork mainly makes some modifications according to my needs, but I'm busy with work and don't have time to submit a PR to the official repository for now. Those in need can use it themselves, and I will continue to merge modifications from the main branch in the future.<br>
+> The main modifications are as follows:<br>
+> - The machine learning module supports cn_clip (https://github.com/OFA-Sys/Chinese-CLIP)
+> - Geocode supports the Amap API (add GEOCODE_WITH_AMAP=true AMAP_GEOCODE_KEYS=key1,key2 in .env)
+> - The page sidebar has been changed to a narrow mode
+> - Fixed some bugs (failure to download videos on iOS mobile end, too few search displays on mobile end, etc.)
+> - Search supports date search (search for a specific day with 20240202, search for a range with 20240202-20240302)
+
 <p align="center"> 
   <br/>  
   <a href="https://opensource.org/license/agpl-v3"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg?color=3F51B5&style=for-the-badge&label=License&logoColor=000000&labelColor=ececec" alt="License: AGPLv3"></a>
