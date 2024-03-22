@@ -119,7 +119,7 @@ async def predict(
     if not isinstance(outputs, list):
         outputs = outputs.tolist()
     # log the output
-    # log.info(f"Model '{model_name}' predicted: {len(outputs.tolist()[0])}")
+    log.info(f"Model '{model_name}' predicted")
     return ORJSONResponse(outputs)
 
 

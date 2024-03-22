@@ -45,6 +45,7 @@ services:
     #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference
     build:
       context: ../machine-learning
+      # dockerfile: Dockerfile.frombase
       dockerfile: Dockerfile
       args:
         - DEVICE=cuda # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference
