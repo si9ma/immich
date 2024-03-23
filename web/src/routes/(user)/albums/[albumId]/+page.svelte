@@ -25,6 +25,7 @@
   import ContextMenu from '$lib/components/shared-components/context-menu/context-menu.svelte';
   import MenuOption from '$lib/components/shared-components/context-menu/menu-option.svelte';
   import ControlAppBar from '$lib/components/shared-components/control-app-bar.svelte';
+  import StackAction from '$lib/components/photos-page/actions/stack-action.svelte';
   import CreateSharedLinkModal from '$lib/components/shared-components/create-share-link-modal/create-shared-link-modal.svelte';
   import {
     NotificationType,
@@ -404,6 +405,9 @@
           {/if}
           {#if isOwned || isAllUserOwned}
             <RemoveFromAlbum menuItem bind:album onRemove={handleRemoveAssets} />
+          {/if}
+          {#if $selectedAssets.size > 1}
+            <StackAction onStack={(assetIds) => {}} />
           {/if}
           {#if isAllUserOwned}
             <DeleteAssets menuItem onAssetDelete={handleRemoveAssets} />
