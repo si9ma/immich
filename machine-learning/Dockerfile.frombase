@@ -1,0 +1,9 @@
+FROM immich-machine-learning-base as base
+
+WORKDIR /usr/src/app
+
+COPY ann/ann.py /usr/src/ann/ann.py
+COPY start.sh log_conf.json ./
+COPY app .
+ENTRYPOINT ["tini", "--"]
+CMD ["./start.sh"]
