@@ -112,6 +112,7 @@ export class AssetServiceV1 {
     const userId = dto.userId || auth.user.id;
     await this.access.requirePermission(auth, Permission.TIMELINE_READ, userId);
     const assets = await this.assetRepositoryV1.getAllByUserId(userId, dto);
+    this.logger.log(`Found ${assets.length} assets`);
     return assets.map((asset) => mapAsset(asset, { withStack: true, auth }));
   }
 
