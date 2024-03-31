@@ -24,7 +24,7 @@ export class MediaRepository implements IMediaRepository {
   private logger = new ImmichLogger(MediaRepository.name);
 
   crop(input: string | Buffer, options: CropOptions): Promise<Buffer> {
-    return sharp(input, { failOn: 'none' })
+    return sharp(input, { failOn: 'none', limitInputPixels: false })
       .pipelineColorspace('rgb16')
       .extract({
         left: options.left,
@@ -36,7 +36,7 @@ export class MediaRepository implements IMediaRepository {
   }
 
   async resize(input: string | Buffer, output: string, options: ResizeOptions): Promise<void> {
-    await sharp(input, { failOn: 'none' })
+    await sharp(input, { failOn: 'none', limitInputPixels: false })
       .pipelineColorspace(options.colorspace === Colorspace.SRGB ? 'srgb' : 'rgb16')
       .resize(options.size, options.size, { fit: 'outside', withoutEnlargement: true })
       .rotate()
@@ -120,7 +120,7 @@ export class MediaRepository implements IMediaRepository {
   async generateThumbhash(imagePath: string): Promise<Buffer> {
     const maxSize = 100;
 
-    const { data, info } = await sharp(imagePath)
+    const { data, info } = await sharp(imagePath, { failOn: 'none', limitInputPixels: false })
       .resize(maxSize, maxSize, { fit: 'inside', withoutEnlargement: true })
       .raw()
       .ensureAlpha()
