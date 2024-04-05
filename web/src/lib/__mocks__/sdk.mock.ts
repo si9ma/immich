@@ -1,4 +1,4 @@
-import sdk from '@immich/sdk';
+import { defaults as sdk } from '@immich/sdk';
 import type { Mock, MockedObject } from 'vitest';
 
 vi.mock('@immich/sdk', async (originalImport) => {
