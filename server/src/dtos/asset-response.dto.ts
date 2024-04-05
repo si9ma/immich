@@ -83,7 +83,7 @@ export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): As
       type: entity.type,
       thumbhash: entity.thumbhash?.toString('base64') ?? null,
       localDateTime: entity.localDateTime,
-      resized: !!entity.resizePath,
+      resized: !!entity.previewPath,
       duration: entity.duration ?? '0:00:00.00000',
       livePhotoVideoId: entity.livePhotoVideoId,
       hasMetadata: false,
@@ -108,7 +108,7 @@ export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): As
     type: entity.type,
     originalPath: entity.originalPath,
     originalFileName: originalFileName,
-    resized: !!entity.resizePath,
+    resized: !!entity.previewPath,
     thumbhash: entity.thumbhash?.toString('base64') ?? null,
     fileCreatedAt: entity.fileCreatedAt,
     fileModifiedAt: entity.fileModifiedAt,
@@ -139,7 +139,12 @@ export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): As
 }
 
 export class MemoryLaneResponseDto {
+  @ApiProperty({ deprecated: true })
   title!: string;
+
+  @ApiProperty({ type: 'integer' })
+  yearsAgo!: number;
+
   assets!: AssetResponseDto[];
 }
 

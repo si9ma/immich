@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DateTime } from 'luxon';
 import path from 'node:path';
 import { Chunked, ChunkedArray, DummyValue, GenerateSql } from 'src/decorators';
 import { AssetOrder } from 'src/entities/album.entity';
@@ -75,42 +74,7 @@ export class AssetRepository implements IAssetRepository {
     return this.repository.save(asset);
   }
 
-  @GenerateSql({ params: [DummyValue.UUID, DummyValue.DATE] })
-  getByDate(ownerId: string, date: Date): Promise<AssetEntity[]> {
-    // For reference of a correct approach although slower
-
-    // let builder = this.repository
-    //   .createQueryBuilder('asset')
-    //   .leftJoin('asset.exifInfo', 'exifInfo')
-    //   .where('asset.ownerId = :ownerId', { ownerId })
-    //   .andWhere(
-    //     `coalesce(date_trunc('day', asset."fileCreatedAt", "exifInfo"."timeZone") at TIME ZONE "exifInfo"."timeZone", date_trunc('day', asset."fileCreatedAt")) IN (:date)`,
-    //     { date },
-    //   )
-    //   .andWhere('asset.isVisible = true')
-    //   .andWhere('asset.isArchived = false')
-    //   .orderBy('asset.fileCreatedAt', 'DESC');
-
-    // return builder.getMany();
-
-    return this.repository.find({
-      where: {
-        ownerId,
-        isVisible: true,
-        isArchived: false,
-        resizePath: Not(IsNull()),
-        fileCreatedAt: OptionalBetween(date, DateTime.fromJSDate(date).plus({ day: 1 }).toJSDate()),
-      },
-      relations: {
-        exifInfo: true,
-      },
-      order: {
-        fileCreatedAt: 'DESC',
-      },
-    });
-  }
-
-  @GenerateSql({ params: [DummyValue.UUID, { day: 1, month: 1 }] })
+  @GenerateSql({ params: [[DummyValue.UUID], { day: 1, month: 1 }] })
   getByDayOfYear(ownerIds: string[], { day, month }: MonthDay): Promise<AssetEntity[]> {
     return this.repository
       .createQueryBuilder('entity')
@@ -118,7 +82,7 @@ export class AssetRepository implements IAssetRepository {
         `entity.ownerId IN (:...ownerIds)
       AND entity.isVisible = true
       AND entity.isArchived = false
-      AND entity.resizePath IS NOT NULL
+      AND entity.previewPath IS NOT NULL
       AND EXTRACT(DAY FROM entity.localDateTime AT TIME ZONE 'UTC') = :day
       AND EXTRACT(MONTH FROM entity.localDateTime AT TIME ZONE 'UTC') = :month`,
         {
@@ -128,7 +92,7 @@ export class AssetRepository implements IAssetRepository {
         },
       )
       .leftJoinAndSelect('entity.exifInfo', 'exifInfo')
-      .orderBy('entity.localDateTime', 'DESC')
+      .orderBy('entity.localDateTime', 'ASC')
       .getMany();
   }
 
@@ -194,7 +158,7 @@ export class AssetRepository implements IAssetRepository {
     return this.getAll(pagination, { ...options, userIds: [userId] });
   }
 
-  @GenerateSql({ params: [[DummyValue.UUID]] })
+  @GenerateSql({ params: [{ take: 1, skip: 0 }, DummyValue.UUID] })
   getLibraryAssetPaths(pagination: PaginationOptions, libraryId: string): Paginated<AssetPathEntity> {
     return paginate(this.repository, pagination, {
       select: { id: true, originalPath: true, isOffline: true },
@@ -337,10 +301,10 @@ export class AssetRepository implements IAssetRepository {
     switch (property) {
       case WithoutProperty.THUMBNAIL: {
         where = [
-          { resizePath: IsNull(), isVisible: true },
-          { resizePath: '', isVisible: true },
-          { webpPath: IsNull(), isVisible: true },
-          { webpPath: '', isVisible: true },
+          { previewPath: IsNull(), isVisible: true },
+          { previewPath: '', isVisible: true },
+          { thumbnailPath: IsNull(), isVisible: true },
+          { thumbnailPath: '', isVisible: true },
           { thumbhash: IsNull(), isVisible: true },
         ];
         break;
@@ -374,7 +338,7 @@ export class AssetRepository implements IAssetRepository {
         };
         where = {
           isVisible: true,
-          resizePath: Not(IsNull()),
+          previewPath: Not(IsNull()),
           smartSearch: {
             embedding: IsNull(),
           },
@@ -387,7 +351,7 @@ export class AssetRepository implements IAssetRepository {
           smartInfo: true,
         };
         where = {
-          resizePath: Not(IsNull()),
+          previewPath: Not(IsNull()),
           isVisible: true,
           smartInfo: {
             tags: IsNull(),
@@ -402,7 +366,7 @@ export class AssetRepository implements IAssetRepository {
           jobStatus: true,
         };
         where = {
-          resizePath: Not(IsNull()),
+          previewPath: Not(IsNull()),
           isVisible: true,
           faces: {
             assetId: IsNull(),
@@ -420,7 +384,7 @@ export class AssetRepository implements IAssetRepository {
           faces: true,
         };
         where = {
-          resizePath: Not(IsNull()),
+          previewPath: Not(IsNull()),
           isVisible: true,
           faces: {
             assetId: Not(IsNull()),

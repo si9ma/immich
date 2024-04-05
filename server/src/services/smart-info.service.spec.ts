@@ -18,7 +18,7 @@ import { newSystemConfigRepositoryMock } from 'test/repositories/system-config.r
 
 const asset = {
   id: 'asset-1',
-  resizePath: 'path/to/resize.ext',
+  previewPath: 'path/to/resize.ext',
 } as AssetEntity;
 
 describe(SmartInfoService.name, () => {
@@ -94,7 +94,7 @@ describe(SmartInfoService.name, () => {
     });
 
     it('should skip assets without a resize path', async () => {
-      const asset = { resizePath: '' } as AssetEntity;
+      const asset = { previewPath: '' } as AssetEntity;
       assetMock.getByIds.mockResolvedValue([asset]);
 
       await sut.handleEncodeClip({ id: asset.id });
@@ -104,7 +104,6 @@ describe(SmartInfoService.name, () => {
     });
 
     it('should save the returned objects', async () => {
-      searchMock.upsert.mockResolvedValue();
       machineMock.encodeImage.mockResolvedValue([0.01, 0.02, 0.03]);
 
       await sut.handleEncodeClip({ id: asset.id });
@@ -114,12 +113,7 @@ describe(SmartInfoService.name, () => {
         { imagePath: 'path/to/resize.ext' },
         { enabled: true, modelName: 'ViT-B-32__openai' },
       );
-      expect(searchMock.upsert).toHaveBeenCalledWith(
-        {
-          assetId: 'asset-1',
-        },
-        [0.01, 0.02, 0.03],
-      );
+      expect(searchMock.upsert).toHaveBeenCalledWith('asset-1', [0.01, 0.02, 0.03]);
     });
   });
 
