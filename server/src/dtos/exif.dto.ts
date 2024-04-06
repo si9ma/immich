@@ -29,7 +29,12 @@ export class ExifResponseDto {
   projectionType?: string | null = null;
 }
 
-export function mapExif(entity: ExifEntity): ExifResponseDto {
+export function mapExif(entity: ExifEntity, addressAsCity: boolean): ExifResponseDto {
+  let city = entity.city;
+  if (addressAsCity) {
+    // TODO Interim solutions support Chinese addresses
+    city = entity.address;
+  }
   return {
     make: entity.make,
     model: entity.model,
@@ -47,8 +52,7 @@ export function mapExif(entity: ExifEntity): ExifResponseDto {
     exposureTime: entity.exposureTime,
     latitude: entity.latitude,
     longitude: entity.longitude,
-    // TODO Interim solutions support Chinese addresses
-    city: entity.address ? entity.address : entity.city,
+    city: city,
     state: entity.state,
     country: entity.country,
     description: entity.description,

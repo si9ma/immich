@@ -54,6 +54,7 @@ export type AssetMapOptions = {
   stripMetadata?: boolean;
   withStack?: boolean;
   auth?: AuthDto;
+  exifAddressAsCity?: boolean;
 };
 
 const peopleWithFaces = (faces: AssetFaceEntity[]): PersonWithFacesResponseDto[] => {
@@ -75,7 +76,7 @@ const peopleWithFaces = (faces: AssetFaceEntity[]): PersonWithFacesResponseDto[]
 };
 
 export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): AssetResponseDto {
-  const { stripMetadata = false, withStack = false } = options;
+  const { stripMetadata = false, withStack = false, exifAddressAsCity = true } = options;
 
   if (stripMetadata) {
     const sanitizedAssetResponse: SanitizedAssetResponseDto = {
@@ -118,7 +119,7 @@ export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): As
     isArchived: options.auth?.user.id === entity.ownerId ? entity.isArchived : false,
     isTrashed: !!entity.deletedAt,
     duration: entity.duration ?? '0:00:00.00000',
-    exifInfo: entity.exifInfo ? mapExif(entity.exifInfo) : undefined,
+    exifInfo: entity.exifInfo ? mapExif(entity.exifInfo, exifAddressAsCity) : undefined,
     smartInfo: entity.smartInfo ? mapSmartInfo(entity.smartInfo) : undefined,
     livePhotoVideoId: entity.livePhotoVideoId,
     tags: entity.tags?.map(mapTag),

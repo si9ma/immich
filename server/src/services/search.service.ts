@@ -169,7 +169,7 @@ export class SearchService {
   async getAssetsByCity(auth: AuthDto): Promise<AssetResponseDto[]> {
     const userIds = await this.getUserIdsToSearch(auth);
     const assets = await this.searchRepository.getAssetsByCity(userIds);
-    return assets.map((asset) => mapAsset(asset));
+    return assets.map((asset) => mapAsset(asset, { exifAddressAsCity: false }));
   }
 
   getSearchSuggestions(auth: AuthDto, dto: SearchSuggestionRequestDto): Promise<string[]> {
