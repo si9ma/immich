@@ -10,7 +10,7 @@ Immich comes preconfigured with an upload library for each user. All assets uplo
 
 ## External Libraries
 
-External libraries tracks assets stored outside of immich, i.e. in the file system. Immich will only read data from the files, and will not modify them in any way. Therefore, the delete button is disabled for external assets. When the external library is scanned, immich will read the metadata from the file and create an asset in the library for each image or video file. These items will then be shown in the main timeline, and they will look and behave like any other asset, including viewing on the map, adding to albums, etc.
+External libraries tracks assets stored outside of Immich, i.e. in the file system. When the external library is scanned, Immich will read the metadata from the file and create an asset in the library for each image or video file. These items will then be shown in the main timeline, and they will look and behave like any other asset, including viewing on the map, adding to albums, etc.
 
 If a file is modified outside of Immich, the changes will not be reflected in immich until the library is scanned again. There are different ways to scan a library depending on the use case:
 
@@ -161,7 +161,7 @@ The christmas trip library will now be scanned in the background. In the meantim
 
 - Click on Create External Library.
 
-:::info Note
+:::note
 If you get an error here, please rename the other external library to something else. This is a bug that will be fixed in a future release.
 :::
 
@@ -175,3 +175,14 @@ If you get an error here, please rename the other external library to something 
 - Click on Scan Library Files
 
 Within seconds, the assets from the old-pics and videos folders should show up in the main timeline.
+
+### Set Custom Scan Interval
+
+:::note
+Only an admin can do this.
+:::
+
+You can define a custom interval for the trigger external library rescan under Administration -> Settings -> Library.  
+You can set the scanning interval using the preset or cron format. For more information you can refer to [Crontab Guru](https://crontab.guru/).
+
+<img src={require('./img/library-custom-scan-interval.png').default} width="75%" title='Set custom scan interval for external library' />

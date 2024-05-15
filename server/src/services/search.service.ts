@@ -1,13 +1,11 @@
-import { ImmichLogger } from 'src/utils/logger';
-import { Inject, Injectable } from '@nestjs/common';
-import { FeatureFlag, SystemConfigCore } from 'src/cores/system-config.core';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { SystemConfigCore } from 'src/cores/system-config.core';
 import { AssetResponseDto, mapAsset } from 'src/dtos/asset-response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { PersonResponseDto } from 'src/dtos/person.dto';
 import {
   MetadataSearchDto,
   PlacesResponseDto,
-  SearchDto,
   SearchPeopleDto,
   SearchPlacesDto,
   SearchResponseDto,
@@ -19,17 +17,18 @@ import {
 import { AssetOrder } from 'src/entities/album.entity';
 import { AssetEntity } from 'src/entities/asset.entity';
 import { IAssetRepository } from 'src/interfaces/asset.interface';
+import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { IMachineLearningRepository } from 'src/interfaces/machine-learning.interface';
 import { IMetadataRepository } from 'src/interfaces/metadata.interface';
 import { IPartnerRepository } from 'src/interfaces/partner.interface';
 import { IPersonRepository } from 'src/interfaces/person.interface';
-import { ISearchRepository, SearchExploreItem, SearchStrategy } from 'src/interfaces/search.interface';
+import { ISearchRepository, SearchExploreItem } from 'src/interfaces/search.interface';
 import { ISystemConfigRepository } from 'src/interfaces/system-config.interface';
+import { isSmartSearchEnabled } from 'src/utils/misc';
 
 @Injectable()
 export class SearchService {
   private configCore: SystemConfigCore;
-  private logger = new ImmichLogger(SearchService.name);
 
   constructor(
     @Inject(ISystemConfigRepository) configRepository: ISystemConfigRepository,
@@ -39,8 +38,10 @@ export class SearchService {
     @Inject(IAssetRepository) private assetRepository: IAssetRepository,
     @Inject(IPartnerRepository) private partnerRepository: IPartnerRepository,
     @Inject(IMetadataRepository) private metadataRepository: IMetadataRepository,
+    @Inject(ILoggerRepository) private logger: ILoggerRepository,
   ) {
-    this.configCore = SystemConfigCore.create(configRepository);
+    this.logger.setContext(SearchService.name);
+    this.configCore = SystemConfigCore.create(configRepository, logger);
   }
 
   async searchPerson(auth: AuthDto, dto: SearchPeopleDto): Promise<PersonResponseDto[]> {
@@ -53,7 +54,6 @@ export class SearchService {
   }
 
   async getExploreData(auth: AuthDto): Promise<SearchExploreItem<AssetResponseDto>[]> {
-    await this.configCore.requireFeature(FeatureFlag.SEARCH);
     const options = { maxFields: 12, minAssetsPerField: 5 };
     const results = await Promise.all([
       this.assetRepository.getAssetIdByCity(auth.user.id, options),
@@ -106,8 +106,11 @@ export class SearchService {
   }
 
   async searchSmart(auth: AuthDto, dto: SmartSearchDto): Promise<SearchResponseDto> {
-    await this.configCore.requireFeature(FeatureFlag.SMART_SEARCH);
     const { machineLearning } = await this.configCore.getConfig();
+    if (!isSmartSearchEnabled(machineLearning)) {
+      throw new BadRequestException('Smart search is not enabled');
+    }
+
     const userIds = await this.getUserIdsToSearch(auth);
 
     const page = dto.page ?? 1;
@@ -190,48 +193,6 @@ export class SearchService {
         return this.metadataRepository.getCameraModels(auth.user.id, dto.make);
       }
     }
-  }
-
-  // TODO: remove after implementing new search filters
-  /** @deprecated */
-  async search(auth: AuthDto, dto: SearchDto): Promise<SearchResponseDto> {
-    await this.configCore.requireFeature(FeatureFlag.SEARCH);
-    const { machineLearning } = await this.configCore.getConfig();
-    const query = dto.q || dto.query;
-    if (!query) {
-      throw new Error('Missing query');
-    }
-
-    let strategy = SearchStrategy.TEXT;
-    if (dto.smart || dto.clip) {
-      await this.configCore.requireFeature(FeatureFlag.SMART_SEARCH);
-      strategy = SearchStrategy.SMART;
-    }
-
-    const userIds = await this.getUserIdsToSearch(auth);
-    const page = dto.page ?? 1;
-
-    let nextPage: string | null = null;
-    let assets: AssetEntity[] = [];
-    switch (strategy) {
-      case SearchStrategy.SMART: {
-        let smartDto = new SmartSearchDto();
-        smartDto.page = dto.page;
-        smartDto.size = dto.size;
-        smartDto.query = dto.query ?? '';
-        smartDto.withArchived = dto.withArchived;
-
-        return this.searchSmart(auth, smartDto);
-      }
-      case SearchStrategy.TEXT: {
-        assets = await this.assetRepository.searchMetadata(query, userIds, { numResults: dto.size || 250 });
-      }
-      default: {
-        break;
-      }
-    }
-
-    return this.mapResponse(assets, nextPage);
   }
 
   private async getUserIdsToSearch(auth: AuthDto): Promise<string[]> {

@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { snakeCase } from 'lodash';
-import { FeatureFlag, SystemConfigCore } from 'src/cores/system-config.core';
+import { SystemConfigCore } from 'src/cores/system-config.core';
 import { mapAsset } from 'src/dtos/asset-response.dto';
 import { AllJobStatusResponseDto, JobCommandDto, JobStatusDto } from 'src/dtos/job.dto';
 import { AssetType } from 'src/entities/asset.entity';
@@ -17,14 +17,13 @@ import {
   QueueCleanType,
   QueueName,
 } from 'src/interfaces/job.interface';
+import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { IMetricRepository } from 'src/interfaces/metric.interface';
 import { IPersonRepository } from 'src/interfaces/person.interface';
 import { ISystemConfigRepository } from 'src/interfaces/system-config.interface';
-import { ImmichLogger } from 'src/utils/logger';
 
 @Injectable()
 export class JobService {
-  private logger = new ImmichLogger(JobService.name);
   private configCore: SystemConfigCore;
 
   constructor(
@@ -34,8 +33,10 @@ export class JobService {
     @Inject(ISystemConfigRepository) configRepository: ISystemConfigRepository,
     @Inject(IPersonRepository) private personRepository: IPersonRepository,
     @Inject(IMetricRepository) private metricRepository: IMetricRepository,
+    @Inject(ILoggerRepository) private logger: ILoggerRepository,
   ) {
-    this.configCore = SystemConfigCore.create(configRepository);
+    this.logger.setContext(JobService.name);
+    this.configCore = SystemConfigCore.create(configRepository, logger);
   }
 
   async handleCommand(queueName: QueueName, dto: JobCommandDto): Promise<JobStatusDto> {
@@ -111,7 +112,6 @@ export class JobService {
       }
 
       case QueueName.SMART_SEARCH: {
-        await this.configCore.requireFeature(FeatureFlag.SMART_SEARCH);
         return this.jobRepository.queue({ name: JobName.QUEUE_SMART_SEARCH, data: { force } });
       }
 
@@ -120,7 +120,6 @@ export class JobService {
       }
 
       case QueueName.SIDECAR: {
-        await this.configCore.requireFeature(FeatureFlag.SIDECAR);
         return this.jobRepository.queue({ name: JobName.QUEUE_SIDECAR, data: { force } });
       }
 
@@ -129,12 +128,10 @@ export class JobService {
       }
 
       case QueueName.FACE_DETECTION: {
-        await this.configCore.requireFeature(FeatureFlag.FACIAL_RECOGNITION);
         return this.jobRepository.queue({ name: JobName.QUEUE_FACE_DETECTION, data: { force } });
       }
 
       case QueueName.FACIAL_RECOGNITION: {
-        await this.configCore.requireFeature(FeatureFlag.FACIAL_RECOGNITION);
         return this.jobRepository.queue({ name: JobName.QUEUE_FACIAL_RECOGNITION, data: { force } });
       }
 
@@ -206,6 +203,7 @@ export class JobService {
       { name: JobName.CLEAN_OLD_AUDIT_LOGS },
       { name: JobName.USER_SYNC_USAGE },
       { name: JobName.QUEUE_FACIAL_RECOGNITION, data: { force: false } },
+      { name: JobName.CLEAN_OLD_SESSION_TOKENS },
     ]);
   }
 

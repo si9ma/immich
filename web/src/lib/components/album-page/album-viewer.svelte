@@ -6,7 +6,7 @@
   import type { AlbumResponseDto, SharedLinkResponseDto, UserResponseDto } from '@immich/sdk';
   import { createAssetInteractionStore } from '../../stores/asset-interaction.store';
   import { AssetStore } from '../../stores/assets.store';
-  import { downloadArchive } from '../../utils/asset-utils';
+  import { downloadAlbum } from '../../utils/asset-utils';
   import CircleIconButton from '../elements/buttons/circle-icon-button.svelte';
   import DownloadAction from '../photos-page/actions/download-action.svelte';
   import AssetGrid from '../photos-page/asset-grid.svelte';
@@ -23,6 +23,7 @@
   export let user: UserResponseDto | undefined = undefined;
 
   const album = sharedLink.album as AlbumResponseDto;
+  let innerWidth: number;
 
   let { isViewing: showAssetViewer } = assetViewingStore;
 
@@ -36,10 +37,6 @@
       dragAndDropFilesStore.set({ isDragging: false, files: [] });
     }
   });
-
-  const downloadAlbum = async () => {
-    await downloadArchive(`${album.albumName}.zip`, { albumId: album.id });
-  };
 </script>
 
 <svelte:window
@@ -51,6 +48,7 @@
       }
     },
   }}
+  bind:innerWidth
 />
 
 <header>
@@ -69,7 +67,7 @@
     <ControlAppBar showBackButton={false}>
       <svelte:fragment slot="leading">
         <a data-sveltekit-preload-data="hover" class="ml-4" href="/">
-          <ImmichLogo class="h-10" />
+          <ImmichLogo class="h-[24px] w-[24px] max-w-none md:w-auto md:h-10 md:max-w-full" noText={innerWidth < 768} />
         </a>
       </svelte:fragment>
 
@@ -83,7 +81,7 @@
         {/if}
 
         {#if album.assetCount > 0 && sharedLink.allowDownload}
-          <CircleIconButton title="Download" on:click={() => downloadAlbum()} icon={mdiFolderDownloadOutline} />
+          <CircleIconButton title="Download" on:click={() => downloadAlbum(album)} icon={mdiFolderDownloadOutline} />
         {/if}
 
         <ThemeButton />

@@ -14,7 +14,7 @@
 
   let showMoreInformation = false;
   $: routePath = resolveRoute(routeId, {});
-  $: isSelected = $page.route.id === routeId;
+  $: isSelected = ($page.route.id?.match(/^\/(admin|\(user\))\/[^/]*/) || [])[0] === routeId;
 
   let hoverTimer = 0;
 

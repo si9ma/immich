@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { instanceToPlain } from 'class-transformer';
 import _ from 'lodash';
+import { LogLevel, SystemConfig, defaults } from 'src/config';
 import {
   supportedDayTokens,
   supportedHourTokens,
@@ -14,7 +15,6 @@ import {
 import { SystemConfigCore } from 'src/cores/system-config.core';
 import { OnServerEvent } from 'src/decorators';
 import { SystemConfigDto, SystemConfigTemplateStorageOptionDto, mapConfig } from 'src/dtos/system-config.dto';
-import { LogLevel, SystemConfig } from 'src/entities/system-config.entity';
 import {
   ClientEvent,
   IEventRepository,
@@ -22,21 +22,22 @@ import {
   ServerAsyncEventMap,
   ServerEvent,
 } from 'src/interfaces/event.interface';
+import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { ISearchRepository } from 'src/interfaces/search.interface';
 import { ISystemConfigRepository } from 'src/interfaces/system-config.interface';
-import { ImmichLogger } from 'src/utils/logger';
 
 @Injectable()
 export class SystemConfigService {
-  private logger = new ImmichLogger(SystemConfigService.name);
   private core: SystemConfigCore;
 
   constructor(
     @Inject(ISystemConfigRepository) private repository: ISystemConfigRepository,
     @Inject(IEventRepository) private eventRepository: IEventRepository,
+    @Inject(ILoggerRepository) private logger: ILoggerRepository,
     @Inject(ISearchRepository) private smartInfoRepository: ISearchRepository,
   ) {
-    this.core = SystemConfigCore.create(repository);
+    this.logger.setContext(SystemConfigService.name);
+    this.core = SystemConfigCore.create(repository, this.logger);
     this.core.config$.subscribe((config) => this.setLogLevel(config));
   }
 
@@ -55,8 +56,7 @@ export class SystemConfigService {
   }
 
   getDefaults(): SystemConfigDto {
-    const config = this.core.getDefaults();
-    return mapConfig(config);
+    return mapConfig(defaults);
   }
 
   @OnServerEvent(ServerAsyncEvent.CONFIG_VALIDATE)
@@ -67,6 +67,10 @@ export class SystemConfigService {
   }
 
   async updateConfig(dto: SystemConfigDto): Promise<SystemConfigDto> {
+    if (this.core.isUsingConfigFile()) {
+      throw new BadRequestException('Cannot update configuration while IMMICH_CONFIG_FILE is in use');
+    }
+
     const oldConfig = await this.core.getConfig();
 
     try {
@@ -88,13 +92,6 @@ export class SystemConfigService {
       await this.smartInfoRepository.init(newConfig.machineLearning.clip.modelName);
     }
     return mapConfig(newConfig);
-  }
-
-  // this is only used by the cli on config change, and it's not actually needed anymore
-  async refreshConfig() {
-    this.eventRepository.serverSend(ServerEvent.CONFIG_UPDATE, null);
-    await this.core.refreshConfig();
-    return true;
   }
 
   getStorageTemplateOptions(): SystemConfigTemplateStorageOptionDto {
@@ -137,7 +134,7 @@ export class SystemConfigService {
     const envLevel = this.getEnvLogLevel();
     const configLevel = logging.enabled ? logging.level : false;
     const level = envLevel ?? configLevel;
-    ImmichLogger.setLogLevel(level);
+    this.logger.setLogLevel(level);
     this.logger.log(`LogLevel=${level} ${envLevel ? '(set via LOG_LEVEL)' : '(set via system config)'}`);
   }
 

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PropertyLifecycle } from 'src/decorators';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { ExifResponseDto, mapExif } from 'src/dtos/exif.dto';
 import { PersonWithFacesResponseDto, mapFacesWithoutPerson, mapPerson } from 'src/dtos/person.dto';
@@ -36,8 +37,10 @@ export class AssetResponseDto extends SanitizedAssetResponseDto {
   isArchived!: boolean;
   isTrashed!: boolean;
   isOffline!: boolean;
-  isExternal!: boolean;
-  isReadOnly!: boolean;
+  @PropertyLifecycle({ deprecatedAt: 'v1.104.0' })
+  isExternal?: boolean;
+  @PropertyLifecycle({ deprecatedAt: 'v1.104.0' })
+  isReadOnly?: boolean;
   exifInfo?: ExifResponseDto;
   smartInfo?: SmartInfoResponseDto;
   tags?: TagResponseDto[];
@@ -116,7 +119,7 @@ export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): As
     localDateTime: entity.localDateTime,
     updatedAt: entity.updatedAt,
     isFavorite: options.auth?.user.id === entity.ownerId ? entity.isFavorite : false,
-    isArchived: options.auth?.user.id === entity.ownerId ? entity.isArchived : false,
+    isArchived: entity.isArchived,
     isTrashed: !!entity.deletedAt,
     duration: entity.duration ?? '0:00:00.00000',
     exifInfo: entity.exifInfo ? mapExif(entity.exifInfo, exifAddressAsCity) : undefined,
@@ -132,15 +135,15 @@ export function mapAsset(entity: AssetEntity, options: AssetMapOptions = {}): As
         .map((a) => mapAsset(a, { stripMetadata, auth: options.auth }))
       : undefined,
     stackCount: entity.stack?.assets?.length ?? null,
-    isExternal: entity.isExternal,
     isOffline: entity.isOffline,
-    isReadOnly: entity.isReadOnly,
+    isExternal: false,
+    isReadOnly: false,
     hasMetadata: true,
   };
 }
 
 export class MemoryLaneResponseDto {
-  @ApiProperty({ deprecated: true })
+  @PropertyLifecycle({ deprecatedAt: 'v1.100.0' })
   title!: string;
 
   @ApiProperty({ type: 'integer' })
