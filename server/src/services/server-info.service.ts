@@ -15,19 +15,19 @@ import {
 } from 'src/dtos/server-info.dto';
 import { SystemMetadataKey } from 'src/entities/system-metadata.entity';
 import { ClientEvent, IEventRepository, ServerEvent, ServerEventMap } from 'src/interfaces/event.interface';
+import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { IServerInfoRepository } from 'src/interfaces/server-info.interface';
 import { IStorageRepository } from 'src/interfaces/storage.interface';
 import { ISystemConfigRepository } from 'src/interfaces/system-config.interface';
 import { ISystemMetadataRepository } from 'src/interfaces/system-metadata.interface';
 import { IUserRepository, UserStatsQueryResponse } from 'src/interfaces/user.interface';
 import { asHumanReadable } from 'src/utils/bytes';
-import { ImmichLogger } from 'src/utils/logger';
 import { mimeTypes } from 'src/utils/mime-types';
+import { isFacialRecognitionEnabled, isSmartSearchEnabled } from 'src/utils/misc';
 import { Version } from 'src/utils/version';
 
 @Injectable()
 export class ServerInfoService {
-  private logger = new ImmichLogger(ServerInfoService.name);
   private configCore: SystemConfigCore;
   private releaseVersion = serverVersion;
   private releaseVersionCheckedAt: DateTime | null = null;
@@ -38,9 +38,11 @@ export class ServerInfoService {
     @Inject(IUserRepository) private userRepository: IUserRepository,
     @Inject(IServerInfoRepository) private repository: IServerInfoRepository,
     @Inject(IStorageRepository) private storageRepository: IStorageRepository,
-    @Inject(ISystemMetadataRepository) private readonly systemMetadataRepository: ISystemMetadataRepository,
+    @Inject(ISystemMetadataRepository) private systemMetadataRepository: ISystemMetadataRepository,
+    @Inject(ILoggerRepository) private logger: ILoggerRepository,
   ) {
-    this.configCore = SystemConfigCore.create(configRepository);
+    this.logger.setContext(ServerInfoService.name);
+    this.configCore = SystemConfigCore.create(configRepository, this.logger);
   }
 
   onConnect() {}
@@ -50,7 +52,9 @@ export class ServerInfoService {
 
     const featureFlags = await this.getFeatures();
     if (featureFlags.configFile) {
-      await this.setAdminOnboarding();
+      await this.systemMetadataRepository.set(SystemMetadataKey.ADMIN_ONBOARDING, {
+        isOnboarded: true,
+      });
     }
   }
 
@@ -79,8 +83,24 @@ export class ServerInfoService {
     return serverVersion;
   }
 
-  getFeatures(): Promise<ServerFeaturesDto> {
-    return this.configCore.getFeatures();
+  async getFeatures(): Promise<ServerFeaturesDto> {
+    const { reverseGeocoding, map, machineLearning, trash, oauth, passwordLogin, notifications } =
+      await this.configCore.getConfig();
+
+    return {
+      smartSearch: isSmartSearchEnabled(machineLearning),
+      facialRecognition: isFacialRecognitionEnabled(machineLearning),
+      map: map.enabled,
+      reverseGeocoding: reverseGeocoding.enabled,
+      sidecar: true,
+      search: true,
+      trash: trash.enabled,
+      oauth: oauth.enabled,
+      oauthAutoLaunch: oauth.autoLaunch,
+      passwordLogin: passwordLogin.enabled,
+      configFile: this.configCore.isUsingConfigFile(),
+      email: notifications.smtp.enabled,
+    };
   }
 
   async getTheme() {
@@ -102,10 +122,6 @@ export class ServerInfoService {
       isOnboarded: onboarding?.isOnboarded || false,
       externalDomain: config.server.externalDomain,
     };
-  }
-
-  setAdminOnboarding(): Promise<void> {
-    return this.systemMetadataRepository.set(SystemMetadataKey.ADMIN_ONBOARDING, { isOnboarded: true });
   }
 
   async getStatistics(): Promise<ServerStatsResponseDto> {

@@ -7,7 +7,7 @@ import { constants } from 'node:fs/promises';
 import path from 'node:path';
 import { Subscription } from 'rxjs';
 import { StorageCore } from 'src/cores/storage.core';
-import { FeatureFlag, SystemConfigCore } from 'src/cores/system-config.core';
+import { SystemConfigCore } from 'src/cores/system-config.core';
 import { AssetEntity, AssetType } from 'src/entities/asset.entity';
 import { ExifEntity } from 'src/entities/exif.entity';
 import { IAlbumRepository } from 'src/interfaces/album.interface';
@@ -25,13 +25,14 @@ import {
   JobStatus,
   QueueName,
 } from 'src/interfaces/job.interface';
+import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { IMediaRepository } from 'src/interfaces/media.interface';
 import { IMetadataRepository, ImmichTags } from 'src/interfaces/metadata.interface';
 import { IMoveRepository } from 'src/interfaces/move.interface';
 import { IPersonRepository } from 'src/interfaces/person.interface';
 import { IStorageRepository } from 'src/interfaces/storage.interface';
 import { ISystemConfigRepository } from 'src/interfaces/system-config.interface';
-import { ImmichLogger } from 'src/utils/logger';
+import { IUserRepository } from 'src/interfaces/user.interface';
 import { handlePromiseError } from 'src/utils/misc';
 import { usePagination } from 'src/utils/pagination';
 
@@ -97,7 +98,6 @@ const validate = <T>(value: T): NonNullable<T> | null => {
 
 @Injectable()
 export class MetadataService {
-  private logger = new ImmichLogger(MetadataService.name);
   private storageCore: StorageCore;
   private configCore: SystemConfigCore;
   private subscription: Subscription | null = null;
@@ -115,15 +115,19 @@ export class MetadataService {
     @Inject(IPersonRepository) personRepository: IPersonRepository,
     @Inject(IStorageRepository) private storageRepository: IStorageRepository,
     @Inject(ISystemConfigRepository) configRepository: ISystemConfigRepository,
+    @Inject(IUserRepository) private userRepository: IUserRepository,
+    @Inject(ILoggerRepository) private logger: ILoggerRepository,
   ) {
-    this.configCore = SystemConfigCore.create(configRepository);
+    this.logger.setContext(MetadataService.name);
+    this.configCore = SystemConfigCore.create(configRepository, this.logger);
     this.storageCore = StorageCore.create(
       assetRepository,
+      cryptoRepository,
       moveRepository,
       personRepository,
-      cryptoRepository,
-      configRepository,
       storageRepository,
+      configRepository,
+      this.logger,
     );
   }
 
@@ -328,7 +332,8 @@ export class MetadataService {
 
   private async applyReverseGeocoding(asset: AssetEntity, exifData: ExifEntityWithoutGeocodeAndTypeOrm) {
     const { latitude, longitude } = exifData;
-    if (!(await this.configCore.hasFeature(FeatureFlag.REVERSE_GEOCODING)) || !longitude || !latitude) {
+    const { reverseGeocoding } = await this.configCore.getConfig();
+    if (!reverseGeocoding.enabled || !longitude || !latitude) {
       return;
     }
 
@@ -405,18 +410,21 @@ export class MetadataService {
       }
       const checksum = this.cryptoRepository.hashSha1(video);
 
-      let motionAsset = await this.assetRepository.getByChecksum(asset.ownerId, checksum);
+      let motionAsset = await this.assetRepository.getByChecksum(asset.libraryId, checksum);
       if (motionAsset) {
         this.logger.debug(
           `Asset ${asset.id}'s motion photo video with checksum ${checksum.toString(
             'base64',
           )} already exists in the repository`,
         );
+
+        // Hide the motion photo video asset if it's not already hidden to prepare for linking
+        if (motionAsset.isVisible) {
+          await this.assetRepository.update({ id: motionAsset.id, isVisible: false });
+          this.logger.log(`Hid unlinked motion photo video asset (${motionAsset.id})`);
+        }
       } else {
-        // We create a UUID in advance so that each extracted video can have a unique filename
-        // (allowing us to delete old ones if necessary)
         const motionAssetId = this.cryptoRepository.randomUUID();
-        const motionPath = StorageCore.getAndroidMotionPath(asset, motionAssetId);
         const createdAt = asset.fileCreatedAt ?? asset.createdAt;
         motionAsset = await this.assetRepository.create({
           id: motionAssetId,
@@ -427,26 +435,38 @@ export class MetadataService {
           localDateTime: createdAt,
           checksum,
           ownerId: asset.ownerId,
-          originalPath: motionPath,
+          originalPath: StorageCore.getAndroidMotionPath(asset, motionAssetId),
           originalFileName: asset.originalFileName,
           isVisible: false,
-          isReadOnly: false,
           deviceAssetId: 'NONE',
           deviceId: 'NONE',
         });
 
-        this.storageCore.ensureFolders(motionPath);
-        await this.storageRepository.writeFile(motionAsset.originalPath, video);
-        await this.jobRepository.queue({ name: JobName.METADATA_EXTRACTION, data: { id: motionAsset.id } });
+        if (!asset.isExternal) {
+          await this.userRepository.updateUsage(asset.ownerId, video.byteLength);
+        }
+      }
+
+      if (asset.livePhotoVideoId !== motionAsset.id) {
         await this.assetRepository.update({ id: asset.id, livePhotoVideoId: motionAsset.id });
 
         // If the asset already had an associated livePhotoVideo, delete it, because
         // its checksum doesn't match the checksum of the motionAsset we just extracted
-        // (if it did, getByChecksum() would've returned non-null)
+        // (if it did, getByChecksum() would've returned a motionAsset with the same ID as livePhotoVideoId)
+        // note asset.livePhotoVideoId is not motionAsset.id yet
         if (asset.livePhotoVideoId) {
           await this.jobRepository.queue({ name: JobName.ASSET_DELETION, data: { id: asset.livePhotoVideoId } });
           this.logger.log(`Removed old motion photo video asset (${asset.livePhotoVideoId})`);
         }
+      }
+
+      // write extracted motion video to disk, especially if the encoded-video folder has been deleted
+      const existsOnDisk = await this.storageRepository.checkFileExists(motionAsset.originalPath);
+      if (!existsOnDisk) {
+        this.storageCore.ensureFolders(motionAsset.originalPath);
+        await this.storageRepository.writeFile(motionAsset.originalPath, video);
+        this.logger.log(`Wrote motion photo video to ${motionAsset.originalPath}`);
+        await this.jobRepository.queue({ name: JobName.METADATA_EXTRACTION, data: { id: motionAsset.id } });
       }
 
       this.logger.debug(`Finished motion photo video extraction (${asset.id})`);

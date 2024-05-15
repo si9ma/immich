@@ -33,7 +33,7 @@ You do not need to redo any transcoding jobs after enabling hardware acceleratio
 #### NVENC
 
 - You must have the official NVIDIA driver installed on the server.
-- On Linux (except for WSL2), you also need to have [NVIDIA Container Runtime][nvcr] installed.
+- On Linux (except for WSL2), you also need to have [NVIDIA Container Toolkit][nvct] installed.
 
 #### QSV
 
@@ -102,7 +102,14 @@ Once this is done, you can continue to step 3 of "Basic Setup".
 
 #### All-In-One - Unraid Setup
 
-##### NVENC - NVIDIA GPUs
+##### QSV
+
+1. Unraid > Docker > (Stop) Immich container > Edit
+2. Scroll down and select `Add another Path, Port, Variable, Label or Device`
+3. In the drop-down menu, select `Device` and an entry with any name and the value `/dev/dri`.
+4. Continue to step 4 of "Basic Setup".
+
+##### NVENC
 
 1. In the container app, add this environmental variable: Key=`NVIDIA_VISIBLE_DEVICES` Value=`all`
 2. While still in the container app, change the container from Basic Mode to Advanced Mode and add the following parameter to the Extra Parameters field: `--runtime=nvidia`
@@ -115,7 +122,7 @@ Once this is done, you can continue to step 3 of "Basic Setup".
 - While you can use VAAPI with NVIDIA and Intel devices, prefer the more specific APIs since they're more optimized for their respective devices
 
 [hw-file]: https://github.com/immich-app/immich/releases/latest/download/hwaccel.transcoding.yml
-[nvcr]: https://github.com/NVIDIA/nvidia-container-runtime/
+[nvct]: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 [jellyfin-lp]: https://jellyfin.org/docs/general/administration/hardware-acceleration/intel/#configure-and-verify-lp-mode-on-linux
 [jellyfin-kernel-bug]: https://jellyfin.org/docs/general/administration/hardware-acceleration/intel/#known-issues-and-limitations
 [libmali-rockchip]: https://github.com/tsukumijima/libmali-rockchip/releases
