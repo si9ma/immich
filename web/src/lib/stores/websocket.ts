@@ -6,7 +6,8 @@ import { user } from './user.store';
 
 export interface ReleaseEvent {
   isAvailable: boolean;
-  checkedAt: Date;
+  /** ISO8601 */
+  checkedAt: string;
   serverVersion: ServerVersionResponseDto;
   releaseVersion: ServerVersionResponseDto;
 }
@@ -25,7 +26,7 @@ export interface Events {
   on_new_release: (newRelase: ReleaseEvent) => void;
 }
 
-const websocket: Socket<Events> = io('', {
+const websocket: Socket<Events> = io({
   path: '/api/socket.io',
   transports: ['websocket'],
   reconnection: true,

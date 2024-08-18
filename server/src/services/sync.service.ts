@@ -1,15 +1,16 @@
 import { Inject } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import { AUDIT_LOG_MAX_DURATION } from 'src/constants';
-import { AccessCore, Permission } from 'src/cores/access.core';
+import { AccessCore } from 'src/cores/access.core';
 import { AssetResponseDto, mapAsset } from 'src/dtos/asset-response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { AssetDeltaSyncDto, AssetDeltaSyncResponseDto, AssetFullSyncDto } from 'src/dtos/sync.dto';
-import { DatabaseAction, EntityType } from 'src/entities/audit.entity';
+import { DatabaseAction, EntityType, Permission } from 'src/enum';
 import { IAccessRepository } from 'src/interfaces/access.interface';
 import { IAssetRepository } from 'src/interfaces/asset.interface';
 import { IAuditRepository } from 'src/interfaces/audit.interface';
 import { IPartnerRepository } from 'src/interfaces/partner.interface';
+import { getMyPartnerIds } from 'src/utils/asset.util';
 import { setIsEqual } from 'src/utils/set';
 
 const FULL_SYNC = { needsFullSync: true, deleted: [], upserted: [] };
@@ -32,7 +33,6 @@ export class SyncService {
     await this.access.requirePermission(auth, Permission.TIMELINE_READ, userId);
     const assets = await this.assetRepository.getAllForUserFullSync({
       ownerId: userId,
-      lastCreationDate: dto.lastCreationDate,
       updatedUntil: dto.updatedUntil,
       lastId: dto.lastId,
       limit: dto.limit,
@@ -47,11 +47,9 @@ export class SyncService {
       return FULL_SYNC;
     }
 
-    const authUserId = auth.user.id;
-
     // app does not have the correct partners synced
-    const partner = await this.partnerRepository.getAll(authUserId);
-    const userIds = [authUserId, ...partner.filter((p) => p.sharedWithId == auth.user.id).map((p) => p.sharedById)];
+    const partnerIds = await getMyPartnerIds({ userId: auth.user.id, repository: this.partnerRepository });
+    const userIds = [auth.user.id, ...partnerIds];
     if (!setIsEqual(new Set(userIds), new Set(dto.userIds))) {
       return FULL_SYNC;
     }
@@ -82,7 +80,7 @@ export class SyncService {
             auth,
             stripMetadata: false,
             // ignore stacks for non partner users
-            withStack: a.ownerId === authUserId,
+            withStack: a.ownerId === auth.user.id,
           }),
         ),
       deleted,

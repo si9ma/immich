@@ -1,5 +1,7 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AccessCore, Permission } from 'src/cores/access.core';
+import { DEFAULT_EXTERNAL_DOMAIN } from 'src/constants';
+import { AccessCore } from 'src/cores/access.core';
+import { SystemConfigCore } from 'src/cores/system-config.core';
 import { AssetIdErrorReason, AssetIdsResponseDto } from 'src/dtos/asset-ids.response.dto';
 import { AssetIdsDto } from 'src/dtos/asset.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
@@ -12,22 +14,30 @@ import {
   mapSharedLinkWithoutMetadata,
 } from 'src/dtos/shared-link.dto';
 import { AssetEntity } from 'src/entities/asset.entity';
-import { SharedLinkEntity, SharedLinkType } from 'src/entities/shared-link.entity';
+import { SharedLinkEntity } from 'src/entities/shared-link.entity';
+import { Permission, SharedLinkType } from 'src/enum';
 import { IAccessRepository } from 'src/interfaces/access.interface';
 import { ICryptoRepository } from 'src/interfaces/crypto.interface';
+import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { ISharedLinkRepository } from 'src/interfaces/shared-link.interface';
+import { ISystemMetadataRepository } from 'src/interfaces/system-metadata.interface';
 import { OpenGraphTags } from 'src/utils/misc';
 
 @Injectable()
 export class SharedLinkService {
   private access: AccessCore;
+  private configCore: SystemConfigCore;
 
   constructor(
     @Inject(IAccessRepository) accessRepository: IAccessRepository,
     @Inject(ICryptoRepository) private cryptoRepository: ICryptoRepository,
+    @Inject(ILoggerRepository) private logger: ILoggerRepository,
     @Inject(ISharedLinkRepository) private repository: ISharedLinkRepository,
+    @Inject(ISystemMetadataRepository) systemMetadataRepository: ISystemMetadataRepository,
   ) {
+    this.logger.setContext(SharedLinkService.name);
     this.access = AccessCore.create(accessRepository);
+    this.configCore = SystemConfigCore.create(systemMetadataRepository, this.logger);
   }
 
   getAll(auth: AuthDto): Promise<SharedLinkResponseDto[]> {
@@ -84,7 +94,7 @@ export class SharedLinkService {
       password: dto.password,
       expiresAt: dto.expiresAt || null,
       allowUpload: dto.allowUpload ?? true,
-      allowDownload: dto.allowDownload ?? true,
+      allowDownload: dto.showMetadata === false ? false : (dto.allowDownload ?? true),
       showExif: dto.showMetadata ?? true,
     });
 
@@ -183,16 +193,18 @@ export class SharedLinkService {
       return null;
     }
 
+    const config = await this.configCore.getConfig({ withCache: true });
     const sharedLink = await this.findOrFail(auth.sharedLink.userId, auth.sharedLink.id);
     const assetId = sharedLink.album?.albumThumbnailAssetId || sharedLink.assets[0]?.id;
     const assetCount = sharedLink.assets.length > 0 ? sharedLink.assets.length : sharedLink.album?.assets.length || 0;
+    const imagePath = assetId
+      ? `/api/assets/${assetId}/thumbnail?key=${sharedLink.key.toString('base64url')}`
+      : '/feature-panel.png';
 
     return {
       title: sharedLink.album ? sharedLink.album.albumName : 'Public Share',
       description: sharedLink.description || `${assetCount} shared photos & videos`,
-      imageUrl: assetId
-        ? `/api/asset/thumbnail/${assetId}?key=${sharedLink.key.toString('base64url')}`
-        : '/feature-panel.png',
+      imageUrl: new URL(imagePath, config.server.externalDomain || DEFAULT_EXTERNAL_DOMAIN).href,
     };
   }
 

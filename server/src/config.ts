@@ -4,8 +4,9 @@ import { CronExpression } from '@nestjs/schedule';
 import { QueueOptions } from 'bullmq';
 import { Request, Response } from 'express';
 import { RedisOptions } from 'ioredis';
-import Joi from 'joi';
+import Joi, { Root } from 'joi';
 import { CLS_ID, ClsModuleOptions } from 'nestjs-cls';
+import { ImmichHeader } from 'src/dtos/auth.dto';
 import { ConcurrentQueueName, QueueName } from 'src/interfaces/job.interface';
 
 export enum TranscodePolicy {
@@ -34,6 +35,13 @@ export enum AudioCodec {
   MP3 = 'mp3',
   AAC = 'aac',
   LIBOPUS = 'libopus',
+}
+
+export enum VideoContainer {
+  MOV = 'mov',
+  MP4 = 'mp4',
+  OGG = 'ogg',
+  WEBM = 'webm',
 }
 
 export enum TranscodeHWAccel {
@@ -85,6 +93,7 @@ export interface SystemConfig {
     acceptedVideoCodecs: VideoCodec[];
     targetAudioCodec: AudioCodec;
     acceptedAudioCodecs: AudioCodec[];
+    acceptedContainers: VideoContainer[];
     targetResolution: string;
     maxBitrate: string;
     bframes: number;
@@ -97,6 +106,7 @@ export interface SystemConfig {
     preferredHwDevice: string;
     transcode: TranscodePolicy;
     accel: TranscodeHWAccel;
+    accelDecode: boolean;
     tonemap: ToneMapping;
   };
   job: Record<ConcurrentQueueName, { concurrency: number }>;
@@ -110,6 +120,10 @@ export interface SystemConfig {
     clip: {
       enabled: boolean;
       modelName: string;
+    };
+    duplicateDetection: {
+      enabled: boolean;
+      maxDistance: number;
     };
     facialRecognition: {
       enabled: boolean;
@@ -140,6 +154,7 @@ export interface SystemConfig {
     mobileRedirectUri: string;
     scope: string;
     signingAlgorithm: string;
+    profileSigningAlgorithm: string;
     storageLabelClaim: string;
     storageQuotaClaim: string;
   };
@@ -211,6 +226,7 @@ export const defaults = Object.freeze<SystemConfig>({
     acceptedVideoCodecs: [VideoCodec.H264],
     targetAudioCodec: AudioCodec.AAC,
     acceptedAudioCodecs: [AudioCodec.AAC, AudioCodec.MP3, AudioCodec.LIBOPUS],
+    acceptedContainers: [VideoContainer.MOV, VideoContainer.OGG, VideoContainer.WEBM],
     targetResolution: '720',
     maxBitrate: '0',
     bframes: -1,
@@ -224,6 +240,7 @@ export const defaults = Object.freeze<SystemConfig>({
     transcode: TranscodePolicy.REQUIRED,
     tonemap: ToneMapping.HABLE,
     accel: TranscodeHWAccel.DISABLED,
+    accelDecode: false,
   },
   job: {
     [QueueName.BACKGROUND_TASK]: { concurrency: 5 },
@@ -234,7 +251,7 @@ export const defaults = Object.freeze<SystemConfig>({
     [QueueName.SIDECAR]: { concurrency: 5 },
     [QueueName.LIBRARY]: { concurrency: 5 },
     [QueueName.MIGRATION]: { concurrency: 5 },
-    [QueueName.THUMBNAIL_GENERATION]: { concurrency: 5 },
+    [QueueName.THUMBNAIL_GENERATION]: { concurrency: 3 },
     [QueueName.VIDEO_CONVERSION]: { concurrency: 1 },
     [QueueName.NOTIFICATION]: { concurrency: 5 },
   },
@@ -248,6 +265,10 @@ export const defaults = Object.freeze<SystemConfig>({
     clip: {
       enabled: true,
       modelName: 'ViT-B-32__openai',
+    },
+    duplicateDetection: {
+      enabled: true,
+      maxDistance: 0.01,
     },
     facialRecognition: {
       enabled: true,
@@ -278,6 +299,7 @@ export const defaults = Object.freeze<SystemConfig>({
     mobileRedirectUri: '',
     scope: 'openid email profile',
     signingAlgorithm: 'RS256',
+    profileSigningAlgorithm: 'none',
     storageLabelClaim: 'preferred_username',
     storageQuotaClaim: 'immich_quota',
   },
@@ -350,8 +372,8 @@ export const immichAppConfig: ConfigModuleOptions = {
   envFilePath: '.env',
   isGlobal: true,
   validationSchema: Joi.object({
-    NODE_ENV: Joi.string().optional().valid('development', 'production', 'staging').default('development'),
-    LOG_LEVEL: Joi.string()
+    IMMICH_ENV: Joi.string().optional().valid('development', 'testing', 'production').default('production'),
+    IMMICH_LOG_LEVEL: Joi.string()
       .optional()
       .valid(...Object.values(LogLevel)),
 
@@ -362,9 +384,23 @@ export const immichAppConfig: ConfigModuleOptions = {
     DB_VECTOR_EXTENSION: Joi.string().optional().valid('pgvector', 'pgvecto.rs').default('pgvecto.rs'),
     DB_SKIP_MIGRATIONS: Joi.boolean().optional().default(false),
 
-    MACHINE_LEARNING_PORT: Joi.number().optional(),
-    MICROSERVICES_PORT: Joi.number().optional(),
-    IMMICH_METRICS_PORT: Joi.number().optional(),
+    IMMICH_PORT: Joi.number().optional(),
+    IMMICH_API_METRICS_PORT: Joi.number().optional(),
+    IMMICH_MICROSERVICES_METRICS_PORT: Joi.number().optional(),
+
+    IMMICH_TRUSTED_PROXIES: Joi.extend((joi: Root) => ({
+      type: 'stringArray',
+      base: joi.array(),
+      coerce: (value) => (value.split ? value.split(',') : value),
+    }))
+      .stringArray()
+      .single()
+      .items(
+        Joi.string().ip({
+          version: ['ipv4', 'ipv6'],
+          cidr: 'optional',
+        }),
+      ),
 
     IMMICH_METRICS: Joi.boolean().optional().default(false),
     IMMICH_HOST_METRICS: Joi.boolean().optional().default(false),
@@ -373,7 +409,7 @@ export const immichAppConfig: ConfigModuleOptions = {
   }),
 };
 
-function parseRedisConfig(): RedisOptions {
+export function parseRedisConfig(): RedisOptions {
   const redisUrl = process.env.REDIS_URL;
   if (redisUrl && redisUrl.startsWith('ioredis://')) {
     try {
@@ -410,11 +446,49 @@ export const clsConfig: ClsModuleOptions = {
     mount: true,
     generateId: true,
     setup: (cls, req: Request, res: Response) => {
-      const headerValues = req.headers['x-immich-cid'];
+      const headerValues = req.headers[ImmichHeader.CID];
       const headerValue = Array.isArray(headerValues) ? headerValues[0] : headerValues;
       const cid = headerValue || cls.get(CLS_ID);
       cls.set(CLS_ID, cid);
-      res.header('x-immich-cid', cid);
+      res.header(ImmichHeader.CID, cid);
     },
   },
+};
+
+export const getBuildMetadata = () => ({
+  build: process.env.IMMICH_BUILD,
+  buildUrl: process.env.IMMICH_BUILD_URL,
+  buildImage: process.env.IMMICH_BUILD_IMAGE,
+  buildImageUrl: process.env.IMMICH_BUILD_IMAGE_URL,
+  repository: process.env.IMMICH_REPOSITORY,
+  repositoryUrl: process.env.IMMICH_REPOSITORY_URL,
+  sourceRef: process.env.IMMICH_SOURCE_REF,
+  sourceCommit: process.env.IMMICH_SOURCE_COMMIT,
+  sourceUrl: process.env.IMMICH_SOURCE_URL,
+});
+
+const clientLicensePublicKeyProd =
+  'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF2LzdTMzJjUkE1KysxTm5WRHNDTQpzcFAvakpISU1xT0pYRm5oNE53QTJPcHorUk1mZGNvOTJQc09naCt3d1FlRXYxVTJjMnBqelRpUS8ybHJLcS9rCnpKUmxYd2M0Y1Vlc1FETUpPRitQMnFPTlBiQUprWHZDWFlCVUxpdENJa29Md2ZoU0dOanlJS2FSRGhkL3ROeU4KOCtoTlJabllUMWhTSWo5U0NrS3hVQ096YXRQVjRtQ0RlclMrYkUrZ0VVZVdwOTlWOWF6dkYwRkltblRXcFFTdwpjOHdFWmdPTWg0c3ZoNmFpY3dkemtQQ3dFTGFrMFZhQkgzMUJFVUNRTGI5K0FJdEhBVXRKQ0t4aGI1V2pzMXM5CmJyWGZpMHZycGdjWi82RGFuWTJxZlNQem5PbXZEMkZycmxTMXE0SkpOM1ZvN1d3LzBZeS95TWNtelRXWmhHdWgKVVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tDQo=';
+
+const clientLicensePublicKeyStaging =
+  'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFuSUNyTm5jbGpPSC9JdTNtWVVaRQp0dGJLV1c3OGRuajl5M0U2ekk3dU1NUndEckdYWFhkTGhkUDFxSWtlZHh0clVVeUpCMWR4R04yQW91S082MlNGCldrbU9PTmNGQlRBWFZTdjhUNVY0S0VwWnFQYWEwaXpNaGxMaE5sRXEvY1ZKdllrWlh1Z2x6b1o3cG1nbzFSdHgKam1iRm5NNzhrYTFRUUJqOVdLaEw2eWpWRUl2MDdVS0lKWHBNTnNuS2g1V083MjZhYmMzSE9udTlETjY5VnFFRQo3dGZrUnRWNmx2U1NzMkFVMngzT255cHA4ek53b0lPTWRibGsyb09aWWROZzY0Y3l2SzJoU0FlU3NVMFRyOVc5Ckgra0Y5QlNCNlk0QXl0QlVkSmkrK2pMSW5HM2Q5cU9ieFVzTlYrN05mRkF5NjJkL0xNR0xSOC9OUFc0U0s3c0MKRlFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tDQo=';
+
+export const getClientLicensePublicKey = (): string => {
+  if (process.env.IMMICH_ENV === 'production') {
+    return clientLicensePublicKeyProd;
+  }
+  return clientLicensePublicKeyStaging;
+};
+
+const serverLicensePublicKeyProd =
+  'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFvcG5ZRGEwYS9kVTVJZUc3NGlFRQpNd2RBS2pzTmN6TGRDcVJkMVo5eTVUMndqTzdlWUlPZUpUc2wzNTBzUjBwNEtmU1VEU1h2QzlOcERwYzF0T0tsCjVzaEMvQXhwdlFBTENva0Y0anQ4dnJyZDlmQ2FYYzFUcVJiT21uaGl1Z0Q2dmtyME8vRmIzVURpM1UwVHZoUFAKbFBkdlNhd3pMcldaUExmbUhWVnJiclNLbW45SWVTZ3kwN3VrV1RJeUxzY2lOcnZuQnl3c0phUmVEdW9OV1BCSApVL21vMm1YYThtNHdNV2hpWGVoaUlPUXFNdVNVZ1BlQ3NXajhVVngxQ0dsUnpQREEwYlZOUXZlS1hXVnhjRUk2ClVMRWdKeTJGNDlsSDArYVlDbUJmN05FcjZWUTJXQjk1ZXZUS1hLdm4wcUlNN25nRmxjVUF3NmZ1VjFjTkNUSlMKNndJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tDQo=';
+
+const serverLicensePublicKeyStaging =
+  'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUE3Sy8yd3ZLUS9NdU8ydi9MUm5saAoyUy9zTHhDOGJiTEw1UUlKOGowQ3BVZW40YURlY2dYMUpKUmtGNlpUVUtpNTdTbEhtS3RSM2JOTzJmdTBUUVg5Ck5WMEJzVzllZVB0MmlTMWl4VVFmTzRObjdvTjZzbEtac01qd29RNGtGRGFmM3VHTlZJc0dMb3UxVWRLUVhpeDEKUlRHcXVTb3NZVjNWRlk3Q1hGYTVWaENBL3poVXNsNGFuVXp3eEF6M01jUFVlTXBaenYvbVZiQlRKVzBPSytWZgpWQUJvMXdYMkVBanpBekVHVzQ3Vko4czhnMnQrNHNPaHFBNStMQjBKVzlORUg5QUpweGZzWE4zSzVtM00yNUJVClZXcTlRYStIdHRENnJ0bnAvcUFweXVkWUdwZk9HYTRCUlZTR1MxMURZM0xrb2FlRzYwUEU5NHpoYjduOHpMWkgKelFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tDQo=';
+
+export const getServerLicensePublicKey = (): string => {
+  if (process.env.IMMICH_ENV === 'production') {
+    return serverLicensePublicKeyProd;
+  }
+  return serverLicensePublicKeyStaging;
 };

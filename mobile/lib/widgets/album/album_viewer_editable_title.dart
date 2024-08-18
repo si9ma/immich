@@ -36,58 +36,56 @@ class AlbumViewerEditableTitle extends HookConsumerWidget {
       [],
     );
 
-    return TextField(
-      onChanged: (value) {
-        if (value.isEmpty) {
-        } else {
-          ref.watch(albumViewerProvider.notifier).setEditTitleText(value);
-        }
-      },
-      focusNode: titleFocusNode,
-      style: context.textTheme.headlineMedium,
-      controller: titleTextEditController,
-      onTap: () {
-        FocusScope.of(context).requestFocus(titleFocusNode);
+    return Material(
+      color: Colors.transparent,
+      child: TextField(
+        onChanged: (value) {
+          if (value.isEmpty) {
+          } else {
+            ref.watch(albumViewerProvider.notifier).setEditTitleText(value);
+          }
+        },
+        focusNode: titleFocusNode,
+        style: context.textTheme.headlineMedium,
+        controller: titleTextEditController,
+        onTap: () {
+          FocusScope.of(context).requestFocus(titleFocusNode);
 
-        ref.watch(albumViewerProvider.notifier).setEditTitleText(album.name);
-        ref.watch(albumViewerProvider.notifier).enableEditAlbum();
+          ref.watch(albumViewerProvider.notifier).setEditTitleText(album.name);
+          ref.watch(albumViewerProvider.notifier).enableEditAlbum();
 
-        if (titleTextEditController.text == 'Untitled') {
-          titleTextEditController.clear();
-        }
-      },
-      decoration: InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        suffixIcon: titleFocusNode.hasFocus
-            ? IconButton(
-                onPressed: () {
-                  titleTextEditController.clear();
-                },
-                icon: Icon(
-                  Icons.cancel_rounded,
-                  color: context.primaryColor,
-                ),
-                splashRadius: 10,
-              )
-            : null,
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.transparent),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.transparent),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        focusColor: Colors.grey[300],
-        fillColor: context.isDarkTheme
-            ? const Color.fromARGB(255, 32, 33, 35)
-            : Colors.grey[200],
-        filled: titleFocusNode.hasFocus,
-        hintText: 'share_add_title'.tr(),
-        hintStyle: TextStyle(
-          fontSize: 28,
-          color: context.isDarkTheme ? Colors.grey[300] : Colors.grey[700],
-          fontWeight: FontWeight.bold,
+          if (titleTextEditController.text == 'Untitled') {
+            titleTextEditController.clear();
+          }
+        },
+        decoration: InputDecoration(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          suffixIcon: titleFocusNode.hasFocus
+              ? IconButton(
+                  onPressed: () {
+                    titleTextEditController.clear();
+                  },
+                  icon: Icon(
+                    Icons.cancel_rounded,
+                    color: context.primaryColor,
+                  ),
+                  splashRadius: 10,
+                )
+              : null,
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.transparent),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.transparent),
+          ),
+          focusColor: Colors.grey[300],
+          fillColor: context.scaffoldBackgroundColor,
+          filled: titleFocusNode.hasFocus,
+          hintText: 'share_add_title'.tr(),
+          hintStyle: context.themeData.inputDecorationTheme.hintStyle?.copyWith(
+            fontSize: 28,
+          ),
         ),
       ),
     );

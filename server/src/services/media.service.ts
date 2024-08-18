@@ -8,12 +8,14 @@ import {
   TranscodePolicy,
   TranscodeTarget,
   VideoCodec,
+  VideoContainer,
 } from 'src/config';
 import { GeneratedImageType, StorageCore, StorageFolder } from 'src/cores/storage.core';
 import { SystemConfigCore } from 'src/cores/system-config.core';
 import { SystemConfigFFmpegDto } from 'src/dtos/system-config.dto';
-import { AssetEntity, AssetType } from 'src/entities/asset.entity';
+import { AssetEntity } from 'src/entities/asset.entity';
 import { AssetPathType } from 'src/entities/move.entity';
+import { AssetType } from 'src/enum';
 import { IAssetRepository, WithoutProperty } from 'src/interfaces/asset.interface';
 import { ICryptoRepository } from 'src/interfaces/crypto.interface';
 import {
@@ -27,22 +29,12 @@ import {
   QueueName,
 } from 'src/interfaces/job.interface';
 import { ILoggerRepository } from 'src/interfaces/logger.interface';
-import { AudioStreamInfo, IMediaRepository, VideoCodecHWConfig, VideoStreamInfo } from 'src/interfaces/media.interface';
+import { AudioStreamInfo, IMediaRepository, VideoFormat, VideoStreamInfo } from 'src/interfaces/media.interface';
 import { IMoveRepository } from 'src/interfaces/move.interface';
 import { IPersonRepository } from 'src/interfaces/person.interface';
 import { IStorageRepository } from 'src/interfaces/storage.interface';
-import { ISystemConfigRepository } from 'src/interfaces/system-config.interface';
-import {
-  AV1Config,
-  H264Config,
-  HEVCConfig,
-  NVENCConfig,
-  QSVConfig,
-  RKMPPConfig,
-  ThumbnailConfig,
-  VAAPIConfig,
-  VP9Config,
-} from 'src/utils/media';
+import { ISystemMetadataRepository } from 'src/interfaces/system-metadata.interface';
+import { BaseConfig, ThumbnailConfig } from 'src/utils/media';
 import { mimeTypes } from 'src/utils/mime-types';
 import { usePagination } from 'src/utils/pagination';
 
@@ -50,8 +42,8 @@ import { usePagination } from 'src/utils/pagination';
 export class MediaService {
   private configCore: SystemConfigCore;
   private storageCore: StorageCore;
-  private openCL: boolean | null = null;
-  private devices: string[] | null = null;
+  private maliOpenCL?: boolean;
+  private devices?: string[];
 
   constructor(
     @Inject(IAssetRepository) private assetRepository: IAssetRepository,
@@ -59,20 +51,20 @@ export class MediaService {
     @Inject(IJobRepository) private jobRepository: IJobRepository,
     @Inject(IMediaRepository) private mediaRepository: IMediaRepository,
     @Inject(IStorageRepository) private storageRepository: IStorageRepository,
-    @Inject(ISystemConfigRepository) configRepository: ISystemConfigRepository,
+    @Inject(ISystemMetadataRepository) systemMetadataRepository: ISystemMetadataRepository,
     @Inject(IMoveRepository) moveRepository: IMoveRepository,
     @Inject(ICryptoRepository) cryptoRepository: ICryptoRepository,
     @Inject(ILoggerRepository) private logger: ILoggerRepository,
   ) {
     this.logger.setContext(MediaService.name);
-    this.configCore = SystemConfigCore.create(configRepository, this.logger);
+    this.configCore = SystemConfigCore.create(systemMetadataRepository, this.logger);
     this.storageCore = StorageCore.create(
       assetRepository,
       cryptoRepository,
       moveRepository,
       personRepository,
       storageRepository,
-      configRepository,
+      systemMetadataRepository,
       this.logger,
     );
   }
@@ -80,7 +72,7 @@ export class MediaService {
   async handleQueueGenerateThumbnails({ force }: IBaseJob): Promise<JobStatus> {
     const assetPagination = usePagination(JOBS_ASSET_PAGINATION_SIZE, (pagination) => {
       return force
-        ? this.assetRepository.getAll(pagination, { isVisible: true })
+        ? this.assetRepository.getAll(pagination, { isVisible: true, withDeleted: true, withArchived: true })
         : this.assetRepository.getWithout(pagination, WithoutProperty.THUMBNAIL);
     });
 
@@ -159,7 +151,7 @@ export class MediaService {
   }
 
   async handleAssetMigration({ id }: IEntityJob): Promise<JobStatus> {
-    const { image } = await this.configCore.getConfig();
+    const { image } = await this.configCore.getConfig({ withCache: true });
     const [asset] = await this.assetRepository.getByIds([id]);
     if (!asset) {
       return JobStatus.FAILED;
@@ -174,7 +166,7 @@ export class MediaService {
 
   async handleGeneratePreview({ id }: IEntityJob): Promise<JobStatus> {
     const [{ image }, [asset]] = await Promise.all([
-      this.configCore.getConfig(),
+      this.configCore.getConfig({ withCache: true }),
       this.assetRepository.getByIds([id], { exifInfo: true }),
     ]);
     if (!asset) {
@@ -195,7 +187,7 @@ export class MediaService {
   }
 
   private async generateThumbnail(asset: AssetEntity, type: GeneratedImageType, format: ImageFormat) {
-    const { image, ffmpeg } = await this.configCore.getConfig();
+    const { image, ffmpeg } = await this.configCore.getConfig({ withCache: true });
     const size = type === AssetPathType.PREVIEW ? image.previewSize : image.thumbnailSize;
     const path = StorageCore.getImagePath(asset, type, format);
     this.storageCore.ensureFolders(path);
@@ -209,7 +201,13 @@ export class MediaService {
         try {
           const useExtracted = didExtract && (await this.shouldUseExtractedImage(extractedPath, image.previewSize));
           const colorspace = this.isSRGB(asset) ? Colorspace.SRGB : image.colorspace;
-          const imageOptions = { format, size, colorspace, quality: image.quality };
+          const imageOptions = {
+            format,
+            size,
+            colorspace,
+            quality: image.quality,
+            processInvalidImages: process.env.IMMICH_PROCESS_INVALID_IMAGES === 'true',
+          };
 
           const outputPath = useExtracted ? extractedPath : asset.originalPath;
           await this.mediaRepository.generateThumbnail(outputPath, path, imageOptions);
@@ -229,8 +227,8 @@ export class MediaService {
           return;
         }
         const mainAudioStream = this.getMainStream(audioStreams);
-        const config = { ...ffmpeg, targetResolution: size.toString() };
-        const options = new ThumbnailConfig(config).getOptions(TranscodeTarget.VIDEO, mainVideoStream, mainAudioStream);
+        const config = ThumbnailConfig.create({ ...ffmpeg, targetResolution: size.toString() });
+        const options = config.getCommand(TranscodeTarget.VIDEO, mainVideoStream, mainAudioStream);
         await this.mediaRepository.transcode(asset.originalPath, path, options);
         break;
       }
@@ -247,7 +245,7 @@ export class MediaService {
 
   async handleGenerateThumbnail({ id }: IEntityJob): Promise<JobStatus> {
     const [{ image }, [asset]] = await Promise.all([
-      this.configCore.getConfig(),
+      this.configCore.getConfig({ withCache: true }),
       this.assetRepository.getByIds([id], { exifInfo: true }),
     ]);
     if (!asset) {
@@ -318,8 +316,7 @@ export class MediaService {
     const { videoStreams, audioStreams, format } = await this.mediaRepository.probe(input);
     const mainVideoStream = this.getMainStream(videoStreams);
     const mainAudioStream = this.getMainStream(audioStreams);
-    const containerExtension = format.formatName;
-    if (!mainVideoStream || !containerExtension) {
+    if (!mainVideoStream || !format.formatName) {
       return JobStatus.FAILED;
     }
 
@@ -328,10 +325,9 @@ export class MediaService {
       return JobStatus.FAILED;
     }
 
-    const { ffmpeg: config } = await this.configCore.getConfig();
-
-    const target = this.getTranscodeTarget(config, mainVideoStream, mainAudioStream);
-    if (target === TranscodeTarget.NONE) {
+    const { ffmpeg } = await this.configCore.getConfig({ withCache: true });
+    const target = this.getTranscodeTarget(ffmpeg, mainVideoStream, mainAudioStream);
+    if (target === TranscodeTarget.NONE && !this.isRemuxRequired(ffmpeg, format)) {
       if (asset.encodedVideoPath) {
         this.logger.log(`Transcoded video exists for asset ${asset.id}, but is no longer required. Deleting...`);
         await this.jobRepository.queue({ name: JobName.DELETE_FILES, data: { files: [asset.encodedVideoPath] } });
@@ -341,31 +337,28 @@ export class MediaService {
       return JobStatus.SKIPPED;
     }
 
-    let transcodeOptions;
+    let command;
     try {
-      transcodeOptions = await this.getCodecConfig(config).then((c) =>
-        c.getOptions(target, mainVideoStream, mainAudioStream),
-      );
+      const config = BaseConfig.create(ffmpeg, await this.getDevices(), await this.hasMaliOpenCL());
+      command = config.getCommand(target, mainVideoStream, mainAudioStream);
     } catch (error) {
       this.logger.error(`An error occurred while configuring transcoding options: ${error}`);
       return JobStatus.FAILED;
     }
 
-    this.logger.log(`Started encoding video ${asset.id} ${JSON.stringify(transcodeOptions)}`);
+    this.logger.log(`Started encoding video ${asset.id} ${JSON.stringify(command)}`);
     try {
-      await this.mediaRepository.transcode(input, output, transcodeOptions);
+      await this.mediaRepository.transcode(input, output, command);
     } catch (error) {
       this.logger.error(error);
-      if (config.accel !== TranscodeHWAccel.DISABLED) {
+      if (ffmpeg.accel !== TranscodeHWAccel.DISABLED) {
         this.logger.error(
-          `Error occurred during transcoding. Retrying with ${config.accel.toUpperCase()} acceleration disabled.`,
+          `Error occurred during transcoding. Retrying with ${ffmpeg.accel.toUpperCase()} acceleration disabled.`,
         );
       }
-      config.accel = TranscodeHWAccel.DISABLED;
-      transcodeOptions = await this.getCodecConfig(config).then((c) =>
-        c.getOptions(target, mainVideoStream, mainAudioStream),
-      );
-      await this.mediaRepository.transcode(input, output, transcodeOptions);
+      const config = BaseConfig.create({ ...ffmpeg, accel: TranscodeHWAccel.DISABLED });
+      command = config.getCommand(target, mainVideoStream, mainAudioStream);
+      await this.mediaRepository.transcode(input, output, command);
     }
 
     this.logger.log(`Successfully encoded ${asset.id}`);
@@ -381,10 +374,10 @@ export class MediaService {
 
   private getTranscodeTarget(
     config: SystemConfigFFmpegDto,
-    videoStream: VideoStreamInfo | null,
-    audioStream: AudioStreamInfo | null,
+    videoStream?: VideoStreamInfo,
+    audioStream?: AudioStreamInfo,
   ): TranscodeTarget {
-    if (videoStream == null && audioStream == null) {
+    if (!videoStream && !audioStream) {
       return TranscodeTarget.NONE;
     }
 
@@ -406,8 +399,8 @@ export class MediaService {
     return TranscodeTarget.NONE;
   }
 
-  private isAudioTranscodeRequired(ffmpegConfig: SystemConfigFFmpegDto, stream: AudioStreamInfo | null): boolean {
-    if (stream == null) {
+  private isAudioTranscodeRequired(ffmpegConfig: SystemConfigFFmpegDto, stream?: AudioStreamInfo): boolean {
+    if (!stream) {
       return false;
     }
 
@@ -429,8 +422,8 @@ export class MediaService {
     }
   }
 
-  private isVideoTranscodeRequired(ffmpegConfig: SystemConfigFFmpegDto, stream: VideoStreamInfo | null): boolean {
-    if (stream == null) {
+  private isVideoTranscodeRequired(ffmpegConfig: SystemConfigFFmpegDto, stream?: VideoStreamInfo): boolean {
+    if (!stream) {
       return false;
     }
 
@@ -464,63 +457,13 @@ export class MediaService {
     }
   }
 
-  async getCodecConfig(config: SystemConfigFFmpegDto) {
-    if (config.accel === TranscodeHWAccel.DISABLED) {
-      return this.getSWCodecConfig(config);
-    }
-    return this.getHWCodecConfig(config);
-  }
-
-  private getSWCodecConfig(config: SystemConfigFFmpegDto) {
-    switch (config.targetVideoCodec) {
-      case VideoCodec.H264: {
-        return new H264Config(config);
-      }
-      case VideoCodec.HEVC: {
-        return new HEVCConfig(config);
-      }
-      case VideoCodec.VP9: {
-        return new VP9Config(config);
-      }
-      case VideoCodec.AV1: {
-        return new AV1Config(config);
-      }
-      default: {
-        throw new UnsupportedMediaTypeException(`Codec '${config.targetVideoCodec}' is unsupported`);
-      }
-    }
-  }
-
-  private async getHWCodecConfig(config: SystemConfigFFmpegDto) {
-    let handler: VideoCodecHWConfig;
-    switch (config.accel) {
-      case TranscodeHWAccel.NVENC: {
-        handler = new NVENCConfig(config);
-        break;
-      }
-      case TranscodeHWAccel.QSV: {
-        handler = new QSVConfig(config, await this.getDevices());
-        break;
-      }
-      case TranscodeHWAccel.VAAPI: {
-        handler = new VAAPIConfig(config, await this.getDevices());
-        break;
-      }
-      case TranscodeHWAccel.RKMPP: {
-        handler = new RKMPPConfig(config, await this.getDevices(), await this.hasOpenCL());
-        break;
-      }
-      default: {
-        throw new UnsupportedMediaTypeException(`${config.accel.toUpperCase()} acceleration is unsupported`);
-      }
-    }
-    if (!handler.getSupportedCodecs().includes(config.targetVideoCodec)) {
-      throw new UnsupportedMediaTypeException(
-        `${config.accel.toUpperCase()} acceleration does not support codec '${config.targetVideoCodec.toUpperCase()}'. Supported codecs: ${handler.getSupportedCodecs()}`,
-      );
+  private isRemuxRequired(ffmpegConfig: SystemConfigFFmpegDto, { formatName, formatLongName }: VideoFormat): boolean {
+    if (ffmpegConfig.transcode === TranscodePolicy.DISABLED) {
+      return false;
     }
 
-    return handler;
+    const name = formatLongName === 'QuickTime / MOV' ? VideoContainer.MOV : (formatName as VideoContainer);
+    return name !== VideoContainer.MP4 && !ffmpegConfig.acceptedContainers.includes(name);
   }
 
   isSRGB(asset: AssetEntity): boolean {
@@ -561,24 +504,29 @@ export class MediaService {
 
   private async getDevices() {
     if (!this.devices) {
-      this.devices = await this.storageRepository.readdir('/dev/dri');
+      try {
+        this.devices = await this.storageRepository.readdir('/dev/dri');
+      } catch {
+        this.logger.debug('No devices found in /dev/dri.');
+        this.devices = [];
+      }
     }
 
     return this.devices;
   }
 
-  private async hasOpenCL() {
-    if (this.openCL === null) {
+  private async hasMaliOpenCL() {
+    if (this.maliOpenCL === undefined) {
       try {
         const maliIcdStat = await this.storageRepository.stat('/etc/OpenCL/vendors/mali.icd');
         const maliDeviceStat = await this.storageRepository.stat('/dev/mali0');
-        this.openCL = maliIcdStat.isFile() && maliDeviceStat.isCharacterDevice();
+        this.maliOpenCL = maliIcdStat.isFile() && maliDeviceStat.isCharacterDevice();
       } catch {
-        this.logger.warn('OpenCL not available for transcoding, using CPU instead.');
-        this.openCL = false;
+        this.logger.debug('OpenCL not available for transcoding, using CPU decoding instead.');
+        this.maliOpenCL = false;
       }
     }
 
-    return this.openCL;
+    return this.maliOpenCL;
   }
 }

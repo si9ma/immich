@@ -2,25 +2,12 @@ import { BinaryField, Tags } from 'exiftool-vendored';
 
 export const IMetadataRepository = 'IMetadataRepository';
 
-export interface GeoPoint {
-  latitude: number;
-  longitude: number;
-}
-
-export interface ReverseGeocodeResult {
-  country: string | null;
-  state: string | null;
-  city: string | null;
-  address: string | null;
-  district: string | null;
-}
-
 export interface ExifDuration {
   Value: number;
   Scale?: number;
 }
 
-export interface ImmichTags extends Omit<Tags, 'FocalLength' | 'Duration'> {
+export interface ImmichTags extends Omit<Tags, 'FocalLength' | 'Duration' | 'Description' | 'ImageDescription'> {
   ContentIdentifier?: string;
   MotionPhoto?: number;
   MotionPhotoVersion?: number;
@@ -32,18 +19,20 @@ export interface ImmichTags extends Omit<Tags, 'FocalLength' | 'Duration'> {
   EmbeddedVideoType?: string;
   EmbeddedVideoFile?: BinaryField;
   MotionPhotoVideo?: BinaryField;
+
+  // Type is wrong, can also be number.
+  Description?: string | number;
+  ImageDescription?: string | number;
 }
 
 export interface IMetadataRepository {
-  init(): Promise<void>;
   teardown(): Promise<void>;
-  reverseGeocode(point: GeoPoint): Promise<ReverseGeocodeResult | null>;
   readTags(path: string): Promise<ImmichTags | null>;
   writeTags(path: string, tags: Partial<Tags>): Promise<void>;
   extractBinaryTag(tagName: string, path: string): Promise<Buffer>;
-  getCountries(userId: string): Promise<string[]>;
-  getStates(userId: string, country?: string): Promise<string[]>;
-  getCities(userId: string, country?: string, state?: string): Promise<string[]>;
-  getCameraMakes(userId: string, model?: string): Promise<string[]>;
-  getCameraModels(userId: string, make?: string): Promise<string[]>;
+  getCountries(userId: string): Promise<Array<string | null>>;
+  getStates(userId: string, country?: string): Promise<Array<string | null>>;
+  getCities(userId: string, country?: string, state?: string): Promise<Array<string | null>>;
+  getCameraMakes(userId: string, model?: string): Promise<Array<string | null>>;
+  getCameraModels(userId: string, make?: string): Promise<Array<string | null>>;
 }

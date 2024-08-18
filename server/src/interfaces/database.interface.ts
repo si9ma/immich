@@ -1,5 +1,3 @@
-import { Version } from 'src/utils/version';
-
 export enum DatabaseExtension {
   CUBE = 'cube',
   EARTH_DISTANCE = 'earthdistance',
@@ -23,12 +21,17 @@ export enum DatabaseLock {
   GetSystemConfig = 69,
 }
 
-export const extName: Record<DatabaseExtension, string> = {
+export const EXTENSION_NAMES: Record<DatabaseExtension, string> = {
   cube: 'cube',
   earthdistance: 'earthdistance',
   vector: 'pgvector',
   vectors: 'pgvecto.rs',
 } as const;
+
+export interface ExtensionVersion {
+  availableVersion: string | null;
+  installedVersion: string | null;
+}
 
 export interface VectorUpdateResult {
   restartRequired: boolean;
@@ -37,13 +40,13 @@ export interface VectorUpdateResult {
 export const IDatabaseRepository = 'IDatabaseRepository';
 
 export interface IDatabaseRepository {
-  getExtensionVersion(extensionName: string): Promise<Version | null>;
-  getAvailableExtensionVersion(extension: DatabaseExtension): Promise<Version | null>;
-  getPreferredVectorExtension(): VectorExtension;
-  getPostgresVersion(): Promise<Version>;
+  getExtensionVersion(extension: DatabaseExtension): Promise<ExtensionVersion>;
+  getExtensionVersionRange(extension: VectorExtension): string;
+  getPostgresVersion(): Promise<string>;
+  getPostgresVersionRange(): string;
   createExtension(extension: DatabaseExtension): Promise<void>;
-  updateExtension(extension: DatabaseExtension, version?: Version): Promise<void>;
-  updateVectorExtension(extension: VectorExtension, version?: Version): Promise<VectorUpdateResult>;
+  updateExtension(extension: DatabaseExtension, version?: string): Promise<void>;
+  updateVectorExtension(extension: VectorExtension, version?: string): Promise<VectorUpdateResult>;
   reindex(index: VectorIndex): Promise<void>;
   shouldReindex(name: VectorIndex): Promise<boolean>;
   runMigrations(options?: { transaction?: 'all' | 'none' | 'each' }): Promise<void>;

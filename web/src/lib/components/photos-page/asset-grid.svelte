@@ -1,5 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { shortcuts, type ShortcutOptions } from '$lib/actions/shortcut';
+  import type { Action } from '$lib/components/asset-viewer/actions/action';
   import { AppRoute, AssetAction } from '$lib/constants';
   import type { AssetInteractionStore } from '$lib/stores/asset-interaction.store';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
@@ -7,8 +9,10 @@
   import { locale, showDeleteModal } from '$lib/stores/preferences.store';
   import { isSearchEnabled } from '$lib/stores/search.store';
   import { featureFlags } from '$lib/stores/server-config.store';
+  import { handlePromiseError } from '$lib/utils';
   import { deleteAssets } from '$lib/utils/actions';
-  import { type ShortcutOptions, shortcuts } from '$lib/utils/shortcut';
+  import { archiveAssets, selectAllAssets, stackAssets } from '$lib/utils/asset-utils';
+  import { navigate } from '$lib/utils/navigation';
   import { formatGroupTitle, splitBucketIntoDateGroups } from '$lib/utils/timeline-util';
   import type { AlbumResponseDto, AssetResponseDto } from '@immich/sdk';
   import { DateTime } from 'luxon';
@@ -18,17 +22,18 @@
   import Scrollbar from '../shared-components/scrollbar/scrollbar.svelte';
   import ShowShortcuts from '../shared-components/show-shortcuts.svelte';
   import AssetDateGroup from './asset-date-group.svelte';
-  import { stackAssets } from '$lib/utils/asset-utils';
   import DeleteAssetDialog from './delete-asset-dialog.svelte';
-  import { handlePromiseError } from '$lib/utils';
-  import { selectAllAssets } from '$lib/utils/asset-utils';
-  import { navigate } from '$lib/utils/navigation';
 
   export let isSelectionMode = false;
   export let singleSelect = false;
   export let assetStore: AssetStore;
   export let assetInteractionStore: AssetInteractionStore;
-  export let removeAction: AssetAction | null = null;
+  export let removeAction:
+    | AssetAction.UNARCHIVE
+    | AssetAction.ARCHIVE
+    | AssetAction.FAVORITE
+    | AssetAction.UNFAVORITE
+    | null = null;
   export let withStacked = false;
   export let showArchiveIcon = false;
   export let isShared = false;
@@ -48,6 +53,12 @@
   $: timelineY = element?.scrollTop || 0;
   $: isEmpty = $assetStore.initialized && $assetStore.buckets.length === 0;
   $: idsSelectedAssets = [...$selectedAssets].map(({ id }) => id);
+  $: isAllArchived = [...$selectedAssets].every((asset) => asset.isArchived);
+  $: {
+    if (isEmpty) {
+      assetInteractionStore.clearMultiselect();
+    }
+  }
 
   $: {
     void assetStore.updateViewport(viewport);
@@ -101,6 +112,20 @@
     }
   };
 
+  const toggleArchive = async () => {
+    const ids = await archiveAssets(Array.from($selectedAssets), !isAllArchived);
+    if (ids) {
+      assetStore.removeAssets(ids);
+      deselectAllAssets();
+    }
+  };
+
+  const focusElement = () => {
+    if (document.activeElement === document.body) {
+      element.focus();
+    }
+  };
+
   $: shortcutList = (() => {
     if ($isSearchEnabled || $showAssetViewer) {
       return [];
@@ -111,8 +136,8 @@
       { shortcut: { key: '?', shift: true }, onShortcut: () => (showShortcuts = !showShortcuts) },
       { shortcut: { key: '/' }, onShortcut: () => goto(AppRoute.EXPLORE) },
       { shortcut: { key: 'A', ctrl: true }, onShortcut: () => selectAllAssets(assetStore, assetInteractionStore) },
-      { shortcut: { key: 'PageUp' }, onShortcut: () => (element.scrollTop = 0) },
-      { shortcut: { key: 'PageDown' }, onShortcut: () => (element.scrollTop = element.scrollHeight) },
+      { shortcut: { key: 'PageDown' }, preventDefault: false, onShortcut: focusElement },
+      { shortcut: { key: 'PageUp' }, preventDefault: false, onShortcut: focusElement },
     ];
 
     if ($isMultiSelectState) {
@@ -121,6 +146,7 @@
         { shortcut: { key: 'Delete', shift: true }, onShortcut: onForceDelete },
         { shortcut: { key: 'D', ctrl: true }, onShortcut: () => deselectAllAssets() },
         { shortcut: { key: 's' }, onShortcut: () => onStackAssets() },
+        { shortcut: { key: 'a', shift: true }, onShortcut: toggleArchive },
       );
     }
 
@@ -172,17 +198,18 @@
 
   const handleClose = () => assetViewingStore.showAssetViewer(false);
 
-  const handleAction = async (action: AssetAction, asset: AssetResponseDto) => {
-    switch (action) {
+  const handleAction = async (action: Action) => {
+    switch (action.type) {
       case removeAction:
       case AssetAction.TRASH:
       case AssetAction.RESTORE:
       case AssetAction.DELETE: {
         // find the next asset to show or close the viewer
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         (await handleNext()) || (await handlePrevious()) || handleClose();
 
         // delete after find the next one
-        assetStore.removeAssets([asset.id]);
+        assetStore.removeAssets([action.asset.id]);
         break;
       }
 
@@ -190,13 +217,17 @@
       case AssetAction.UNARCHIVE:
       case AssetAction.FAVORITE:
       case AssetAction.UNFAVORITE: {
-        assetStore.updateAssets([asset]);
+        assetStore.updateAssets([action.asset]);
         break;
       }
 
       case AssetAction.ADD: {
-        assetStore.addAssets([asset]);
+        assetStore.addAssets([action.asset]);
         break;
+      }
+
+      case AssetAction.UNSTACK: {
+        assetStore.addAssets(action.assets);
       }
     }
   };
@@ -406,7 +437,10 @@
 <!-- Right margin MUST be equal to the width of immich-scrubbable-scrollbar -->
 <section
   id="asset-grid"
-  class="scrollbar-hidden h-full overflow-y-auto pb-[60px] {isEmpty ? 'm-0' : 'ml-4 tall:ml-0 mr-[60px]'}"
+  class="scrollbar-hidden h-full overflow-y-auto outline-none pb-[60px] {isEmpty
+    ? 'm-0'
+    : 'ml-4 tall:ml-0 md:mr-[60px]'}"
+  tabindex="-1"
   bind:clientHeight={viewport.height}
   bind:clientWidth={viewport.width}
   bind:this={element}
@@ -477,10 +511,10 @@
         preloadAssets={$preloadAssets}
         {isShared}
         {album}
+        onAction={handleAction}
         on:previous={handlePrevious}
         on:next={handleNext}
         on:close={handleClose}
-        on:action={({ detail: action }) => handleAction(action.type, action.asset)}
       />
     {/await}
   {/if}

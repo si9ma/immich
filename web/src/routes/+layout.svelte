@@ -10,7 +10,7 @@
   import VersionAnnouncementBox from '$lib/components/shared-components/version-announcement-box.svelte';
   import { Theme } from '$lib/constants';
   import { colorTheme, handleToggleTheme, type ThemeSetting } from '$lib/stores/preferences.store';
-  import { loadConfig } from '$lib/stores/server-config.store';
+  import { loadConfig, serverConfig } from '$lib/stores/server-config.store';
   import { user } from '$lib/stores/user.store';
   import { closeWebsocketConnection, openWebsocketConnection } from '$lib/stores/websocket';
   import { setKey } from '$lib/utils';
@@ -18,9 +18,10 @@
   import { onDestroy, onMount } from 'svelte';
   import '../app.css';
   import { isAssetViewerRoute, isSharedLinkRoute } from '$lib/utils/navigation';
+  import DialogWrapper from '$lib/components/shared-components/dialog/dialog-wrapper.svelte';
+  import { t } from 'svelte-i18n';
 
   let showNavigationLoadingBar = false;
-
   $: changeTheme($colorTheme);
 
   $: if ($user) {
@@ -76,7 +77,7 @@
     try {
       await loadConfig();
     } catch (error) {
-      handleError(error, 'Unable to connect to server');
+      handleError(error, $t('errors.unable_to_connect_to_server'));
     }
   });
 </script>
@@ -94,20 +95,30 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content={$page.data.meta.title} />
     <meta property="og:description" content={$page.data.meta.description} />
-    <meta property="og:image" content={$page.data.meta.imageUrl} />
+    {#if $page.data.meta.imageUrl}
+      <meta
+        property="og:image"
+        content={new URL($page.data.meta.imageUrl, $serverConfig.externalDomain || window.location.origin).href}
+      />
+    {/if}
 
     <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={$page.data.meta.title} />
     <meta name="twitter:description" content={$page.data.meta.description} />
-    <meta name="twitter:image" content={$page.data.meta.imageUrl} />
+    {#if $page.data.meta.imageUrl}
+      <meta
+        name="twitter:image"
+        content={new URL($page.data.meta.imageUrl, $serverConfig.externalDomain || window.location.origin).href}
+      />
+    {/if}
   {/if}
 </svelte:head>
 
 <noscript
   class="absolute z-[1000] flex h-screen w-screen place-content-center place-items-center bg-immich-bg dark:bg-immich-dark-bg dark:text-immich-dark-fg"
 >
-  <FullscreenContainer title="Welcome to Immich">
+  <FullscreenContainer title={$t('welcome_to_immich')}>
     To use Immich, you must enable JavaScript or use a JavaScript compatible browser.
   </FullscreenContainer>
 </noscript>
@@ -121,6 +132,7 @@
 <DownloadPanel />
 <UploadPanel />
 <NotificationList />
+<DialogWrapper />
 
 {#if $user?.isAdmin}
   <VersionAnnouncementBox />

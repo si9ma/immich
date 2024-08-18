@@ -11,6 +11,10 @@ export function getFileNameWithoutExtension(path: string): string {
   return basename(path, extname(path));
 }
 
+export function getFilenameExtension(path: string): string {
+  return extname(path);
+}
+
 export function getLivePhotoMotionFilename(stillName: string, motionName: string) {
   return getFileNameWithoutExtension(stillName) + extname(motionName);
 }
@@ -65,10 +69,10 @@ export const sendFile = async (
 
     await access(file.path, constants.R_OK);
 
-    return _sendFile(file.path, options);
+    return await _sendFile(file.path, options);
   } catch (error: Error | any) {
     // ignore client-closed connection
-    if (isConnectionAborted(error)) {
+    if (isConnectionAborted(error) || res.headersSent) {
       return;
     }
 
