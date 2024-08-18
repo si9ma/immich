@@ -16,6 +16,7 @@ export interface ThumbnailOptions {
   colorspace: string;
   quality: number;
   crop?: CropOptions;
+  processInvalidImages: boolean;
 }
 
 export interface VideoStreamInfo {
@@ -47,13 +48,17 @@ export interface ImageDimensions {
   height: number;
 }
 
+export interface InputDimensions extends ImageDimensions {
+  inputPath: string;
+}
+
 export interface VideoInfo {
   format: VideoFormat;
   videoStreams: VideoStreamInfo[];
   audioStreams: AudioStreamInfo[];
 }
 
-export interface TranscodeOptions {
+export interface TranscodeCommand {
   inputOptions: string[];
   outputOptions: string[];
   twoPass: boolean;
@@ -67,7 +72,7 @@ export interface BitrateDistribution {
 }
 
 export interface VideoCodecSWConfig {
-  getOptions(target: TranscodeTarget, videoStream: VideoStreamInfo, audioStream: AudioStreamInfo): TranscodeOptions;
+  getCommand(target: TranscodeTarget, videoStream: VideoStreamInfo, audioStream: AudioStreamInfo): TranscodeCommand;
 }
 
 export interface VideoCodecHWConfig extends VideoCodecSWConfig {
@@ -83,5 +88,5 @@ export interface IMediaRepository {
 
   // video
   probe(input: string): Promise<VideoInfo>;
-  transcode(input: string, output: string | Writable, options: TranscodeOptions): Promise<void>;
+  transcode(input: string, output: string | Writable, command: TranscodeCommand): Promise<void>;
 }

@@ -2,10 +2,11 @@
   import type { ComboBoxOption } from '$lib/components/shared-components/combobox.svelte';
   import SettingCombobox from '$lib/components/shared-components/settings/setting-combobox.svelte';
   import SettingSwitch from '$lib/components/shared-components/settings/setting-switch.svelte';
-  import { fallbackLocale, locales } from '$lib/constants';
+  import { defaultLang, fallbackLocale, langs, locales } from '$lib/constants';
   import {
     alwaysLoadOriginalFile,
     colorTheme,
+    lang,
     locale,
     loopVideo,
     playVideoThumbnailOnHover,
@@ -13,8 +14,18 @@
     sidebarSettings,
   } from '$lib/stores/preferences.store';
   import { findLocale } from '$lib/utils';
+  import { getClosestAvailableLocale, langCodes } from '$lib/utils/i18n';
   import { onMount } from 'svelte';
+  import { locale as i18nLocale, t } from 'svelte-i18n';
   import { fade } from 'svelte/transition';
+  import { invalidateAll } from '$app/navigation';
+  import { preferences } from '$lib/stores/user.store';
+  import { updateMyPreferences } from '@immich/sdk';
+  import { handleError } from '../../utils/handle-error';
+  import {
+    notificationController,
+    NotificationType,
+  } from '$lib/components/shared-components/notification/notification';
 
   let time = new Date();
 
@@ -34,6 +45,8 @@
     value: findLocale(editedLocale).code || fallbackLocale.code,
     label: findLocale(editedLocale).name || fallbackLocale.name,
   };
+  $: closestLanguage = getClosestAvailableLocale([$lang], langCodes);
+  $: ratingEnabled = $preferences?.rating?.enabled;
 
   onMount(() => {
     const interval = setInterval(() => {
@@ -62,8 +75,39 @@
     $locale = $locale ? undefined : fallbackLocale.code;
   };
 
+  const langOptions = langs
+    .map((lang) => ({ label: lang.name, value: lang.code }))
+    .sort((a, b) => {
+      if (b.label.startsWith('Development')) {
+        return -1;
+      }
+      return a.label.localeCompare(b.label);
+    });
+  const defaultLangOption = { label: defaultLang.name, value: defaultLang.code };
+
+  const handleLanguageChange = async (newLang: string | undefined) => {
+    if (newLang) {
+      $lang = newLang;
+      await i18nLocale.set(newLang);
+      await invalidateAll();
+    }
+  };
+
   const handleLocaleChange = (newLocale: string | undefined) => {
-    $locale = newLocale;
+    if (newLocale) {
+      $locale = newLocale;
+    }
+  };
+
+  const handleRatingChange = async (enabled: boolean) => {
+    try {
+      const data = await updateMyPreferences({ userPreferencesUpdateDto: { rating: { enabled } } });
+      $preferences.rating.enabled = data.rating.enabled;
+
+      notificationController.show({ message: $t('saved_settings'), type: NotificationType.Info });
+    } catch (error) {
+      handleError(error, $t('errors.unable_to_update_settings'));
+    }
   };
 </script>
 
@@ -72,19 +116,28 @@
     <div class="ml-4 mt-4 flex flex-col gap-4">
       <div class="ml-4">
         <SettingSwitch
-          id="theme-selection"
-          title="Theme selection"
-          subtitle="Automatically set the theme to light or dark based on your browser's system preference"
+          title={$t('theme_selection')}
+          subtitle={$t('theme_selection_description')}
           bind:checked={$colorTheme.system}
           on:toggle={handleToggleColorTheme}
         />
       </div>
 
       <div class="ml-4">
+        <SettingCombobox
+          comboboxPlaceholder={$t('language')}
+          selectedOption={langOptions.find(({ value }) => value === closestLanguage) || defaultLangOption}
+          options={langOptions}
+          title={$t('language')}
+          subtitle={$t('language_setting_description')}
+          onSelect={(combobox) => handleLanguageChange(combobox?.value)}
+        />
+      </div>
+
+      <div class="ml-4">
         <SettingSwitch
-          id="default-locale"
-          title="Default Locale"
-          subtitle="Format dates and numbers based on your browser locale"
+          title={$t('default_locale')}
+          subtitle={$t('default_locale_description')}
           checked={$locale == undefined}
           on:toggle={handleToggleLocaleBrowser}
         >
@@ -94,12 +147,11 @@
       {#if $locale !== undefined}
         <div class="ml-4">
           <SettingCombobox
-            id="custom-locale"
-            comboboxPlaceholder="Searching locales..."
+            comboboxPlaceholder={$t('searching_locales')}
             {selectedOption}
             options={getAllLanguages()}
-            title="Custom Locale"
-            subtitle="Format dates and numbers based on the language and the region"
+            title={$t('custom_locale')}
+            subtitle={$t('custom_locale_description')}
             onSelect={(combobox) => handleLocaleChange(combobox?.value)}
           />
         </div>
@@ -107,27 +159,24 @@
 
       <div class="ml-4">
         <SettingSwitch
-          id="always-load-original-file"
-          title="Display original photos"
-          subtitle="Prefer to display the original photo when viewing an asset rather than thumbnails when the original asset is web-compatible. This may result in slower photo display speeds."
+          title={$t('display_original_photos')}
+          subtitle={$t('display_original_photos_setting_description')}
           bind:checked={$alwaysLoadOriginalFile}
           on:toggle={() => ($alwaysLoadOriginalFile = !$alwaysLoadOriginalFile)}
         />
       </div>
       <div class="ml-4">
         <SettingSwitch
-          id="play-video-thumbnail-on-hover"
-          title="Play video thumbnail on hover"
-          subtitle="Play video thumbnail when mouse is hovering over item. Even when disabled, playback can be started by hovering over the play icon."
+          title={$t('video_hover_setting')}
+          subtitle={$t('video_hover_setting_description')}
           bind:checked={$playVideoThumbnailOnHover}
           on:toggle={() => ($playVideoThumbnailOnHover = !$playVideoThumbnailOnHover)}
         />
       </div>
       <div class="ml-4">
         <SettingSwitch
-          id="loop-video"
-          title="Loop videos"
-          subtitle="Enable to automatically loop a video in the detail viewer."
+          title={$t('loop_videos')}
+          subtitle={$t('loop_videos_description')}
           bind:checked={$loopVideo}
           on:toggle={() => ($loopVideo = !$loopVideo)}
         />
@@ -135,27 +184,32 @@
 
       <div class="ml-4">
         <SettingSwitch
-          id="show-delete-warning"
-          title="Permanent deletion warning"
-          subtitle="Show a warning when permanently deleting assets"
+          title={$t('permanent_deletion_warning')}
+          subtitle={$t('permanent_deletion_warning_setting_description')}
           bind:checked={$showDeleteModal}
         />
       </div>
 
       <div class="ml-4">
         <SettingSwitch
-          id="people-sidebar-link"
-          title="People"
-          subtitle="Display a link to People in the sidebar"
+          title={$t('people')}
+          subtitle={$t('people_sidebar_description')}
           bind:checked={$sidebarSettings.people}
         />
       </div>
       <div class="ml-4">
         <SettingSwitch
-          id="sharing-sidebar-link"
-          title="Sharing"
-          subtitle="Display a link to Sharing in the sidebar"
+          title={$t('sharing')}
+          subtitle={$t('sharing_sidebar_description')}
           bind:checked={$sidebarSettings.sharing}
+        />
+      </div>
+      <div class="ml-4">
+        <SettingSwitch
+          title={$t('rating')}
+          subtitle={$t('rating_description')}
+          bind:checked={ratingEnabled}
+          on:toggle={({ detail: enabled }) => handleRatingChange(enabled)}
         />
       </div>
     </div>

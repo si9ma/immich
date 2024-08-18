@@ -1,7 +1,7 @@
 <p align="center"> 
   <br/>  
   <a href="https://opensource.org/license/agpl-v3"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg?color=3F51B5&style=for-the-badge&label=License&logoColor=000000&labelColor=ececec" alt="License: AGPLv3"></a>
-  <a href="https://discord.gg/D8JsnBEuKb">
+  <a href="https://discord.immich.app">
     <img src="https://img.shields.io/discord/979116623879368755.svg?label=Discord&logo=Discord&style=for-the-badge&logoColor=000000&labelColor=ececec" alt="Discord"/>
   </a>
   <br/>  
@@ -22,7 +22,6 @@
   <a href="../README.md">English</a>
   <a href="README_ca_ES.md">Català</a>
   <a href="README_es_ES.md">Español</a>
-  <a href="README_de_DE.md">Deutsch</a>
   <a href="README_fr_FR.md">Français</a>
   <a href="README_it_IT.md">Italiano</a>
   <a href="README_ja_JP.md">日本語</a>

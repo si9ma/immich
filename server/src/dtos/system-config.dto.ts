@@ -29,8 +29,9 @@ import {
   TranscodeHWAccel,
   TranscodePolicy,
   VideoCodec,
+  VideoContainer,
 } from 'src/config';
-import { CLIPConfig, RecognitionConfig } from 'src/dtos/model-config.dto';
+import { CLIPConfig, DuplicateDetectionConfig, FacialRecognitionConfig } from 'src/dtos/model-config.dto';
 import { ConcurrentQueueName, QueueName } from 'src/interfaces/job.interface';
 import { ValidateBoolean, validateCronExpression } from 'src/validation';
 
@@ -78,6 +79,10 @@ export class SystemConfigFFmpegDto {
   @IsEnum(AudioCodec, { each: true })
   @ApiProperty({ enumName: 'AudioCodec', enum: AudioCodec, isArray: true })
   acceptedAudioCodecs!: AudioCodec[];
+
+  @IsEnum(VideoContainer, { each: true })
+  @ApiProperty({ enumName: 'VideoContainer', enum: VideoContainer, isArray: true })
+  acceptedContainers!: VideoContainer[];
 
   @IsString()
   targetResolution!: string;
@@ -131,6 +136,9 @@ export class SystemConfigFFmpegDto {
   @IsEnum(TranscodeHWAccel)
   @ApiProperty({ enumName: 'TranscodeHWAccel', enum: TranscodeHWAccel })
   accel!: TranscodeHWAccel;
+
+  @ValidateBoolean()
+  accelDecode!: boolean;
 
   @IsEnum(ToneMapping)
   @ApiProperty({ enumName: 'ToneMapping', enum: ToneMapping })
@@ -262,10 +270,15 @@ class SystemConfigMachineLearningDto {
   @IsObject()
   clip!: CLIPConfig;
 
-  @Type(() => RecognitionConfig)
+  @Type(() => DuplicateDetectionConfig)
   @ValidateNested()
   @IsObject()
-  facialRecognition!: RecognitionConfig;
+  duplicateDetection!: DuplicateDetectionConfig;
+
+  @Type(() => FacialRecognitionConfig)
+  @ValidateNested()
+  @IsObject()
+  facialRecognition!: FacialRecognitionConfig;
 }
 
 enum MapTheme {
@@ -342,6 +355,10 @@ class SystemConfigOAuthDto {
   signingAlgorithm!: string;
 
   @IsString()
+  @IsNotEmpty()
+  profileSigningAlgorithm!: string;
+
+  @IsString()
   storageLabelClaim!: string;
 
   @IsString()
@@ -359,7 +376,8 @@ class SystemConfigReverseGeocodingDto {
 }
 
 class SystemConfigServerDto {
-  @IsString()
+  @ValidateIf((_, value: string) => value !== '')
+  @IsUrl({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
   externalDomain!: string;
 
   @IsString()
@@ -386,7 +404,7 @@ class SystemConfigSmtpTransportDto {
   password!: string;
 }
 
-class SystemConfigSmtpDto {
+export class SystemConfigSmtpDto {
   @IsBoolean()
   enabled!: boolean;
 

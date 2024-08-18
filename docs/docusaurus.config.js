@@ -92,17 +92,22 @@ const config = {
           alt: 'Immich Logo',
           src: 'img/immich-logo-inline-light.png',
           srcDark: 'img/immich-logo-inline-dark.png',
+          className: 'rounded-none',
         },
         items: [
+          {
+            type: 'custom-versionSwitcher',
+            position: 'right',
+          },
           {
             to: '/docs/overview/introduction',
             position: 'right',
             label: 'Docs',
           },
           {
-            to: '/milestones',
+            to: '/roadmap',
             position: 'right',
-            label: 'Milestones',
+            label: 'Roadmap',
           },
           {
             to: '/docs/api',
@@ -120,7 +125,7 @@ const config = {
             position: 'right',
           },
           {
-            href: 'https://discord.gg/D8JsnBEuKb',
+            href: 'https://discord.immich.app',
             label: 'Discord',
             position: 'right',
           },
@@ -140,28 +145,36 @@ const config = {
                 label: 'Installation',
                 to: '/docs/install/requirements',
               },
+              {
+                label: 'Contributing',
+                to: '/docs/overview/support-the-project',
+              },
+              {
+                label: 'Privacy Policy',
+                to: '/privacy-policy',
+              },
             ],
           },
           {
-            title: 'Community',
+            title: 'Documentation',
             items: [
               {
-                label: 'Discord',
-                href: 'https://discord.com/invite/D8JsnBEuKb',
+                label: 'Roadmap',
+                to: '/roadmap',
               },
               {
-                label: 'Reddit',
-                href: 'https://www.reddit.com/r/immich/',
+                label: 'API',
+                to: '/docs/api',
+              },
+              {
+                label: 'Cursed Knowledge',
+                to: '/cursed-knowledge',
               },
             ],
           },
           {
             title: 'Links',
             items: [
-              // {
-              //   label: "Blog",
-              //   to: "/blog",
-              // },
               {
                 label: 'GitHub',
                 href: 'https://github.com/immich-app/immich',
@@ -169,6 +182,14 @@ const config = {
               {
                 label: 'YouTube',
                 href: 'https://www.youtube.com/@immich-app',
+              },
+              {
+                label: 'Discord',
+                href: 'https://discord.immich.app',
+              },
+              {
+                label: 'Reddit',
+                href: 'https://www.reddit.com/r/immich/',
               },
             ],
           },

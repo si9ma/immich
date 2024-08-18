@@ -27,6 +27,7 @@ export class ExifResponseDto {
   address?: string | null = null;
   description?: string | null = null;
   projectionType?: string | null = null;
+  rating?: number | null = null;
 }
 
 export function mapExif(entity: ExifEntity, addressAsCity: boolean): ExifResponseDto {
@@ -59,6 +60,7 @@ export function mapExif(entity: ExifEntity, addressAsCity: boolean): ExifRespons
     projectionType: entity.projectionType,
     address: entity.address,
     district: entity.district,
+    rating: entity.rating,
   };
 }
 
@@ -71,5 +73,6 @@ export function mapSanitizedExif(entity: ExifEntity): ExifResponseDto {
     projectionType: entity.projectionType,
     exifImageWidth: entity.exifImageWidth,
     exifImageHeight: entity.exifImageHeight,
+    rating: entity.rating,
   };
 }

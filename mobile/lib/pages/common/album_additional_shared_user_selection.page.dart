@@ -10,7 +10,7 @@ import 'package:immich_mobile/entities/album.entity.dart';
 import 'package:immich_mobile/entities/user.entity.dart';
 import 'package:immich_mobile/widgets/common/user_circle_avatar.dart';
 
-@RoutePage<List<String>?>()
+@RoutePage()
 class AlbumAdditionalSharedUserSelectionPage extends HookConsumerWidget {
   final Album album;
 
@@ -55,10 +55,9 @@ class AlbumAdditionalSharedUserSelectionPage extends HookConsumerWidget {
             child: Chip(
               backgroundColor: context.primaryColor.withOpacity(0.15),
               label: Text(
-                user.email,
+                user.name,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.black87,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -88,11 +87,18 @@ class AlbumAdditionalSharedUserSelectionPage extends HookConsumerWidget {
             itemBuilder: ((context, index) {
               return ListTile(
                 leading: buildTileIcon(users[index]),
+                dense: true,
                 title: Text(
-                  users[index].email,
+                  users[index].name,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  users[index].email,
+                  style: const TextStyle(
+                    fontSize: 12,
                   ),
                 ),
                 onTap: () {

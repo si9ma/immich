@@ -10,7 +10,7 @@ interface CommunityProjectProps {
 const projects: CommunityProjectProps[] = [
   {
     title: 'immich-go',
-    description: `An alternative to the immich-CLI command that doesn't depend on nodejs installation. It tries its best for importing google photos takeout archives.`,
+    description: `An alternative to the immich-CLI that doesn't depend on nodejs. It specializes in importing Google Photos Takeout archives.`,
     url: 'https://github.com/simulot/immich-go',
   },
   {
@@ -62,6 +62,11 @@ const projects: CommunityProjectProps[] = [
     title: 'Powershell Module PSImmich',
     description: 'Powershell Module for the Immich API',
     url: 'https://github.com/hanpq/PSImmich',
+  },
+  {
+    title: 'Immich Distribution',
+    description: 'Snap package for easy install and zero-care auto updates of Immich. Self-hosted photo management.',
+    url: 'https://immich-distribution.nsg.cc',
   },
 ];
 

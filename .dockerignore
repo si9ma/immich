@@ -4,6 +4,7 @@
 
 design/
 docker/
+!docker/scripts
 docs/
 e2e/
 fastlane/
@@ -28,3 +29,4 @@ web/node_modules/
 web/coverage/
 web/.svelte-kit
 web/build/
+web/.env

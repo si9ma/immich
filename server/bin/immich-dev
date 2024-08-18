@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
 node /usr/src/app/node_modules/.bin/nest start --debug "0.0.0.0:9230" --watch -- "$@"
+# nest start --debug "0.0.0.0:9230" --watch -- "$@"

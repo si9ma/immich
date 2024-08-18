@@ -1,39 +1,28 @@
 name: immich-prod
 
-x-server-build: &server-common
-  image: immich-server:latest
-  build:
-    context: ../
-    dockerfile: server/Dockerfile
-  volumes:
-    - ${UPLOAD_LOCATION}/photos:/usr/src/app/upload
-    - /etc/localtime:/etc/localtime:ro
-  env_file:
-    - .env
-  restart: always
-
 services:
   immich-server:
     container_name: immich_server
-    command: ['start.sh', 'immich']
-    <<: *server-common
+    image: immich-server:latest
+    # extends:
+    #   file: hwaccel.transcoding.yml
+    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
+    build:
+      context: ../
+      dockerfile: server/Dockerfile
+    volumes:
+      - ${UPLOAD_LOCATION}/photos:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
     ports:
       - 2283:3001
     depends_on:
       - redis
       - database
-
-  immich-microservices:
-    container_name: immich_microservices
-    command: ['start.sh', 'microservices']
-    <<: *server-common
-    # extends:
-    #   file: hwaccel.transcoding.yml
-    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
-    depends_on:
-      - redis
-      - database
-      - immich-server
+    restart: always
+    healthcheck:
+      disable: false
 
   immich-machine-learning:
     container_name: immich_machine_learning
@@ -47,15 +36,21 @@ services:
       dockerfile: Dockerfile
       args:
         - DEVICE=cuda # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference
+    ports:
+      - 3003:3003
     volumes:
       - model-cache:/cache
     env_file:
       - .env
     restart: always
+    healthcheck:
+      disable: false
 
   redis:
     container_name: immich_redis
-    image: redis:6.2-alpine@sha256:84882e87b54734154586e5f8abd4dce69fe7311315e2fc6d67c29614c8de2672
+    image: redis:6.2-alpine@sha256:e3b17ba9479deec4b7d1eeec1548a253acc5374d68d3b27937fcfe4df8d18c7e
+    healthcheck:
+      test: redis-cli ping || exit 1
     restart: always
 
   database:
@@ -72,14 +67,20 @@ services:
       - ${UPLOAD_LOCATION}/postgres:/var/lib/postgresql/data
     ports:
       - 5432:5432
-    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    healthcheck:
+      test: pg_isready --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' || exit 1; Chksum="$$(psql --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
+      interval: 5m
+      start_interval: 30s
+      start_period: 5m
+    command: ["postgres", "-c", "shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    restart: always
 
   # set IMMICH_METRICS=true in .env to enable metrics
   immich-prometheus:
     container_name: immich_prometheus
     ports:
       - 9090:9090
-    image: prom/prometheus@sha256:5c435642ca4d8427ca26f4901c11114023004709037880cd7860d5b7176aa731
+    image: prom/prometheus@sha256:cafe963e591c872d38f3ea41ff8eb22cee97917b7c97b5c0ccd43a419f11f613
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
@@ -91,7 +92,7 @@ services:
     command: ['./run.sh', '-disable-reporting']
     ports:
       - 3000:3000
-    image: grafana/grafana:10.4.2-ubuntu@sha256:4f55071b556fb03f12b41423c98a185ed6695ed9ff2558e35805f0dd765fd958
+    image: grafana/grafana:11.1.3-ubuntu@sha256:e10453733015f31103cb530425f32c994816b50102886fa885dafea2c50a711c
     volumes:
       - grafana-data:/var/lib/grafana
 

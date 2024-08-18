@@ -9,8 +9,10 @@
 
 <script lang="ts">
   import { quintOut } from 'svelte/easing';
+  import type { FormEventHandler } from 'svelte/elements';
   import { fly } from 'svelte/transition';
   import PasswordField from '../password-field.svelte';
+  import { t } from 'svelte-i18n';
 
   export let inputType: SettingInputFieldType;
   export let value: string | number;
@@ -25,7 +27,9 @@
   export let isEdited = false;
   export let passwordAutocomplete: string = 'current-password';
 
-  const validateInput = () => {
+  const handleChange: FormEventHandler<HTMLInputElement> = (e) => {
+    value = e.currentTarget.value;
+
     if (inputType === SettingInputFieldType.NUMBER) {
       let newValue = Number(value) || 0;
       if (newValue < min) {
@@ -51,7 +55,7 @@
         transition:fly={{ x: 10, duration: 200, easing: quintOut }}
         class="rounded-full bg-orange-100 px-2 text-[10px] text-orange-900"
       >
-        Unsaved change
+        {$t('unsaved_change')}
       </div>
     {/if}
   </div>
@@ -77,8 +81,7 @@
       {step}
       {required}
       {value}
-      on:input={(e) => (value = e.currentTarget.value)}
-      on:blur={validateInput}
+      on:change={handleChange}
       {disabled}
       {title}
     />

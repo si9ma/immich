@@ -4,28 +4,27 @@ import { MicroservicesModule } from 'src/app.module';
 import { envName, serverVersion } from 'src/constants';
 import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { WebSocketAdapter } from 'src/middleware/websocket.adapter';
-import { otelSDK } from 'src/utils/instrumentation';
+import { otelStart } from 'src/utils/instrumentation';
 
-const host = process.env.HOST;
+export async function bootstrap() {
+  const otelPort = Number.parseInt(process.env.IMMICH_MICROSERVICES_METRICS_PORT ?? '8082');
 
-export async function bootstrapMicroservices() {
-  otelSDK.start();
+  otelStart(otelPort);
 
-  const port = Number(process.env.MICROSERVICES_PORT) || 3002;
   const app = await NestFactory.create(MicroservicesModule, { bufferLogs: true });
   const logger = await app.resolve(ILoggerRepository);
-  logger.setAppName('ImmichMicroservices');
-  logger.setContext('ImmichMicroservices');
+  logger.setAppName('Microservices');
+  logger.setContext('Bootstrap');
   app.useLogger(logger);
   app.useWebSocketAdapter(new WebSocketAdapter(app));
 
-  await (host ? app.listen(port, host) : app.listen(port));
+  await app.listen(0);
 
-  logger.log(`Immich Microservices is listening on ${await app.getUrl()} [v${serverVersion}] [${envName}] `);
+  logger.log(`Immich Microservices is running [v${serverVersion}] [${envName}] `);
 }
 
 if (!isMainThread) {
-  bootstrapMicroservices().catch((error) => {
+  bootstrap().catch((error) => {
     console.error(error);
     process.exit(1);
   });

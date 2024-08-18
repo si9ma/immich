@@ -9,10 +9,12 @@ import {
   IsNotEmpty,
   IsPositive,
   IsString,
+  Max,
+  Min,
   ValidateIf,
 } from 'class-validator';
 import { BulkIdsDto } from 'src/dtos/asset-ids.response.dto';
-import { AssetType } from 'src/entities/asset.entity';
+import { AssetType } from 'src/enum';
 import { AssetStats } from 'src/interfaces/asset.interface';
 import { Optional, ValidateBoolean, ValidateUUID } from 'src/validation';
 
@@ -46,6 +48,12 @@ export class UpdateAssetBase {
   @IsLongitude()
   @IsNotEmpty()
   longitude?: number;
+
+  @Optional()
+  @IsInt()
+  @Max(5)
+  @Min(0)
+  rating?: number;
 }
 
 export class AssetBulkUpdateDto extends UpdateAssetBase {
@@ -57,6 +65,9 @@ export class AssetBulkUpdateDto extends UpdateAssetBase {
 
   @ValidateBoolean({ optional: true })
   removeParent?: boolean;
+
+  @Optional()
+  duplicateId?: string | null;
 }
 
 export class UpdateAssetDto extends UpdateAssetBase {
@@ -124,9 +135,3 @@ export const mapStats = (stats: AssetStats): AssetStatsResponseDto => {
     total: Object.values(stats).reduce((total, value) => total + value, 0),
   };
 };
-export enum UploadFieldName {
-  ASSET_DATA = 'assetData',
-  LIVE_PHOTO_DATA = 'livePhotoData',
-  SIDECAR_DATA = 'sidecarData',
-  PROFILE_DATA = 'file',
-}

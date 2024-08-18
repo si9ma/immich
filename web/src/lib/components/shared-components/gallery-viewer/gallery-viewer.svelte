@@ -1,18 +1,20 @@
 <script lang="ts">
-  import Portal from '../portal/portal.svelte';
+  import { goto } from '$app/navigation';
+  import type { Action } from '$lib/components/asset-viewer/actions/action';
   import Thumbnail from '$lib/components/assets/thumbnail/thumbnail.svelte';
+  import { AppRoute, AssetAction } from '$lib/constants';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
   import type { BucketPosition, Viewport } from '$lib/stores/assets.store';
-  import { handleError } from '$lib/utils/handle-error';
-  import { type AssetResponseDto } from '@immich/sdk';
-  import { createEventDispatcher, onDestroy } from 'svelte';
-  import AssetViewer from '../../asset-viewer/asset-viewer.svelte';
-  import justifiedLayout from 'justified-layout';
   import { getAssetRatio } from '$lib/utils/asset-utils';
-  import { calculateWidth } from '$lib/utils/timeline-util';
+  import { handleError } from '$lib/utils/handle-error';
   import { navigate } from '$lib/utils/navigation';
-  import { AppRoute, AssetAction } from '$lib/constants';
-  import { goto } from '$app/navigation';
+  import { calculateWidth } from '$lib/utils/timeline-util';
+  import { type AssetResponseDto } from '@immich/sdk';
+  import justifiedLayout from 'justified-layout';
+  import { createEventDispatcher, onDestroy } from 'svelte';
+  import { t } from 'svelte-i18n';
+  import AssetViewer from '../../asset-viewer/asset-viewer.svelte';
+  import Portal from '../portal/portal.svelte';
 
   const dispatch = createEventDispatcher<{ intersected: { container: HTMLDivElement; position: BucketPosition } }>();
 
@@ -52,7 +54,7 @@
         await navigate({ targetRoute: 'current', assetId: $viewingAsset.id });
       }
     } catch (error) {
-      handleError(error, 'Cannot navigate to the next asset');
+      handleError(error, $t('errors.cannot_navigate_next_asset'));
     }
   };
 
@@ -63,17 +65,17 @@
         await navigate({ targetRoute: 'current', assetId: $viewingAsset.id });
       }
     } catch (error) {
-      handleError(error, 'Cannot navigate to previous asset');
+      handleError(error, $t('errors.cannot_navigate_previous_asset'));
     }
   };
 
-  const handleAction = async (action: AssetAction, asset: AssetResponseDto) => {
-    switch (action) {
+  const handleAction = async (action: Action) => {
+    switch (action.type) {
       case AssetAction.ARCHIVE:
       case AssetAction.DELETE:
       case AssetAction.TRASH: {
         assets.splice(
-          assets.findIndex((a) => a.id === asset.id),
+          assets.findIndex((a) => a.id === action.asset.id),
           1,
         );
         assets = assets;
@@ -123,7 +125,15 @@
         <Thumbnail
           {asset}
           readonly={disableAssetSelect}
-          onClick={(e) => (isMultiSelectionMode ? selectAssetHandler(e) : viewAssetHandler(e))}
+          onClick={async (asset, e) => {
+            e.preventDefault();
+
+            if (isMultiSelectionMode) {
+              selectAssetHandler(asset);
+              return;
+            }
+            await viewAssetHandler(asset);
+          }}
           on:select={(e) => selectAssetHandler(e.detail.asset)}
           on:intersected={(event) =>
             i === Math.max(1, assets.length - 7) ? dispatch('intersected', event.detail) : undefined}
@@ -140,11 +150,6 @@
 <!-- Overlay Asset Viewer -->
 {#if $isViewerOpen}
   <Portal target="body">
-    <AssetViewer
-      asset={$viewingAsset}
-      on:action={({ detail: action }) => handleAction(action.type, action.asset)}
-      on:previous={handlePrevious}
-      on:next={handleNext}
-    />
+    <AssetViewer asset={$viewingAsset} onAction={handleAction} on:previous={handlePrevious} on:next={handleNext} />
   </Portal>
 {/if}

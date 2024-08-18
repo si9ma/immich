@@ -1,8 +1,9 @@
 import { Inject } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { AccessCore, Permission } from 'src/cores/access.core';
+import { AccessCore } from 'src/cores/access.core';
 import { BulkIdsDto } from 'src/dtos/asset-ids.response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
+import { Permission } from 'src/enum';
 import { IAccessRepository } from 'src/interfaces/access.interface';
 import { IAssetRepository } from 'src/interfaces/asset.interface';
 import { ClientEvent, IEventRepository } from 'src/interfaces/event.interface';
@@ -49,7 +50,13 @@ export class TrashService {
 
     for await (const assets of assetPagination) {
       await this.jobRepository.queueAll(
-        assets.map((asset) => ({ name: JobName.ASSET_DELETION, data: { id: asset.id } })),
+        assets.map((asset) => ({
+          name: JobName.ASSET_DELETION,
+          data: {
+            id: asset.id,
+            deleteOnDisk: true,
+          },
+        })),
       );
     }
   }

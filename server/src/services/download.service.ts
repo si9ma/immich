@@ -1,17 +1,19 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { parse } from 'node:path';
-import { AccessCore, Permission } from 'src/cores/access.core';
+import { AccessCore } from 'src/cores/access.core';
+import { StorageCore } from 'src/cores/storage.core';
 import { AssetIdsDto } from 'src/dtos/asset.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { DownloadArchiveInfo, DownloadInfoDto, DownloadResponseDto } from 'src/dtos/download.dto';
 import { AssetEntity } from 'src/entities/asset.entity';
+import { Permission } from 'src/enum';
 import { IAccessRepository } from 'src/interfaces/access.interface';
 import { IAssetRepository } from 'src/interfaces/asset.interface';
-import { IStorageRepository, ImmichReadStream } from 'src/interfaces/storage.interface';
+import { ILoggerRepository } from 'src/interfaces/logger.interface';
+import { ImmichReadStream, IStorageRepository } from 'src/interfaces/storage.interface';
 import { HumanReadableSize } from 'src/utils/bytes';
-import { CacheControl, ImmichFileResponse } from 'src/utils/file';
-import { mimeTypes } from 'src/utils/mime-types';
 import { usePagination } from 'src/utils/pagination';
+import { getPreferences } from 'src/utils/preferences';
 
 @Injectable()
 export class DownloadService {
@@ -20,28 +22,11 @@ export class DownloadService {
   constructor(
     @Inject(IAccessRepository) accessRepository: IAccessRepository,
     @Inject(IAssetRepository) private assetRepository: IAssetRepository,
+    @Inject(ILoggerRepository) private logger: ILoggerRepository,
     @Inject(IStorageRepository) private storageRepository: IStorageRepository,
   ) {
     this.access = AccessCore.create(accessRepository);
-  }
-
-  async downloadFile(auth: AuthDto, id: string): Promise<ImmichFileResponse> {
-    await this.access.requirePermission(auth, Permission.ASSET_DOWNLOAD, id);
-
-    const [asset] = await this.assetRepository.getByIds([id]);
-    if (!asset) {
-      throw new BadRequestException('Asset not found');
-    }
-
-    if (asset.isOffline) {
-      throw new BadRequestException('Asset is offline');
-    }
-
-    return new ImmichFileResponse({
-      path: asset.originalPath,
-      contentType: mimeTypes.lookup(asset.originalPath),
-      cacheControl: CacheControl.NONE,
-    });
+    this.logger.setContext(DownloadService.name);
   }
 
   async getDownloadInfo(auth: AuthDto, dto: DownloadInfoDto): Promise<DownloadResponseDto> {
@@ -49,12 +34,22 @@ export class DownloadService {
     const archives: DownloadArchiveInfo[] = [];
     let archive: DownloadArchiveInfo = { size: 0, assetIds: [] };
 
+    const preferences = getPreferences(auth.user);
+
     const assetPagination = await this.getDownloadAssets(auth, dto);
     for await (const assets of assetPagination) {
       // motion part of live photos
-      const motionIds = assets.map((asset) => asset.livePhotoVideoId).filter<string>((id): id is string => !!id);
+      const motionIds = assets.map((asset) => asset.livePhotoVideoId).filter((id): id is string => !!id);
       if (motionIds.length > 0) {
-        assets.push(...(await this.assetRepository.getByIds(motionIds, { exifInfo: true })));
+        const motionAssets = await this.assetRepository.getByIds(motionIds, { exifInfo: true });
+        for (const motionAsset of motionAssets) {
+          if (
+            !StorageCore.isAndroidMotionPath(motionAsset.originalPath) ||
+            preferences.download.includeEmbeddedVideos
+          ) {
+            assets.push(motionAsset);
+          }
+        }
       }
 
       for (const asset of assets) {
@@ -104,7 +99,14 @@ export class DownloadService {
         filename = `${parsedFilename.name}+${count}${parsedFilename.ext}`;
       }
 
-      zip.addFile(originalPath, filename);
+      let realpath = originalPath;
+      try {
+        realpath = await this.storageRepository.realpath(originalPath);
+      } catch {
+        this.logger.warn('Unable to resolve realpath', { originalPath });
+      }
+
+      zip.addFile(realpath, filename);
     }
 
     void zip.finalize();

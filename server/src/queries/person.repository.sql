@@ -37,9 +37,12 @@ ORDER BY
   "person"."isHidden" ASC,
   NULLIF("person"."name", '') IS NULL ASC,
   COUNT("face"."assetId") DESC,
-  NULLIF("person"."name", '') ASC NULLS LAST
+  NULLIF("person"."name", '') ASC NULLS LAST,
+  "person"."createdAt" ASC
 LIMIT
-  500
+  11
+OFFSET
+  10
 
 -- PersonRepository.getAllWithoutFaces
 SELECT
@@ -174,7 +177,8 @@ FROM
       "AssetFaceEntity__AssetFaceEntity_asset"."livePhotoVideoId" AS "AssetFaceEntity__AssetFaceEntity_asset_livePhotoVideoId",
       "AssetFaceEntity__AssetFaceEntity_asset"."originalFileName" AS "AssetFaceEntity__AssetFaceEntity_asset_originalFileName",
       "AssetFaceEntity__AssetFaceEntity_asset"."sidecarPath" AS "AssetFaceEntity__AssetFaceEntity_asset_sidecarPath",
-      "AssetFaceEntity__AssetFaceEntity_asset"."stackId" AS "AssetFaceEntity__AssetFaceEntity_asset_stackId"
+      "AssetFaceEntity__AssetFaceEntity_asset"."stackId" AS "AssetFaceEntity__AssetFaceEntity_asset_stackId",
+      "AssetFaceEntity__AssetFaceEntity_asset"."duplicateId" AS "AssetFaceEntity__AssetFaceEntity_asset_duplicateId"
     FROM
       "asset_faces" "AssetFaceEntity"
       LEFT JOIN "person" "AssetFaceEntity__AssetFaceEntity_person" ON "AssetFaceEntity__AssetFaceEntity_person"."id" = "AssetFaceEntity"."personId"
@@ -272,6 +276,7 @@ FROM
       "AssetEntity"."originalFileName" AS "AssetEntity_originalFileName",
       "AssetEntity"."sidecarPath" AS "AssetEntity_sidecarPath",
       "AssetEntity"."stackId" AS "AssetEntity_stackId",
+      "AssetEntity"."duplicateId" AS "AssetEntity_duplicateId",
       "AssetEntity__AssetEntity_faces"."id" AS "AssetEntity__AssetEntity_faces_id",
       "AssetEntity__AssetEntity_faces"."assetId" AS "AssetEntity__AssetEntity_faces_assetId",
       "AssetEntity__AssetEntity_faces"."personId" AS "AssetEntity__AssetEntity_faces_personId",
@@ -317,6 +322,7 @@ FROM
       "AssetEntity__AssetEntity_exifInfo"."profileDescription" AS "AssetEntity__AssetEntity_exifInfo_profileDescription",
       "AssetEntity__AssetEntity_exifInfo"."colorspace" AS "AssetEntity__AssetEntity_exifInfo_colorspace",
       "AssetEntity__AssetEntity_exifInfo"."bitsPerSample" AS "AssetEntity__AssetEntity_exifInfo_bitsPerSample",
+      "AssetEntity__AssetEntity_exifInfo"."rating" AS "AssetEntity__AssetEntity_exifInfo_rating",
       "AssetEntity__AssetEntity_exifInfo"."fps" AS "AssetEntity__AssetEntity_exifInfo_fps"
     FROM
       "assets" "AssetEntity"
@@ -400,7 +406,8 @@ SELECT
   "AssetFaceEntity__AssetFaceEntity_asset"."livePhotoVideoId" AS "AssetFaceEntity__AssetFaceEntity_asset_livePhotoVideoId",
   "AssetFaceEntity__AssetFaceEntity_asset"."originalFileName" AS "AssetFaceEntity__AssetFaceEntity_asset_originalFileName",
   "AssetFaceEntity__AssetFaceEntity_asset"."sidecarPath" AS "AssetFaceEntity__AssetFaceEntity_asset_sidecarPath",
-  "AssetFaceEntity__AssetFaceEntity_asset"."stackId" AS "AssetFaceEntity__AssetFaceEntity_asset_stackId"
+  "AssetFaceEntity__AssetFaceEntity_asset"."stackId" AS "AssetFaceEntity__AssetFaceEntity_asset_stackId",
+  "AssetFaceEntity__AssetFaceEntity_asset"."duplicateId" AS "AssetFaceEntity__AssetFaceEntity_asset_duplicateId"
 FROM
   "asset_faces" "AssetFaceEntity"
   LEFT JOIN "assets" "AssetFaceEntity__AssetFaceEntity_asset" ON "AssetFaceEntity__AssetFaceEntity_asset"."id" = "AssetFaceEntity"."assetId"
@@ -431,3 +438,9 @@ WHERE
   (("AssetFaceEntity"."personId" = $1))
 LIMIT
   1
+
+-- PersonRepository.getLatestFaceDate
+SELECT
+  MAX("jobStatus"."facesRecognizedAt")::text AS "latestDate"
+FROM
+  "asset_job_status" "jobStatus"
