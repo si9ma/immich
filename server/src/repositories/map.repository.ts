@@ -4,11 +4,12 @@ import { getName } from 'i18n-iso-countries';
 import { createReadStream, existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import readLine from 'node:readline';
-import { citiesFile, resourcePaths } from 'src/constants';
+import { citiesFile } from 'src/constants';
 import { AssetEntity } from 'src/entities/asset.entity';
 import { GeodataPlacesEntity } from 'src/entities/geodata-places.entity';
 import { NaturalEarthCountriesEntity } from 'src/entities/natural-earth-countries.entity';
 import { SystemMetadataKey } from 'src/enum';
+import { IConfigRepository } from 'src/interfaces/config.interface';
 import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import {
   GeoPoint,
@@ -32,6 +33,7 @@ export class MapRepository implements IMapRepository {
     @InjectRepository(NaturalEarthCountriesEntity)
     private naturalEarthCountriesRepository: Repository<NaturalEarthCountriesEntity>,
     @InjectDataSource() private dataSource: DataSource,
+    @Inject(IConfigRepository) private configRepository: IConfigRepository,
     @Inject(ISystemMetadataRepository) private metadataRepository: ISystemMetadataRepository,
     @Inject(ILoggerRepository) private logger: ILoggerRepository,
   ) {
@@ -40,6 +42,7 @@ export class MapRepository implements IMapRepository {
 
   async init(): Promise<void> {
     this.logger.log('Initializing metadata repository');
+    const { resourcePaths } = this.configRepository.getEnv();
     const geodataDate = await readFile(resourcePaths.geodata.dateFile, 'utf8');
 
     // TODO move to service init
@@ -126,7 +129,7 @@ export class MapRepository implements IMapRepository {
     }
   }
 
-  async reverseGeocodeWithAmap(point: GeoPoint): Promise<ReverseGeocodeResult | null> {
+  async reverseGeocodeWithAmap(point: GeoPoint): Promise<ReverseGeocodeResult> {
     this.logger.debug(`Request: ${point.latitude},${point.longitude}`);
 
     // read key list from env,AMAP_GEOCODE_KEYS, then random select one key
@@ -144,7 +147,7 @@ export class MapRepository implements IMapRepository {
     const response = await fetch(`${url}?${new URLSearchParams(params)}`);
     if (!response.ok) {
       this.logger.error(`Request failed with status ${response.status}`);
-      return null;
+      return { country:null, state:null, city:null, district:null, address:null };
     }
 
     const data = await response.json();
@@ -160,7 +163,7 @@ export class MapRepository implements IMapRepository {
     return { country, state, city, district, address };
   }
 
-  async reverseGeocode(point: GeoPoint): Promise<ReverseGeocodeResult | null> {
+  async reverseGeocode(point: GeoPoint): Promise<ReverseGeocodeResult> {
     this.logger.debug(`Request: ${point.latitude},${point.longitude}`);
 
     // base on env GEOCODE_WITH_AMAP, if true, use amap to reverse geocode
@@ -204,7 +207,7 @@ export class MapRepository implements IMapRepository {
         `Response from database for natural earth reverse geocoding latitude: ${point.latitude}, longitude: ${point.longitude} was null`,
       );
 
-      return null;
+      return { country: null, state: null, city: null, district:null, address:null };
     }
 
     this.logger.verbose(`Raw: ${JSON.stringify(ne_response, ['id', 'admin', 'admin_a3', 'type'], 2)}`);
@@ -227,6 +230,8 @@ export class MapRepository implements IMapRepository {
   private async importNaturalEarthCountries() {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
+
+    const { resourcePaths } = this.configRepository.getEnv();
 
     try {
       await queryRunner.startTransaction();
@@ -272,6 +277,7 @@ export class MapRepository implements IMapRepository {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
 
+    const { resourcePaths } = this.configRepository.getEnv();
     const admin1 = await this.loadAdmin(resourcePaths.geodata.admin1);
     const admin2 = await this.loadAdmin(resourcePaths.geodata.admin2);
 
@@ -327,6 +333,7 @@ export class MapRepository implements IMapRepository {
     admin1Map: Map<string, string>,
     admin2Map: Map<string, string>,
   ) {
+    const { resourcePaths } = this.configRepository.getEnv();
     await this.loadGeodataToTableFromFile(
       queryRunner,
       (lineSplit: string[]) =>
@@ -364,7 +371,7 @@ export class MapRepository implements IMapRepository {
     }
 
     const input = createReadStream(filePath);
-    const lineReader = readLine.createInterface({ input: input });
+    const lineReader = readLine.createInterface({ input });
 
     const adminMap = new Map<string, string>();
     for await (const line of lineReader) {

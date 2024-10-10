@@ -1,8 +1,18 @@
+export enum AuthType {
+  PASSWORD = 'password',
+  OAUTH = 'oauth',
+}
+
 export enum AssetType {
   IMAGE = 'IMAGE',
   VIDEO = 'VIDEO',
   AUDIO = 'AUDIO',
   OTHER = 'OTHER',
+}
+
+export enum AssetFileType {
+  PREVIEW = 'preview',
+  THUMBNAIL = 'thumbnail',
 }
 
 export enum AlbumUserRole {
@@ -49,7 +59,6 @@ export enum Permission {
   ASSET_READ = 'asset.read',
   ASSET_UPDATE = 'asset.update',
   ASSET_DELETE = 'asset.delete',
-  ASSET_RESTORE = 'asset.restore',
   ASSET_SHARE = 'asset.share',
   ASSET_VIEW = 'asset.view',
   ASSET_DOWNLOAD = 'asset.download',
@@ -102,10 +111,19 @@ export enum Permission {
   PERSON_MERGE = 'person.merge',
   PERSON_REASSIGN = 'person.reassign',
 
+  SESSION_READ = 'session.read',
+  SESSION_UPDATE = 'session.update',
+  SESSION_DELETE = 'session.delete',
+
   SHARED_LINK_CREATE = 'sharedLink.create',
   SHARED_LINK_READ = 'sharedLink.read',
   SHARED_LINK_UPDATE = 'sharedLink.update',
   SHARED_LINK_DELETE = 'sharedLink.delete',
+
+  STACK_CREATE = 'stack.create',
+  STACK_READ = 'stack.read',
+  STACK_UPDATE = 'stack.update',
+  STACK_DELETE = 'stack.delete',
 
   SYSTEM_CONFIG_READ = 'systemConfig.read',
   SYSTEM_CONFIG_UPDATE = 'systemConfig.update',
@@ -117,6 +135,7 @@ export enum Permission {
   TAG_READ = 'tag.read',
   TAG_UPDATE = 'tag.update',
   TAG_DELETE = 'tag.delete',
+  TAG_ASSET = 'tag.asset',
 
   ADMIN_USER_CREATE = 'admin.user.create',
   ADMIN_USER_READ = 'admin.user.read',
@@ -134,11 +153,20 @@ export enum SharedLinkType {
   INDIVIDUAL = 'INDIVIDUAL',
 }
 
+export enum StorageFolder {
+  ENCODED_VIDEO = 'encoded-video',
+  LIBRARY = 'library',
+  UPLOAD = 'upload',
+  PROFILE = 'profile',
+  THUMBNAILS = 'thumbs',
+}
+
 export enum SystemMetadataKey {
   REVERSE_GEOCODING_STATE = 'reverse-geocoding-state',
   FACIAL_RECOGNITION_STATE = 'facial-recognition-state',
   ADMIN_ONBOARDING = 'admin-onboarding',
   SYSTEM_CONFIG = 'system-config',
+  SYSTEM_FLAGS = 'system-flags',
   VERSION_CHECK_STATE = 'version-check-state',
   LICENSE = 'license',
 }
@@ -165,4 +193,149 @@ export enum UserStatus {
   ACTIVE = 'active',
   REMOVING = 'removing',
   DELETED = 'deleted',
+}
+
+export enum AssetStatus {
+  ACTIVE = 'active',
+  TRASHED = 'trashed',
+  DELETED = 'deleted',
+}
+
+export enum SourceType {
+  MACHINE_LEARNING = 'machine-learning',
+  EXIF = 'exif',
+}
+
+export enum ManualJobName {
+  PERSON_CLEANUP = 'person-cleanup',
+  TAG_CLEANUP = 'tag-cleanup',
+  USER_CLEANUP = 'user-cleanup',
+}
+
+export enum AssetPathType {
+  ORIGINAL = 'original',
+  PREVIEW = 'preview',
+  THUMBNAIL = 'thumbnail',
+  ENCODED_VIDEO = 'encoded_video',
+  SIDECAR = 'sidecar',
+}
+
+export enum PersonPathType {
+  FACE = 'face',
+}
+
+export enum UserPathType {
+  PROFILE = 'profile',
+}
+
+export type PathType = AssetPathType | PersonPathType | UserPathType;
+
+export enum TranscodePolicy {
+  ALL = 'all',
+  OPTIMAL = 'optimal',
+  BITRATE = 'bitrate',
+  REQUIRED = 'required',
+  DISABLED = 'disabled',
+}
+
+export enum TranscodeTarget {
+  NONE,
+  AUDIO,
+  VIDEO,
+  ALL,
+}
+
+export enum VideoCodec {
+  H264 = 'h264',
+  HEVC = 'hevc',
+  VP9 = 'vp9',
+  AV1 = 'av1',
+}
+
+export enum AudioCodec {
+  MP3 = 'mp3',
+  AAC = 'aac',
+  LIBOPUS = 'libopus',
+}
+
+export enum VideoContainer {
+  MOV = 'mov',
+  MP4 = 'mp4',
+  OGG = 'ogg',
+  WEBM = 'webm',
+}
+
+export enum TranscodeHWAccel {
+  NVENC = 'nvenc',
+  QSV = 'qsv',
+  VAAPI = 'vaapi',
+  RKMPP = 'rkmpp',
+  DISABLED = 'disabled',
+}
+
+export enum ToneMapping {
+  HABLE = 'hable',
+  MOBIUS = 'mobius',
+  REINHARD = 'reinhard',
+  DISABLED = 'disabled',
+}
+
+export enum CQMode {
+  AUTO = 'auto',
+  CQP = 'cqp',
+  ICQ = 'icq',
+}
+
+export enum Colorspace {
+  SRGB = 'srgb',
+  P3 = 'p3',
+}
+
+export enum ImageFormat {
+  JPEG = 'jpeg',
+  WEBP = 'webp',
+}
+
+export enum LogLevel {
+  VERBOSE = 'verbose',
+  DEBUG = 'debug',
+  LOG = 'log',
+  WARN = 'warn',
+  ERROR = 'error',
+  FATAL = 'fatal',
+}
+
+export enum MetadataKey {
+  AUTH_ROUTE = 'auth_route',
+  ADMIN_ROUTE = 'admin_route',
+  SHARED_ROUTE = 'shared_route',
+  API_KEY_SECURITY = 'api_key',
+  EVENT_CONFIG = 'event_config',
+}
+
+export enum RouteKey {
+  ASSET = 'assets',
+  USER = 'users',
+}
+
+export enum CacheControl {
+  PRIVATE_WITH_CACHE = 'private_with_cache',
+  PRIVATE_WITHOUT_CACHE = 'private_without_cache',
+  NONE = 'none',
+}
+
+export enum PaginationMode {
+  LIMIT_OFFSET = 'limit-offset',
+  SKIP_TAKE = 'skip-take',
+}
+
+export enum ImmichEnvironment {
+  DEVELOPMENT = 'development',
+  TESTING = 'testing',
+  PRODUCTION = 'production',
+}
+
+export enum ImmichWorker {
+  API = 'api',
+  MICROSERVICES = 'microservices',
 }

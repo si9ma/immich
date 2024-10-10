@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resizeObserver } from '$lib/actions/resize-observer';
   import Icon from '$lib/components/elements/icon.svelte';
   import { AppRoute, QueryParameter } from '$lib/constants';
   import { memoryStore } from '$lib/stores/memory.store';
@@ -38,7 +39,7 @@
     id="memory-lane"
     bind:this={memoryLaneElement}
     class="relative mt-5 overflow-x-hidden whitespace-nowrap transition-all"
-    bind:offsetWidth
+    use:resizeObserver={({ width }) => (offsetWidth = width)}
     on:scroll={onScroll}
   >
     {#if canScrollLeft || canScrollRight}
@@ -67,12 +68,12 @@
         {/if}
       </div>
     {/if}
-    <div class="inline-block" bind:offsetWidth={innerWidth}>
-      {#each $memoryStore as memory, index (memory.yearsAgo)}
+    <div class="inline-block" use:resizeObserver={({ width }) => (innerWidth = width)}>
+      {#each $memoryStore as memory (memory.yearsAgo)}
         {#if memory.assets.length > 0}
           <a
             class="memory-card relative mr-8 inline-block aspect-video h-[215px] rounded-xl"
-            href="{AppRoute.MEMORY}?{QueryParameter.MEMORY_INDEX}={index}"
+            href="{AppRoute.MEMORY}?{QueryParameter.ID}={memory.assets[0].id}"
           >
             <img
               class="h-full w-full rounded-xl object-cover"

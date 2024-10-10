@@ -4,7 +4,8 @@
   import Portal from '$lib/components/shared-components/portal/portal.svelte';
   import DuplicateAsset from '$lib/components/utilities-page/duplicates/duplicate-asset.svelte';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
-  import { suggestDuplicateByFileSize } from '$lib/utils';
+  import { handlePromiseError, suggestDuplicateByFileSize } from '$lib/utils';
+  import { navigate } from '$lib/utils/navigation';
   import { shortcuts } from '$lib/actions/shortcut';
   import { type AssetResponseDto } from '@immich/sdk';
   import { mdiCheck, mdiTrashCanOutline, mdiImageMultipleOutline } from '@mdi/js';
@@ -150,15 +151,18 @@
       <AssetViewer
         asset={$viewingAsset}
         showNavigation={assets.length > 1}
-        on:next={() => {
+        onNext={() => {
           const index = getAssetIndex($viewingAsset.id) + 1;
           setAsset(assets[index % assets.length]);
         }}
-        on:previous={() => {
+        onPrevious={() => {
           const index = getAssetIndex($viewingAsset.id) - 1 + assets.length;
           setAsset(assets[index % assets.length]);
         }}
-        on:close={() => assetViewingStore.showAssetViewer(false)}
+        onClose={() => {
+          assetViewingStore.showAssetViewer(false);
+          handlePromiseError(navigate({ targetRoute: 'current', assetId: null }));
+        }}
       />
     </Portal>
   {/await}

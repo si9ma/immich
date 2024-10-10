@@ -18,20 +18,20 @@
 
   $: makeFilter = filters.make;
   $: modelFilter = filters.model;
-  $: handlePromiseError(updateMakes(modelFilter));
+  $: handlePromiseError(updateMakes());
   $: handlePromiseError(updateModels(makeFilter));
 
-  async function updateMakes(model?: string) {
+  async function updateMakes() {
     const results: Array<string | null> = await getSearchSuggestions({
       $type: SearchSuggestionType.CameraMake,
-      model,
       includeNull: true,
     });
+
+    makes = results.map((result) => result ?? '');
+
     if (filters.make && !makes.includes(filters.make)) {
       filters.make = undefined;
     }
-
-    makes = results.map((result) => result ?? '');
   }
 
   async function updateModels(make?: string) {
@@ -41,7 +41,7 @@
       includeNull: true,
     });
 
-    const models = results.map((result) => result ?? '');
+    models = results.map((result) => result ?? '');
 
     if (filters.model && !models.includes(filters.model)) {
       filters.model = undefined;
@@ -56,7 +56,7 @@
     <div class="w-full">
       <Combobox
         label={$t('make')}
-        on:select={({ detail }) => (filters.make = detail?.value)}
+        onSelect={(option) => (filters.make = option?.value)}
         options={asComboboxOptions(makes)}
         placeholder={$t('search_camera_make')}
         selectedOption={asSelectedOption(makeFilter)}
@@ -66,7 +66,7 @@
     <div class="w-full">
       <Combobox
         label={$t('model')}
-        on:select={({ detail }) => (filters.model = detail?.value)}
+        onSelect={(option) => (filters.model = option?.value)}
         options={asComboboxOptions(models)}
         placeholder={$t('search_camera_model')}
         selectedOption={asSelectedOption(modelFilter)}
