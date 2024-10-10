@@ -1,7 +1,5 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { DEFAULT_EXTERNAL_DOMAIN } from 'src/constants';
-import { AccessCore } from 'src/cores/access.core';
-import { SystemConfigCore } from 'src/cores/system-config.core';
 import { AssetIdErrorReason, AssetIdsResponseDto } from 'src/dtos/asset-ids.response.dto';
 import { AssetIdsDto } from 'src/dtos/asset.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
@@ -16,32 +14,13 @@ import {
 import { AssetEntity } from 'src/entities/asset.entity';
 import { SharedLinkEntity } from 'src/entities/shared-link.entity';
 import { Permission, SharedLinkType } from 'src/enum';
-import { IAccessRepository } from 'src/interfaces/access.interface';
-import { ICryptoRepository } from 'src/interfaces/crypto.interface';
-import { ILoggerRepository } from 'src/interfaces/logger.interface';
-import { ISharedLinkRepository } from 'src/interfaces/shared-link.interface';
-import { ISystemMetadataRepository } from 'src/interfaces/system-metadata.interface';
+import { BaseService } from 'src/services/base.service';
 import { OpenGraphTags } from 'src/utils/misc';
 
 @Injectable()
-export class SharedLinkService {
-  private access: AccessCore;
-  private configCore: SystemConfigCore;
-
-  constructor(
-    @Inject(IAccessRepository) accessRepository: IAccessRepository,
-    @Inject(ICryptoRepository) private cryptoRepository: ICryptoRepository,
-    @Inject(ILoggerRepository) private logger: ILoggerRepository,
-    @Inject(ISharedLinkRepository) private repository: ISharedLinkRepository,
-    @Inject(ISystemMetadataRepository) systemMetadataRepository: ISystemMetadataRepository,
-  ) {
-    this.logger.setContext(SharedLinkService.name);
-    this.access = AccessCore.create(accessRepository);
-    this.configCore = SystemConfigCore.create(systemMetadataRepository, this.logger);
-  }
-
-  getAll(auth: AuthDto): Promise<SharedLinkResponseDto[]> {
-    return this.repository.getAll(auth.user.id).then((links) => links.map((link) => mapSharedLink(link)));
+export class SharedLinkService extends BaseService {
+  async getAll(auth: AuthDto): Promise<SharedLinkResponseDto[]> {
+    return this.sharedLinkRepository.getAll(auth.user.id).then((links) => links.map((link) => mapSharedLink(link)));
   }
 
   async getMine(auth: AuthDto, dto: SharedLinkPasswordDto): Promise<SharedLinkResponseDto> {
@@ -69,7 +48,7 @@ export class SharedLinkService {
         if (!dto.albumId) {
           throw new BadRequestException('Invalid albumId');
         }
-        await this.access.requirePermission(auth, Permission.ALBUM_SHARE, dto.albumId);
+        await this.requireAccess({ auth, permission: Permission.ALBUM_SHARE, ids: [dto.albumId] });
         break;
       }
 
@@ -78,13 +57,13 @@ export class SharedLinkService {
           throw new BadRequestException('Invalid assetIds');
         }
 
-        await this.access.requirePermission(auth, Permission.ASSET_SHARE, dto.assetIds);
+        await this.requireAccess({ auth, permission: Permission.ASSET_SHARE, ids: dto.assetIds });
 
         break;
       }
     }
 
-    const sharedLink = await this.repository.create({
+    const sharedLink = await this.sharedLinkRepository.create({
       key: this.cryptoRepository.randomBytes(50),
       userId: auth.user.id,
       type: dto.type,
@@ -103,7 +82,7 @@ export class SharedLinkService {
 
   async update(auth: AuthDto, id: string, dto: SharedLinkEditDto) {
     await this.findOrFail(auth.user.id, id);
-    const sharedLink = await this.repository.update({
+    const sharedLink = await this.sharedLinkRepository.update({
       id,
       userId: auth.user.id,
       description: dto.description,
@@ -118,12 +97,12 @@ export class SharedLinkService {
 
   async remove(auth: AuthDto, id: string): Promise<void> {
     const sharedLink = await this.findOrFail(auth.user.id, id);
-    await this.repository.remove(sharedLink);
+    await this.sharedLinkRepository.remove(sharedLink);
   }
 
   // TODO: replace `userId` with permissions and access control checks
   private async findOrFail(userId: string, id: string) {
-    const sharedLink = await this.repository.get(userId, id);
+    const sharedLink = await this.sharedLinkRepository.get(userId, id);
     if (!sharedLink) {
       throw new BadRequestException('Shared link not found');
     }
@@ -139,7 +118,11 @@ export class SharedLinkService {
 
     const existingAssetIds = new Set(sharedLink.assets.map((asset) => asset.id));
     const notPresentAssetIds = dto.assetIds.filter((assetId) => !existingAssetIds.has(assetId));
-    const allowedAssetIds = await this.access.checkAccess(auth, Permission.ASSET_SHARE, notPresentAssetIds);
+    const allowedAssetIds = await this.checkAccess({
+      auth,
+      permission: Permission.ASSET_SHARE,
+      ids: notPresentAssetIds,
+    });
 
     const results: AssetIdsResponseDto[] = [];
     for (const assetId of dto.assetIds) {
@@ -159,7 +142,7 @@ export class SharedLinkService {
       sharedLink.assets.push({ id: assetId } as AssetEntity);
     }
 
-    await this.repository.update(sharedLink);
+    await this.sharedLinkRepository.update(sharedLink);
 
     return results;
   }
@@ -183,7 +166,7 @@ export class SharedLinkService {
       sharedLink.assets = sharedLink.assets.filter((asset) => asset.id !== assetId);
     }
 
-    await this.repository.update(sharedLink);
+    await this.sharedLinkRepository.update(sharedLink);
 
     return results;
   }
@@ -193,7 +176,7 @@ export class SharedLinkService {
       return null;
     }
 
-    const config = await this.configCore.getConfig({ withCache: true });
+    const config = await this.getConfig({ withCache: true });
     const sharedLink = await this.findOrFail(auth.sharedLink.userId, auth.sharedLink.id);
     const assetId = sharedLink.album?.albumThumbnailAssetId || sharedLink.assets[0]?.id;
     const assetCount = sharedLink.assets.length > 0 ? sharedLink.assets.length : sharedLink.album?.assets.length || 0;

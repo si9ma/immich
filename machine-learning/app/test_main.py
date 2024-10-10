@@ -124,7 +124,6 @@ class TestBase:
             "immich-app/ViT-B-32__openai",
             cache_dir=encoder.cache_dir,
             local_dir=encoder.cache_dir,
-            local_dir_use_symlinks=False,
             ignore_patterns=["*.armnn"],
         )
 
@@ -136,7 +135,6 @@ class TestBase:
             "immich-app/ViT-B-32__openai",
             cache_dir=encoder.cache_dir,
             local_dir=encoder.cache_dir,
-            local_dir_use_symlinks=False,
             ignore_patterns=[],
         )
 
@@ -212,9 +210,23 @@ class TestOrtSession:
         session = OrtSession(model_path, providers=["OpenVINOExecutionProvider", "CPUExecutionProvider"])
 
         assert session.provider_options == [
-            {"device_type": "GPU", "precision": "FP32", "cache_dir": "/cache/ViT-B-32__openai/openvino"},
+            {"device_type": "GPU.0", "precision": "FP32", "cache_dir": "/cache/ViT-B-32__openai/openvino"},
             {"arena_extend_strategy": "kSameAsRequested"},
         ]
+
+    def test_sets_device_id_for_openvino(self) -> None:
+        os.environ["MACHINE_LEARNING_DEVICE_ID"] = "1"
+
+        session = OrtSession("ViT-B-32__openai", providers=["OpenVINOExecutionProvider"])
+
+        assert session.provider_options[0]["device_type"] == "GPU.1"
+
+    def test_sets_device_id_for_cuda(self) -> None:
+        os.environ["MACHINE_LEARNING_DEVICE_ID"] = "1"
+
+        session = OrtSession("ViT-B-32__openai", providers=["CUDAExecutionProvider"])
+
+        assert session.provider_options[0]["device_id"] == "1"
 
     def test_sets_provider_options_kwarg(self) -> None:
         session = OrtSession(
@@ -379,13 +391,40 @@ class TestCLIP:
 
         clip_encoder = OpenClipTextualEncoder("ViT-B-32__openai", cache_dir="test_cache")
         clip_encoder._load()
-        tokens = clip_encoder.tokenize("test search query")
+        tokens = clip_encoder.tokenize("test   search query")
 
         assert "text" in tokens
         assert isinstance(tokens["text"], np.ndarray)
         assert tokens["text"].shape == (1, 77)
         assert tokens["text"].dtype == np.int32
         assert np.allclose(tokens["text"], np.array([mock_ids], dtype=np.int32), atol=0)
+        mock_tokenizer.encode.assert_called_once_with("test search query")
+
+    def test_openclip_tokenizer_canonicalizes_text(
+        self,
+        mocker: MockerFixture,
+        clip_model_cfg: dict[str, Any],
+        clip_tokenizer_cfg: Callable[[Path], dict[str, Any]],
+    ) -> None:
+        clip_model_cfg["text_cfg"]["tokenizer_kwargs"] = {"clean": "canonicalize"}
+        mocker.patch.object(OpenClipTextualEncoder, "download")
+        mocker.patch.object(OpenClipTextualEncoder, "model_cfg", clip_model_cfg)
+        mocker.patch.object(OpenClipTextualEncoder, "tokenizer_cfg", clip_tokenizer_cfg)
+        mocker.patch.object(InferenceModel, "_make_session", autospec=True).return_value
+        mock_tokenizer = mocker.patch("app.models.clip.textual.Tokenizer.from_file", autospec=True).return_value
+        mock_ids = [randint(0, 50000) for _ in range(77)]
+        mock_tokenizer.encode.return_value = SimpleNamespace(ids=mock_ids)
+
+        clip_encoder = OpenClipTextualEncoder("ViT-B-32__openai", cache_dir="test_cache")
+        clip_encoder._load()
+        tokens = clip_encoder.tokenize("Test   Search Query!")
+
+        assert "text" in tokens
+        assert isinstance(tokens["text"], np.ndarray)
+        assert tokens["text"].shape == (1, 77)
+        assert tokens["text"].dtype == np.int32
+        assert np.allclose(tokens["text"], np.array([mock_ids], dtype=np.int32), atol=0)
+        mock_tokenizer.encode.assert_called_once_with("test search query")
 
     def test_mclip_tokenizer(
         self,

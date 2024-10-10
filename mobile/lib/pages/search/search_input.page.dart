@@ -8,6 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/entities/asset.entity.dart';
 import 'package:immich_mobile/extensions/build_context_extensions.dart';
 import 'package:immich_mobile/extensions/theme_extensions.dart';
+import 'package:immich_mobile/interfaces/person_api.interface.dart';
 import 'package:immich_mobile/models/search/search_filter.model.dart';
 import 'package:immich_mobile/providers/search/paginated_search.provider.dart';
 import 'package:immich_mobile/widgets/asset_grid/multiselect_grid.dart';
@@ -19,7 +20,6 @@ import 'package:immich_mobile/widgets/search/search_filter/media_type_picker.dar
 import 'package:immich_mobile/widgets/search/search_filter/people_picker.dart';
 import 'package:immich_mobile/widgets/search/search_filter/search_filter_chip.dart';
 import 'package:immich_mobile/widgets/search/search_filter/search_filter_utils.dart';
-import 'package:openapi/api.dart';
 
 @RoutePage()
 class SearchInputPage extends HookConsumerWidget {
@@ -31,6 +31,7 @@ class SearchInputPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isContextualSearch = useState(true);
     final textSearchController = useTextEditingController();
+    final focusNode = useFocusNode();
     final filter = useState<SearchFilter>(
       SearchFilter(
         people: prefilter?.people ?? {},
@@ -110,7 +111,7 @@ class SearchInputPage extends HookConsumerWidget {
     }
 
     showPeoplePicker() {
-      handleOnSelect(Set<PersonResponseDto> value) {
+      handleOnSelect(Set<Person> value) {
         filter.value = filter.value.copyWith(
           people: value,
         );
@@ -440,6 +441,10 @@ class SearchInputPage extends HookConsumerWidget {
     }
 
     handleTextSubmitted(String value) {
+      if (value.isEmpty) {
+        return;
+      }
+
       if (isContextualSearch.value) {
         filter.value = filter.value.copyWith(
           context: value,
@@ -489,38 +494,82 @@ class SearchInputPage extends HookConsumerWidget {
       appBar: AppBar(
         automaticallyImplyLeading: true,
         actions: [
-          IconButton(
-            icon: isContextualSearch.value
-                ? const Icon(Icons.abc_rounded)
-                : const Icon(Icons.image_search_rounded),
-            onPressed: () {
-              isContextualSearch.value = !isContextualSearch.value;
-              textSearchController.clear();
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 14.0),
+            child: IconButton(
+              icon: isContextualSearch.value
+                  ? const Icon(Icons.abc_rounded)
+                  : const Icon(Icons.image_search_rounded),
+              onPressed: () {
+                isContextualSearch.value = !isContextualSearch.value;
+                textSearchController.clear();
+              },
+            ),
           ),
         ],
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.router.maybePop(),
-        ),
-        title: TextField(
-          controller: textSearchController,
-          decoration: InputDecoration(
-            hintText: isContextualSearch.value
-                ? 'contextual_search'.tr()
-                : 'filename_search'.tr(),
-            hintStyle: context.textTheme.bodyLarge?.copyWith(
-              color: context.themeData.colorScheme.onSurfaceSecondary,
-              fontWeight: FontWeight.w500,
+        title: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: context.colorScheme.onSurface.withAlpha(0),
+              width: 0,
             ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.transparent),
-            ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.transparent),
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              colors: [
+                context.colorScheme.primary.withOpacity(0.075),
+                context.colorScheme.primary.withOpacity(0.09),
+                context.colorScheme.primary.withOpacity(0.075),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          onSubmitted: handleTextSubmitted,
+          child: TextField(
+            controller: textSearchController,
+            decoration: InputDecoration(
+              contentPadding: EdgeInsets.all(8),
+              prefixIcon: prefilter != null
+                  ? null
+                  : Icon(
+                      Icons.search_rounded,
+                      color: context.colorScheme.primary,
+                    ),
+              hintText: isContextualSearch.value
+                  ? 'contextual_search'.tr()
+                  : 'filename_search'.tr(),
+              hintStyle: context.textTheme.bodyLarge?.copyWith(
+                color: context.themeData.colorScheme.onSurfaceSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide(
+                  color: context.colorScheme.surfaceDim,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide(
+                  color: context.colorScheme.surfaceContainer,
+                ),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide(
+                  color: context.colorScheme.surfaceDim,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide(
+                  color: context.colorScheme.primary.withAlpha(100),
+                ),
+              ),
+            ),
+            onSubmitted: handleTextSubmitted,
+            focusNode: focusNode,
+            onTapOutside: (_) => focusNode.unfocus(),
+          ),
         ),
       ),
       body: Column(

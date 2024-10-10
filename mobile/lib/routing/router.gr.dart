@@ -185,7 +185,7 @@ class AlbumOptionsRouteArgs {
 class AlbumPreviewRoute extends PageRouteInfo<AlbumPreviewRouteArgs> {
   AlbumPreviewRoute({
     Key? key,
-    required AssetPathEntity album,
+    required Album album,
     List<PageRouteInfo>? children,
   }) : super(
           AlbumPreviewRoute.name,
@@ -218,7 +218,7 @@ class AlbumPreviewRouteArgs {
 
   final Key? key;
 
-  final AssetPathEntity album;
+  final Album album;
 
   @override
   String toString() {
@@ -317,6 +317,25 @@ class AlbumViewerRouteArgs {
   String toString() {
     return 'AlbumViewerRouteArgs{key: $key, albumId: $albumId}';
   }
+}
+
+/// generated route for
+/// [AlbumsPage]
+class AlbumsRoute extends PageRouteInfo<void> {
+  const AlbumsRoute({List<PageRouteInfo>? children})
+      : super(
+          AlbumsRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'AlbumsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const AlbumsPage();
+    },
+  );
 }
 
 /// generated route for
@@ -560,15 +579,13 @@ class ChangePasswordRoute extends PageRouteInfo<void> {
 class CreateAlbumRoute extends PageRouteInfo<CreateAlbumRouteArgs> {
   CreateAlbumRoute({
     Key? key,
-    required bool isSharedAlbum,
-    List<Asset>? initialAssets,
+    List<Asset>? assets,
     List<PageRouteInfo>? children,
   }) : super(
           CreateAlbumRoute.name,
           args: CreateAlbumRouteArgs(
             key: key,
-            isSharedAlbum: isSharedAlbum,
-            initialAssets: initialAssets,
+            assets: assets,
           ),
           initialChildren: children,
         );
@@ -578,11 +595,11 @@ class CreateAlbumRoute extends PageRouteInfo<CreateAlbumRouteArgs> {
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      final args = data.argsAs<CreateAlbumRouteArgs>();
+      final args = data.argsAs<CreateAlbumRouteArgs>(
+          orElse: () => const CreateAlbumRouteArgs());
       return CreateAlbumPage(
         key: args.key,
-        isSharedAlbum: args.isSharedAlbum,
-        initialAssets: args.initialAssets,
+        assets: args.assets,
       );
     },
   );
@@ -591,19 +608,16 @@ class CreateAlbumRoute extends PageRouteInfo<CreateAlbumRouteArgs> {
 class CreateAlbumRouteArgs {
   const CreateAlbumRouteArgs({
     this.key,
-    required this.isSharedAlbum,
-    this.initialAssets,
+    this.assets,
   });
 
   final Key? key;
 
-  final bool isSharedAlbum;
-
-  final List<Asset>? initialAssets;
+  final List<Asset>? assets;
 
   @override
   String toString() {
-    return 'CreateAlbumRouteArgs{key: $key, isSharedAlbum: $isSharedAlbum, initialAssets: $initialAssets}';
+    return 'CreateAlbumRouteArgs{key: $key, assets: $assets}';
   }
 }
 
@@ -613,12 +627,14 @@ class CropImageRoute extends PageRouteInfo<CropImageRouteArgs> {
   CropImageRoute({
     Key? key,
     required Image image,
+    required Asset asset,
     List<PageRouteInfo>? children,
   }) : super(
           CropImageRoute.name,
           args: CropImageRouteArgs(
             key: key,
             image: image,
+            asset: asset,
           ),
           initialChildren: children,
         );
@@ -632,6 +648,7 @@ class CropImageRoute extends PageRouteInfo<CropImageRouteArgs> {
       return CropImagePage(
         key: args.key,
         image: args.image,
+        asset: args.asset,
       );
     },
   );
@@ -641,15 +658,18 @@ class CropImageRouteArgs {
   const CropImageRouteArgs({
     this.key,
     required this.image,
+    required this.asset,
   });
 
   final Key? key;
 
   final Image image;
 
+  final Asset asset;
+
   @override
   String toString() {
-    return 'CropImageRouteArgs{key: $key, image: $image}';
+    return 'CropImageRouteArgs{key: $key, image: $image, asset: $asset}';
   }
 }
 
@@ -658,15 +678,17 @@ class CropImageRouteArgs {
 class EditImageRoute extends PageRouteInfo<EditImageRouteArgs> {
   EditImageRoute({
     Key? key,
-    Image? image,
-    Asset? asset,
+    required Asset asset,
+    required Image image,
+    required bool isEdited,
     List<PageRouteInfo>? children,
   }) : super(
           EditImageRoute.name,
           args: EditImageRouteArgs(
             key: key,
-            image: image,
             asset: asset,
+            image: image,
+            isEdited: isEdited,
           ),
           initialChildren: children,
         );
@@ -676,12 +698,12 @@ class EditImageRoute extends PageRouteInfo<EditImageRouteArgs> {
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      final args = data.argsAs<EditImageRouteArgs>(
-          orElse: () => const EditImageRouteArgs());
+      final args = data.argsAs<EditImageRouteArgs>();
       return EditImagePage(
         key: args.key,
-        image: args.image,
         asset: args.asset,
+        image: args.image,
+        isEdited: args.isEdited,
       );
     },
   );
@@ -690,19 +712,22 @@ class EditImageRoute extends PageRouteInfo<EditImageRouteArgs> {
 class EditImageRouteArgs {
   const EditImageRouteArgs({
     this.key,
-    this.image,
-    this.asset,
+    required this.asset,
+    required this.image,
+    required this.isEdited,
   });
 
   final Key? key;
 
-  final Image? image;
+  final Asset asset;
 
-  final Asset? asset;
+  final Image image;
+
+  final bool isEdited;
 
   @override
   String toString() {
-    return 'EditImageRouteArgs{key: $key, image: $image, asset: $asset}';
+    return 'EditImageRouteArgs{key: $key, asset: $asset, image: $image, isEdited: $isEdited}';
   }
 }
 
@@ -742,6 +767,58 @@ class FavoritesRoute extends PageRouteInfo<void> {
       return const FavoritesPage();
     },
   );
+}
+
+/// generated route for
+/// [FilterImagePage]
+class FilterImageRoute extends PageRouteInfo<FilterImageRouteArgs> {
+  FilterImageRoute({
+    Key? key,
+    required Image image,
+    required Asset asset,
+    List<PageRouteInfo>? children,
+  }) : super(
+          FilterImageRoute.name,
+          args: FilterImageRouteArgs(
+            key: key,
+            image: image,
+            asset: asset,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'FilterImageRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<FilterImageRouteArgs>();
+      return FilterImagePage(
+        key: args.key,
+        image: args.image,
+        asset: args.asset,
+      );
+    },
+  );
+}
+
+class FilterImageRouteArgs {
+  const FilterImageRouteArgs({
+    this.key,
+    required this.image,
+    required this.asset,
+  });
+
+  final Key? key;
+
+  final Image image;
+
+  final Asset asset;
+
+  @override
+  String toString() {
+    return 'FilterImageRouteArgs{key: $key, image: $image, asset: $asset}';
+  }
 }
 
 /// generated route for
@@ -842,6 +919,25 @@ class LibraryRoute extends PageRouteInfo<void> {
     name,
     builder: (data) {
       return const LibraryPage();
+    },
+  );
+}
+
+/// generated route for
+/// [LocalAlbumsPage]
+class LocalAlbumsRoute extends PageRouteInfo<void> {
+  const LocalAlbumsRoute({List<PageRouteInfo>? children})
+      : super(
+          LocalAlbumsRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'LocalAlbumsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const LocalAlbumsPage();
     },
   );
 }
@@ -1049,6 +1145,25 @@ class PartnerRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [PeopleCollectionPage]
+class PeopleCollectionRoute extends PageRouteInfo<void> {
+  const PeopleCollectionRoute({List<PageRouteInfo>? children})
+      : super(
+          PeopleCollectionRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'PeopleCollectionRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const PeopleCollectionPage();
+    },
+  );
+}
+
+/// generated route for
 /// [PermissionOnboardingPage]
 class PermissionOnboardingRoute extends PageRouteInfo<void> {
   const PermissionOnboardingRoute({List<PageRouteInfo>? children})
@@ -1134,6 +1249,25 @@ class PhotosRoute extends PageRouteInfo<void> {
     name,
     builder: (data) {
       return const PhotosPage();
+    },
+  );
+}
+
+/// generated route for
+/// [PlacesCollectionPage]
+class PlacesCollectionRoute extends PageRouteInfo<void> {
+  const PlacesCollectionRoute({List<PageRouteInfo>? children})
+      : super(
+          PlacesCollectionRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'PlacesCollectionRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const PlacesCollectionPage();
     },
   );
 }
@@ -1362,25 +1496,6 @@ class SharedLinkRoute extends PageRouteInfo<void> {
     name,
     builder: (data) {
       return const SharedLinkPage();
-    },
-  );
-}
-
-/// generated route for
-/// [SharingPage]
-class SharingRoute extends PageRouteInfo<void> {
-  const SharingRoute({List<PageRouteInfo>? children})
-      : super(
-          SharingRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'SharingRoute';
-
-  static PageInfo page = PageInfo(
-    name,
-    builder: (data) {
-      return const SharingPage();
     },
   );
 }

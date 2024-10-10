@@ -16,6 +16,7 @@ import 'package:immich_mobile/providers/asset.provider.dart';
 import 'package:immich_mobile/providers/authentication.provider.dart';
 import 'package:immich_mobile/providers/backup/backup.provider.dart';
 import 'package:immich_mobile/providers/server_info.provider.dart';
+import 'package:immich_mobile/utils/provider_utils.dart';
 import 'package:immich_mobile/utils/version_compatibility.dart';
 import 'package:immich_mobile/widgets/common/immich_logo.dart';
 import 'package:immich_mobile/widgets/common/immich_title_text.dart';
@@ -27,12 +28,15 @@ import 'package:immich_mobile/widgets/forms/login/login_button.dart';
 import 'package:immich_mobile/widgets/forms/login/o_auth_login_button.dart';
 import 'package:immich_mobile/widgets/forms/login/password_input.dart';
 import 'package:immich_mobile/widgets/forms/login/server_endpoint_input.dart';
+import 'package:logging/logging.dart';
 import 'package:openapi/api.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class LoginForm extends HookConsumerWidget {
-  const LoginForm({super.key});
+  LoginForm({super.key});
+
+  final log = Logger('LoginForm');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -172,7 +176,7 @@ class LoginForm extends HookConsumerWidget {
     populateTestLoginInfo1() {
       usernameController.text = 'testuser@email.com';
       passwordController.text = 'password';
-      serverEndpointController.text = 'http://10.1.15.216:2283/api';
+      serverEndpointController.text = 'http://192.168.1.118:2283/api';
     }
 
     login() async {
@@ -182,6 +186,9 @@ class LoginForm extends HookConsumerWidget {
 
       // This will remove current cache asset state of previous user login.
       ref.read(assetProvider.notifier).clearAllAsset();
+
+      // Invalidate all api repository provider instance to take into account new access token
+      invalidateAllApiRepositoryProviders(ref);
 
       try {
         final isAuthenticated =
@@ -229,7 +236,9 @@ class LoginForm extends HookConsumerWidget {
             .getOAuthServerUrl(sanitizeUrl(serverEndpointController.text));
 
         isLoading.value = true;
-      } catch (e) {
+      } catch (error, stack) {
+        log.severe('Error getting OAuth server Url: $error', stack);
+
         ImmichToast.show(
           context: context,
           msg: "login_form_failed_get_oauth_server_config".tr(),
@@ -241,10 +250,19 @@ class LoginForm extends HookConsumerWidget {
       }
 
       if (oAuthServerUrl != null) {
-        var loginResponseDto = await oAuthService.oAuthLogin(oAuthServerUrl);
+        try {
+          final loginResponseDto =
+              await oAuthService.oAuthLogin(oAuthServerUrl);
 
-        if (loginResponseDto != null) {
-          var isSuccess = await ref
+          if (loginResponseDto == null) {
+            return;
+          }
+
+          log.info(
+            "Finished OAuth login with response: ${loginResponseDto.userEmail}",
+          );
+
+          final isSuccess = await ref
               .watch(authenticationProvider.notifier)
               .setSuccessLoginInfo(
                 accessToken: loginResponseDto.accessToken,
@@ -258,17 +276,19 @@ class LoginForm extends HookConsumerWidget {
               ref.watch(backupProvider.notifier).resumeBackup();
             }
             context.replaceRoute(const TabControllerRoute());
-          } else {
-            ImmichToast.show(
-              context: context,
-              msg: "login_form_failed_login".tr(),
-              toastType: ToastType.error,
-              gravity: ToastGravity.TOP,
-            );
           }
-        }
+        } catch (error, stack) {
+          log.severe('Error logging in with OAuth: $error', stack);
 
-        isLoading.value = false;
+          ImmichToast.show(
+            context: context,
+            msg: error.toString(),
+            toastType: ToastType.error,
+            gravity: ToastGravity.TOP,
+          );
+        } finally {
+          isLoading.value = false;
+        }
       } else {
         ImmichToast.show(
           context: context,

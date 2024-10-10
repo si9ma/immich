@@ -30,6 +30,7 @@ import {
   signUpAdmin,
   updateAdminOnboarding,
   updateAlbumUser,
+  updateAssets,
   updateConfig,
   validate,
 } from '@immich/sdk';
@@ -53,8 +54,8 @@ type WaitOptions = { event: EventType; id?: string; total?: number; timeout?: nu
 type AdminSetupOptions = { onboarding?: boolean };
 type FileData = { bytes?: Buffer; filename: string };
 
-const dbUrl = 'postgres://postgres:postgres@127.0.0.1:5433/immich';
-export const baseUrl = 'http://127.0.0.1:2283';
+const dbUrl = 'postgres://postgres:postgres@127.0.0.1:5435/immich';
+export const baseUrl = 'http://127.0.0.1:2285';
 export const shareUrl = `${baseUrl}/share`;
 export const app = `${baseUrl}/api`;
 // TODO move test assets into e2e/assets
@@ -67,6 +68,7 @@ export const immichCli = (args: string[]) =>
   executeCommand('node', ['node_modules/.bin/immich', '-d', `/${tempDir}/immich/`, ...args]).promise;
 export const immichAdmin = (args: string[]) =>
   executeCommand('docker', ['exec', '-i', 'immich-e2e-server', '/bin/bash', '-c', `immich-admin ${args.join(' ')}`]);
+export const specialCharStrings = ["'", '"', ',', '{', '}', '*'];
 
 const executeCommand = (command: string, args: string[]) => {
   let _resolve: (value: CommandResponse) => void;
@@ -148,14 +150,14 @@ export const utils = {
         'sessions',
         'users',
         'system_metadata',
+        'tags',
       ];
 
       const sql: string[] = [];
 
       for (const table of tables) {
         if (table === 'system_metadata') {
-          // prevent reverse geocoder from being re-initialized
-          sql.push(`DELETE FROM "system_metadata" where "key" != 'reverse-geocoding-state';`);
+          sql.push(`DELETE FROM "system_metadata" where "key" NOT IN ('reverse-geocoding-state', 'system-flags');`);
         } else {
           sql.push(`DELETE FROM ${table} CASCADE;`);
         }
@@ -371,7 +373,21 @@ export const utils = {
     writeFileSync(path, makeRandomImage());
   },
 
+  createDirectory: (path: string) => {
+    if (!existsSync(dirname(path))) {
+      mkdirSync(dirname(path), { recursive: true });
+    }
+  },
+
   removeImageFile: (path: string) => {
+    if (!existsSync(path)) {
+      return;
+    }
+
+    rmSync(path);
+  },
+
+  removeDirectory: (path: string) => {
     if (!existsSync(path)) {
       return;
     }
@@ -387,6 +403,9 @@ export const utils = {
   metadataSearch: async (accessToken: string, dto: MetadataSearchDto) => {
     return searchMetadata({ metadataSearchDto: dto }, { headers: asBearerAuth(accessToken) });
   },
+
+  archiveAssets: (accessToken: string, ids: string[]) =>
+    updateAssets({ assetBulkUpdateDto: { ids, isArchived: true } }, { headers: asBearerAuth(accessToken) }),
 
   deleteAssets: (accessToken: string, ids: string[]) =>
     deleteAssets({ assetBulkDeleteDto: { ids } }, { headers: asBearerAuth(accessToken) }),

@@ -18,7 +18,7 @@ class ApiService implements Authentication {
   late AlbumsApi albumsApi;
   late AssetsApi assetsApi;
   late SearchApi searchApi;
-  late ServerInfoApi serverInfoApi;
+  late ServerApi serverInfoApi;
   late MapApi mapApi;
   late PartnersApi partnersApi;
   late PeopleApi peopleApi;
@@ -29,6 +29,7 @@ class ApiService implements Authentication {
   late ActivitiesApi activitiesApi;
   late DownloadApi downloadApi;
   late TrashApi trashApi;
+  late StacksApi stacksApi;
 
   ApiService() {
     final endpoint = Store.tryGet(StoreKey.serverEndpoint);
@@ -49,7 +50,7 @@ class ApiService implements Authentication {
     oAuthApi = OAuthApi(_apiClient);
     albumsApi = AlbumsApi(_apiClient);
     assetsApi = AssetsApi(_apiClient);
-    serverInfoApi = ServerInfoApi(_apiClient);
+    serverInfoApi = ServerApi(_apiClient);
     searchApi = SearchApi(_apiClient);
     mapApi = MapApi(_apiClient);
     partnersApi = PartnersApi(_apiClient);
@@ -61,6 +62,7 @@ class ApiService implements Authentication {
     activitiesApi = ActivitiesApi(_apiClient);
     downloadApi = DownloadApi(_apiClient);
     trashApi = TrashApi(_apiClient);
+    stacksApi = StacksApi(_apiClient);
   }
 
   Future<String> resolveAndSetEndpoint(String serverUrl) async {
@@ -95,27 +97,13 @@ class ApiService implements Authentication {
   }
 
   Future<bool> _isEndpointAvailable(String serverUrl) async {
-    final Client client = Client();
-
     if (!serverUrl.endsWith('/api')) {
       serverUrl += '/api';
     }
 
     try {
-      final response = await client
-          .get(
-            Uri.parse("$serverUrl/server-info/ping"),
-            headers: getRequestHeaders(),
-          )
-          .timeout(const Duration(seconds: 5));
-
-      _log.info("Pinging server with response code ${response.statusCode}");
-      if (response.statusCode != 200) {
-        _log.severe(
-          "Server Gateway Error: ${response.body} - Cannot communicate to the server",
-        );
-        return false;
-      }
+      await setEndpoint(serverUrl);
+      await serverInfoApi.pingServer().timeout(Duration(seconds: 5));
     } on TimeoutException catch (_) {
       return false;
     } on SocketException catch (_) {

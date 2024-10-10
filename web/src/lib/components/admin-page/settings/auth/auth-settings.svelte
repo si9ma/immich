@@ -71,7 +71,7 @@
 <div>
   <div in:fade={{ duration: 500 }}>
     <form autocomplete="off" on:submit|preventDefault>
-      <div class="ml-4 mt-4 flex flex-col gap-4">
+      <div class="ml-4 mt-4 flex flex-col">
         <SettingAccordion
           key="oauth"
           title={$t('admin.oauth_settings')}
@@ -209,7 +209,9 @@
 
               <SettingSwitch
                 title={$t('admin.oauth_mobile_redirect_uri_override').toUpperCase()}
-                subtitle={$t('admin.oauth_mobile_redirect_uri_override_description')}
+                subtitle={$t('admin.oauth_mobile_redirect_uri_override_description', {
+                  values: { callback: 'app.immich:///oauth-callback' },
+                })}
                 disabled={disabled || !config.oauth.enabled}
                 on:click={() => handleToggleOverride()}
                 bind:checked={config.oauth.mobileOverrideEnabled}

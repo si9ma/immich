@@ -4,7 +4,6 @@ import {
   CreateLibraryDto,
   LibraryResponseDto,
   LibraryStatsResponseDto,
-  ScanLibraryDto,
   UpdateLibraryDto,
   ValidateLibraryDto,
   ValidateLibraryResponseDto,
@@ -31,16 +30,23 @@ export class LibraryController {
     return this.service.create(dto);
   }
 
+  @Get(':id')
+  @Authenticated({ permission: Permission.LIBRARY_READ, admin: true })
+  getLibrary(@Param() { id }: UUIDParamDto): Promise<LibraryResponseDto> {
+    return this.service.get(id);
+  }
+
   @Put(':id')
   @Authenticated({ permission: Permission.LIBRARY_UPDATE, admin: true })
   updateLibrary(@Param() { id }: UUIDParamDto, @Body() dto: UpdateLibraryDto): Promise<LibraryResponseDto> {
     return this.service.update(id, dto);
   }
 
-  @Get(':id')
-  @Authenticated({ permission: Permission.LIBRARY_READ, admin: true })
-  getLibrary(@Param() { id }: UUIDParamDto): Promise<LibraryResponseDto> {
-    return this.service.get(id);
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Authenticated({ permission: Permission.LIBRARY_DELETE, admin: true })
+  deleteLibrary(@Param() { id }: UUIDParamDto): Promise<void> {
+    return this.service.delete(id);
   }
 
   @Post(':id/validate')
@@ -51,13 +57,6 @@ export class LibraryController {
     return this.service.validate(id, dto);
   }
 
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Authenticated({ permission: Permission.LIBRARY_DELETE, admin: true })
-  deleteLibrary(@Param() { id }: UUIDParamDto): Promise<void> {
-    return this.service.delete(id);
-  }
-
   @Get(':id/statistics')
   @Authenticated({ permission: Permission.LIBRARY_STATISTICS, admin: true })
   getLibraryStatistics(@Param() { id }: UUIDParamDto): Promise<LibraryStatsResponseDto> {
@@ -66,15 +65,8 @@ export class LibraryController {
 
   @Post(':id/scan')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Authenticated({ admin: true })
-  scanLibrary(@Param() { id }: UUIDParamDto, @Body() dto: ScanLibraryDto) {
-    return this.service.queueScan(id, dto);
-  }
-
-  @Post(':id/removeOffline')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Authenticated({ admin: true })
-  removeOfflineFiles(@Param() { id }: UUIDParamDto) {
-    return this.service.queueRemoveOffline(id);
+  @Authenticated({ permission: Permission.LIBRARY_UPDATE, admin: true })
+  scanLibrary(@Param() { id }: UUIDParamDto) {
+    return this.service.queueScan(id);
   }
 }

@@ -45,6 +45,9 @@ export enum AppRoute {
 
   UTILITIES = '/utilities',
   DUPLICATES = '/utilities/duplicates',
+
+  FOLDERS = '/folders',
+  TAGS = '/tags',
 }
 
 export enum ProjectionType {
@@ -68,9 +71,8 @@ export const dateFormats = {
 
 export enum QueryParameter {
   ACTION = 'action',
-  ASSET_INDEX = 'assetIndex',
+  ID = 'id',
   IS_OPEN = 'isOpen',
-  MEMORY_INDEX = 'memoryIndex',
   ONBOARDING_STEP = 'step',
   OPEN_SETTING = 'openSetting',
   PREVIOUS_ROUTE = 'previousRoute',
@@ -78,6 +80,7 @@ export enum QueryParameter {
   SEARCHED_PEOPLE = 'searchedPeople',
   SMART_SEARCH = 'smartSearch',
   PAGE = 'page',
+  PATH = 'path',
 }
 
 export enum OpenSettingQueryParameterValue {
@@ -90,7 +93,7 @@ export enum ActionQueryParameterValue {
   MERGE = 'merge',
 }
 
-export const maximumLengthSearchPeople: number = 20;
+export const maximumLengthSearchPeople = 1000;
 
 // time to load the map before displaying the loading spinner
 export const timeToLoadTheMap: number = 100;
@@ -258,6 +261,7 @@ export const langs = [
   { name: 'Bislama', code: 'bi', loader: () => import('$lib/i18n/bi.json') },
   { name: 'Catalan', code: 'ca', loader: () => import('$lib/i18n/ca.json') },
   { name: 'Czech', code: 'cs', loader: () => import('$lib/i18n/cs.json') },
+  { name: 'Chuvash', code: 'cv', loader: () => import('$lib/i18n/cv.json') },
   { name: 'Danish', code: 'da', loader: () => import('$lib/i18n/da.json') },
   { name: 'German', code: 'de', loader: () => import('$lib/i18n/de.json') },
   defaultLang,
@@ -277,9 +281,14 @@ export const langs = [
   { name: 'Japanese', code: 'ja', loader: () => import('$lib/i18n/ja.json') },
   { name: 'Kurdish (Northern)', code: 'kmr', loader: () => import('$lib/i18n/kmr.json') },
   { name: 'Korean', code: 'ko', loader: () => import('$lib/i18n/ko.json') },
+  { name: 'Luxembourgish', code: 'lb', loader: () => import('$lib/i18n/lb.json') },
   { name: 'Lithuanian', code: 'lt', loader: () => import('$lib/i18n/lt.json') },
   { name: 'Latvian', code: 'lv', loader: () => import('$lib/i18n/lv.json') },
+  { name: 'Malay (Pattani)', code: 'mfa', loader: () => import('$lib/i18n/mfa.json') },
+  { name: 'Macedonian', code: 'mk', loader: () => import('$lib/i18n/mk.json') },
   { name: 'Mongolian', code: 'mn', loader: () => import('$lib/i18n/mn.json') },
+  { name: 'Marathi', code: 'mr', loader: () => import('$lib/i18n/mr.json') },
+  { name: 'Malay', code: 'ms', loader: () => import('$lib/i18n/ms.json') },
   { name: 'Norwegian Bokmål', code: 'nb-NO', weblateCode: 'nb_NO', loader: () => import('$lib/i18n/nb_NO.json') },
   { name: 'Dutch', code: 'nl', loader: () => import('$lib/i18n/nl.json') },
   { name: 'Polish', code: 'pl', loader: () => import('$lib/i18n/pl.json') },
