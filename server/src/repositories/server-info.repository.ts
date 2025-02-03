@@ -1,13 +1,29 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { exiftool } from 'exiftool-vendored';
 import { exec as execCallback } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import sharp from 'sharp';
-import { IConfigRepository } from 'src/interfaces/config.interface';
-import { ILoggerRepository } from 'src/interfaces/logger.interface';
-import { GitHubRelease, IServerInfoRepository, ServerBuildVersions } from 'src/interfaces/server-info.interface';
-import { Instrumentation } from 'src/utils/instrumentation';
+import { ConfigRepository } from 'src/repositories/config.repository';
+import { LoggingRepository } from 'src/repositories/logging.repository';
+
+export interface GitHubRelease {
+  id: number;
+  url: string;
+  tag_name: string;
+  name: string;
+  created_at: string;
+  published_at: string;
+  body: string;
+}
+
+export interface ServerBuildVersions {
+  nodejs: string;
+  ffmpeg: string;
+  libvips: string;
+  exiftool: string;
+  imagemagick: string;
+}
 
 const exec = promisify(execCallback);
 const maybeFirstLine = async (command: string): Promise<string> => {
@@ -34,12 +50,11 @@ const getLockfileVersion = (name: string, lockfile?: BuildLockfile) => {
   return item?.version;
 };
 
-@Instrumentation()
 @Injectable()
-export class ServerInfoRepository implements IServerInfoRepository {
+export class ServerInfoRepository {
   constructor(
-    @Inject(IConfigRepository) private configRepository: IConfigRepository,
-    @Inject(ILoggerRepository) private logger: ILoggerRepository,
+    private configRepository: ConfigRepository,
+    private logger: LoggingRepository,
   ) {
     this.logger.setContext(ServerInfoRepository.name);
   }

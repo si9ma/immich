@@ -1,10 +1,10 @@
 import { IAssetRepository, WithoutProperty } from 'src/interfaces/asset.interface';
 import { IJobRepository, JobName, JobStatus } from 'src/interfaces/job.interface';
-import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { ISearchRepository } from 'src/interfaces/search.interface';
 import { ISystemMetadataRepository } from 'src/interfaces/system-metadata.interface';
 import { DuplicateService } from 'src/services/duplicate.service';
 import { SearchService } from 'src/services/search.service';
+import { ILoggingRepository } from 'src/types';
 import { assetStub } from 'test/fixtures/asset.stub';
 import { authStub } from 'test/fixtures/auth.stub';
 import { newTestService } from 'test/utils';
@@ -17,7 +17,7 @@ describe(SearchService.name, () => {
 
   let assetMock: Mocked<IAssetRepository>;
   let jobMock: Mocked<IJobRepository>;
-  let loggerMock: Mocked<ILoggerRepository>;
+  let loggerMock: Mocked<ILoggingRepository>;
   let searchMock: Mocked<ISearchRepository>;
   let systemMock: Mocked<ISystemMetadataRepository>;
 
@@ -31,9 +31,20 @@ describe(SearchService.name, () => {
 
   describe('getDuplicates', () => {
     it('should get duplicates', async () => {
-      assetMock.getDuplicates.mockResolvedValue([assetStub.hasDupe]);
+      assetMock.getDuplicates.mockResolvedValue([
+        {
+          duplicateId: assetStub.hasDupe.duplicateId!,
+          assets: [assetStub.hasDupe, assetStub.hasDupe],
+        },
+      ]);
       await expect(sut.getDuplicates(authStub.admin)).resolves.toEqual([
-        { duplicateId: assetStub.hasDupe.duplicateId, assets: [expect.objectContaining({ id: assetStub.hasDupe.id })] },
+        {
+          duplicateId: assetStub.hasDupe.duplicateId,
+          assets: [
+            expect.objectContaining({ id: assetStub.hasDupe.id }),
+            expect.objectContaining({ id: assetStub.hasDupe.id }),
+          ],
+        },
       ]);
     });
   });

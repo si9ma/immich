@@ -4,8 +4,8 @@ import { access, constants } from 'node:fs/promises';
 import { basename, extname, isAbsolute } from 'node:path';
 import { promisify } from 'node:util';
 import { CacheControl } from 'src/enum';
-import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { ImmichReadStream } from 'src/interfaces/storage.interface';
+import { ILoggingRepository } from 'src/types';
 import { isConnectionAborted } from 'src/utils/misc';
 
 export function getFileNameWithoutExtension(path: string): string {
@@ -24,6 +24,7 @@ export class ImmichFileResponse {
   public readonly path!: string;
   public readonly contentType!: string;
   public readonly cacheControl!: CacheControl;
+  public readonly fileName?: string;
 
   constructor(response: ImmichFileResponse) {
     Object.assign(this, response);
@@ -36,7 +37,7 @@ export const sendFile = async (
   res: Response,
   next: NextFunction,
   handler: () => Promise<ImmichFileResponse>,
-  logger: ILoggerRepository,
+  logger: ILoggingRepository,
 ): Promise<void> => {
   const _sendFile = (path: string, options: SendFileOptions) =>
     promisify<string, SendFileOptions>(res.sendFile).bind(res)(path, options);
@@ -56,6 +57,9 @@ export const sendFile = async (
     }
 
     res.header('Content-Type', file.contentType);
+    if (file.fileName) {
+      res.header('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(file.fileName)}`);
+    }
 
     const options: SendFileOptions = { dotfiles: 'allow' };
     if (!isAbsolute(file.path)) {

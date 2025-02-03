@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:immich_mobile/constants/enums.dart';
 import 'package:immich_mobile/entities/user.entity.dart';
 import 'package:immich_mobile/models/albums/album_search.model.dart';
 import 'package:immich_mobile/services/album.service.dart';
@@ -45,8 +46,18 @@ class AlbumNotifier extends StateNotifier<List<Album>> {
   ) =>
       _albumService.createAlbum(albumTitle, assets, []);
 
-  Future<Album?> getAlbumByName(String albumName, {bool remoteOnly = false}) =>
-      _albumService.getAlbumByName(albumName, remoteOnly);
+  Future<Album?> getAlbumByName(
+    String albumName, {
+    bool? remote,
+    bool? shared,
+    bool? owner,
+  }) =>
+      _albumService.getAlbumByName(
+        albumName,
+        remote: remote,
+        shared: shared,
+        owner: owner,
+      );
 
   /// Create an album on the server with the same name as the selected album for backup
   /// First this will check if the album already exists on the server with name
@@ -54,7 +65,7 @@ class AlbumNotifier extends StateNotifier<List<Album>> {
   Future<void> createSyncAlbum(
     String albumName,
   ) async {
-    final album = await getAlbumByName(albumName, remoteOnly: true);
+    final album = await getAlbumByName(albumName, remote: true, owner: true);
     if (album != null) {
       return;
     }
@@ -106,6 +117,13 @@ class AlbumNotifier extends StateNotifier<List<Album>> {
     return _albumService.setActivityStatus(album, enabled);
   }
 
+  Future<Album?> toggleSortOrder(Album album) {
+    final order =
+        album.sortOrder == SortOrder.asc ? SortOrder.desc : SortOrder.asc;
+
+    return _albumService.updateSortOrder(album, order);
+  }
+
   @override
   void dispose() {
     _streamSub.cancel();
@@ -135,11 +153,22 @@ final albumWatcher =
 final albumRenderlistProvider =
     StreamProvider.autoDispose.family<RenderList, int>((ref, albumId) {
   final album = ref.watch(albumWatcher(albumId)).value;
+
   if (album != null) {
-    final query =
-        album.assets.filter().isTrashedEqualTo(false).sortByFileCreatedAtDesc();
-    return renderListGeneratorWithGroupBy(query, GroupAssetsBy.none);
+    final query = album.assets.filter().isTrashedEqualTo(false);
+    if (album.sortOrder == SortOrder.asc) {
+      return renderListGeneratorWithGroupBy(
+        query.sortByFileCreatedAt(),
+        GroupAssetsBy.none,
+      );
+    } else if (album.sortOrder == SortOrder.desc) {
+      return renderListGeneratorWithGroupBy(
+        query.sortByFileCreatedAtDesc(),
+        GroupAssetsBy.none,
+      );
+    }
   }
+
   return const Stream.empty();
 });
 

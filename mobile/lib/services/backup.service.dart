@@ -313,15 +313,12 @@ class BackupService {
             );
           }
         } else {
-          if (asset.type == AssetType.video) {
-            file = await asset.local!.originFile;
-          } else {
-            file = await asset.local!.originFile
+          file =
+              await asset.local!.originFile.timeout(const Duration(seconds: 5));
+
+          if (asset.local!.isLivePhoto) {
+            livePhotoFile = await asset.local!.originFileWithSubtype
                 .timeout(const Duration(seconds: 5));
-            if (asset.local!.isLivePhoto) {
-              livePhotoFile = await asset.local!.originFileWithSubtype
-                  .timeout(const Duration(seconds: 5));
-            }
           }
         }
 
@@ -522,18 +519,12 @@ class BackupService {
     return responseBody.containsKey('id') ? responseBody['id'] : null;
   }
 
-  String _getAssetType(AssetType assetType) {
-    switch (assetType) {
-      case AssetType.audio:
-        return "AUDIO";
-      case AssetType.image:
-        return "IMAGE";
-      case AssetType.video:
-        return "VIDEO";
-      case AssetType.other:
-        return "OTHER";
-    }
-  }
+  String _getAssetType(AssetType assetType) => switch (assetType) {
+        AssetType.audio => "AUDIO",
+        AssetType.image => "IMAGE",
+        AssetType.video => "VIDEO",
+        AssetType.other => "OTHER",
+      };
 }
 
 class MultipartRequest extends http.MultipartRequest {

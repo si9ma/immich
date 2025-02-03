@@ -2,16 +2,20 @@
   import Tree from '$lib/components/shared-components/tree/tree.svelte';
   import { normalizeTreePath, type RecursiveObject } from '$lib/utils/tree-utils';
 
-  export let items: RecursiveObject;
-  export let parent = '';
-  export let active = '';
-  export let icons: { default: string; active: string };
-  export let getLink: (path: string) => string;
-  export let getColor: (path: string) => string | undefined = () => undefined;
+  interface Props {
+    items: RecursiveObject;
+    parent?: string;
+    active?: string;
+    icons: { default: string; active: string };
+    getLink: (path: string) => string;
+    getColor?: (path: string) => string | undefined;
+  }
+
+  let { items, parent = '', active = '', icons, getLink, getColor = () => undefined }: Props = $props();
 </script>
 
 <ul class="list-none ml-2">
-  {#each Object.entries(items) as [path, tree]}
+  {#each Object.entries(items).sort() as [path, tree]}
     {@const value = normalizeTreePath(`${parent}/${path}`)}
     {@const key = value + getColor(value)}
     {#key key}

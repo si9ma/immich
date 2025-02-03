@@ -16,7 +16,7 @@ export const handleToggleTheme = () => {
 };
 
 const initTheme = (): ThemeSetting => {
-  if (browser && !window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  if (browser && globalThis.matchMedia && !globalThis.matchMedia('(prefers-color-scheme: dark)').matches) {
     return { value: Theme.LIGHT, system: false };
   }
   return { value: Theme.DARK, system: false };
@@ -62,7 +62,7 @@ export interface MapSettings {
   dateBefore: string;
 }
 
-export const mapSettings = persisted<MapSettings>('map-settings', {
+const defaultMapSettings = {
   allowDarkMode: true,
   includeArchived: false,
   onlyFavorites: false,
@@ -71,7 +71,17 @@ export const mapSettings = persisted<MapSettings>('map-settings', {
   relativeDate: '',
   dateAfter: '',
   dateBefore: '',
-});
+};
+
+const persistedObject = <T>(key: string, defaults: T) =>
+  persisted<T>(key, defaults, {
+    serializer: {
+      parse: (text) => ({ ...defaultMapSettings, ...JSON.parse(text ?? null) }),
+      stringify: JSON.stringify,
+    },
+  });
+
+export const mapSettings = persistedObject<MapSettings>('map-settings', defaultMapSettings);
 
 export const videoViewerVolume = persisted<number>('video-viewer-volume', 1, {});
 export const videoViewerMuted = persisted<boolean>('video-viewer-muted', false, {});
@@ -144,3 +154,5 @@ export const alwaysLoadOriginalFile = persisted<boolean>('always-load-original-f
 export const playVideoThumbnailOnHover = persisted<boolean>('play-video-thumbnail-on-hover', true, {});
 
 export const loopVideo = persisted<boolean>('loop-video', true, {});
+
+export const recentAlbumsDropdown = persisted<boolean>('recent-albums-open', true, {});

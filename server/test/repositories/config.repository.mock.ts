@@ -1,6 +1,7 @@
 import { ImmichEnvironment, ImmichWorker } from 'src/enum';
-import { EnvData, IConfigRepository } from 'src/interfaces/config.interface';
 import { DatabaseExtension } from 'src/interfaces/database.interface';
+import { EnvData } from 'src/repositories/config.repository';
+import { IConfigRepository } from 'src/types';
 import { Mocked, vitest } from 'vitest';
 
 const envData: EnvData = {
@@ -8,13 +9,33 @@ const envData: EnvData = {
   environment: ImmichEnvironment.PRODUCTION,
 
   buildMetadata: {},
+  bull: {
+    config: {
+      prefix: 'immich_bull',
+    },
+    queues: [{ name: 'queue-1' }],
+  },
+
+  cls: {
+    config: {},
+  },
 
   database: {
-    host: 'database',
-    port: 5432,
-    username: 'postgres',
-    password: 'postgres',
-    name: 'immich',
+    config: {
+      kysely: { database: 'immich', host: 'database', port: 5432 },
+      typeorm: {
+        connectionType: 'parts',
+        database: 'immich',
+        type: 'postgres',
+        host: 'database',
+        port: 5432,
+        username: 'postgres',
+        password: 'postgres',
+        name: 'immich',
+        synchronize: false,
+        migrationsRun: true,
+      },
+    },
 
     skipMigrations: false,
     vectorExtension: DatabaseExtension.VECTORS,
@@ -23,6 +44,26 @@ const envData: EnvData = {
   licensePublicKey: {
     client: 'client-public-key',
     server: 'server-public-key',
+  },
+
+  network: {
+    trustedProxies: [],
+  },
+
+  otel: {
+    metrics: {
+      hostMetrics: false,
+      apiMetrics: {
+        enable: false,
+        ignoreRoutes: [],
+      },
+    },
+  },
+
+  redis: {
+    host: 'redis',
+    port: 6379,
+    db: 0,
   },
 
   resourcePaths: {
@@ -44,15 +85,21 @@ const envData: EnvData = {
     ignoreMountCheckErrors: false,
   },
 
+  telemetry: {
+    apiPort: 8081,
+    microservicesPort: 8082,
+    metrics: new Set(),
+  },
+
   workers: [ImmichWorker.API, ImmichWorker.MICROSERVICES],
 
   noColor: false,
 };
 
+export const mockEnvData = (config: Partial<EnvData>) => ({ ...envData, ...config });
 export const newConfigRepositoryMock = (): Mocked<IConfigRepository> => {
   return {
-    getEnv: vitest.fn().mockReturnValue(envData),
+    getEnv: vitest.fn().mockReturnValue(mockEnvData({})),
+    getWorker: vitest.fn().mockReturnValue(ImmichWorker.API),
   };
 };
-
-export const mockEnvData = (config: Partial<EnvData>) => ({ ...envData, ...config });

@@ -7,39 +7,74 @@
     type AdapterConstructor,
     type PluginConstructor,
   } from '@photo-sphere-viewer/core';
+  import { SettingsPlugin } from '@photo-sphere-viewer/settings-plugin';
+  import { ResolutionPlugin } from '@photo-sphere-viewer/resolution-plugin';
   import '@photo-sphere-viewer/core/index.css';
+  import '@photo-sphere-viewer/settings-plugin/index.css';
   import { onDestroy, onMount } from 'svelte';
 
-  export let panorama: string | { source: string };
-  export let originalImageUrl: string | null;
-  export let adapter: AdapterConstructor | [AdapterConstructor, unknown] = EquirectangularAdapter;
-  export let plugins: (PluginConstructor | [PluginConstructor, unknown])[] = [];
-  export let navbar = false;
+  interface Props {
+    panorama: string | { source: string };
+    originalPanorama?: string | { source: string };
+    adapter?: AdapterConstructor | [AdapterConstructor, unknown];
+    plugins?: (PluginConstructor | [PluginConstructor, unknown])[];
+    navbar?: boolean;
+  }
 
-  let container: HTMLDivElement;
+  let { panorama, originalPanorama, adapter = EquirectangularAdapter, plugins = [], navbar = false }: Props = $props();
+
+  let container: HTMLDivElement | undefined = $state();
   let viewer: Viewer;
 
   onMount(() => {
+    if (!container) {
+      return;
+    }
+
     viewer = new Viewer({
       adapter,
-      plugins,
+      plugins: [
+        SettingsPlugin,
+        [
+          ResolutionPlugin,
+          {
+            defaultResolution: $alwaysLoadOriginalFile && originalPanorama ? 'original' : 'default',
+            resolutions: [
+              {
+                id: 'default',
+                label: 'Default',
+                panorama,
+              },
+              ...(originalPanorama
+                ? [
+                    {
+                      id: 'original',
+                      label: 'Original',
+                      panorama: originalPanorama,
+                    },
+                  ]
+                : []),
+            ],
+          },
+        ],
+        ...plugins,
+      ],
       container,
-      panorama,
-      touchmoveTwoFingers: true,
+      touchmoveTwoFingers: false,
       mousewheelCtrlKey: false,
       navbar,
-      maxFov: 180,
-      fisheye: true,
+      minFov: 10,
+      maxFov: 120,
+      fisheye: false,
     });
+    const resolutionPlugin = viewer.getPlugin(ResolutionPlugin) as ResolutionPlugin;
 
-    if (originalImageUrl && !$alwaysLoadOriginalFile) {
+    if (originalPanorama && !$alwaysLoadOriginalFile) {
       const zoomHandler = ({ zoomLevel }: events.ZoomUpdatedEvent) => {
         // zoomLevel range: [0, 100]
         if (Math.round(zoomLevel) >= 75) {
           // Replace the preview with the original
-          viewer.setPanorama(originalImageUrl, { showLoader: false, speed: 150 }).catch(() => {
-            viewer.setPanorama(panorama, { showLoader: false, speed: 0 }).catch(() => {});
-          });
+          void resolutionPlugin.setResolution('original');
           viewer.removeEventListener(events.ZoomUpdatedEvent.type, zoomHandler);
         }
       };
@@ -54,4 +89,4 @@
   });
 </script>
 
-<div class="h-full w-full mb-0" bind:this={container} />
+<div class="h-full w-full mb-0" bind:this={container}></div>

@@ -39,13 +39,16 @@ All the services are packaged to run as with single Docker Compose command.
 make dev # required Makefile installed on the system.
 ```
 
-5. Access the dev instance in your browser at http://localhost:2283, or connect via the mobile app.
+5. Access the dev instance in your browser at http://localhost:3000, or connect via the mobile app.
 
 All the services will be started with hot-reloading enabled for a quick feedback loop.
 
-You can access the web from `http://your-machine-ip:2283` or `http://localhost:2283` and access the server from the mobile app at `http://your-machine-ip:2283/api`
+You can access the web from `http://your-machine-ip:3000` or `http://localhost:3000` and access the server from the mobile app at `http://your-machine-ip:3000/api`
 
-**Note:** the "web" development container runs with uid 1000. If that uid does not have read/write permissions on the mounted volumes, you may encounter errors
+**Notes:**
+
+- The "web" development container runs with uid 1000. If that uid does not have read/write permissions on the mounted volumes, you may encounter errors
+- In case of rootless docker setup, you need to use root within the container, otherwise you will encounter read/write permission related errors, see comments in `docker/docker-compose.dev.yml`.
 
 #### Connect web to a remote backend
 
@@ -59,6 +62,17 @@ If you only want to do web development connected to an existing, remote backend,
 ```bash
 IMMICH_SERVER_URL=https://demo.immich.app/ npm run dev
 ```
+
+#### `@immich/ui`
+
+To see local changes to `@immich/ui` in Immich, do the following:
+
+1. Install `@immich/ui` as a sibling to `immich/`, for example `/home/user/immich` and `/home/user/ui`
+1. Build the `@immich/ui` project via `npm run build`
+1. Uncomment the corresponding volume in web service of the `docker/docker-compose.dev.yaml` file (`../../ui:/usr/ui`)
+1. Uncomment the corresponding alias in the `web/vite.config.js` file (`'@immich/ui': path.resolve(\_\_dirname, '../../ui')`)
+1. Start up the stack via `make dev`
+1. After making changes in `@immich/ui`, rebuild it (`npm run build`)
 
 ### Mobile app
 
@@ -76,7 +90,7 @@ Setting these in the IDE give a better developer experience, auto-formatting cod
 
 ### Dart Code Metrics
 
-The mobile app uses DCM (Dart Code Metrics) for linting and metrics calculation. Please refer to the [Getting Started](https://dcm.dev/docs/getting-started/#installation) page for more information on setting up DCM
+The mobile app uses DCM (Dart Code Metrics) for linting and metrics calculation. Please refer to the [Getting Started](https://dcm.dev/docs/) page for more information on setting up DCM
 
 Note: Activating the license is not required.
 

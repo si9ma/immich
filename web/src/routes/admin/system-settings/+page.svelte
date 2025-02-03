@@ -1,6 +1,7 @@
 <script lang="ts">
   import AdminSettings from '$lib/components/admin-page/settings/admin-settings.svelte';
   import AuthSettings from '$lib/components/admin-page/settings/auth/auth-settings.svelte';
+  import BackupSettings from '$lib/components/admin-page/settings/backup-settings/backup-settings.svelte';
   import FFmpegSettings from '$lib/components/admin-page/settings/ffmpeg/ffmpeg-settings.svelte';
   import ImageSettings from '$lib/components/admin-page/settings/image/image-settings.svelte';
   import JobSettings from '$lib/components/admin-page/settings/job-settings/job-settings.svelte';
@@ -16,8 +17,7 @@
   import ThemeSettings from '$lib/components/admin-page/settings/theme/theme-settings.svelte';
   import TrashSettings from '$lib/components/admin-page/settings/trash-settings/trash-settings.svelte';
   import UserSettings from '$lib/components/admin-page/settings/user-settings/user-settings.svelte';
-  import LinkButton from '$lib/components/elements/buttons/link-button.svelte';
-  import Icon from '$lib/components/elements/icon.svelte';
+  import { Button, Text, HStack, Alert } from '@immich/ui';
   import UserPageLayout from '$lib/components/layouts/user-page-layout.svelte';
   import SettingAccordionState from '$lib/components/shared-components/settings/setting-accordion-state.svelte';
   import SettingAccordion from '$lib/components/shared-components/settings/setting-accordion.svelte';
@@ -26,10 +26,9 @@
   import { featureFlags } from '$lib/stores/server-config.store';
   import { copyToClipboard } from '$lib/utils';
   import { downloadBlob } from '$lib/utils/asset-utils';
-  import type { SystemConfigDto } from '@immich/sdk';
   import {
     mdiAccountOutline,
-    mdiAlert,
+    mdiBackupRestore,
     mdiBellOutline,
     mdiBookshelf,
     mdiContentCopy,
@@ -51,19 +50,35 @@
   } from '@mdi/js';
   import type { PageData } from './$types';
   import { t } from 'svelte-i18n';
-  import type { ComponentType, SvelteComponent } from 'svelte';
+  import type { Component } from 'svelte';
   import type { SettingsComponentProps } from '$lib/components/admin-page/settings/admin-settings';
   import SearchBar from '$lib/components/elements/search-bar.svelte';
 
-  export let data: PageData;
+  interface Props {
+    data: PageData;
+  }
 
-  let config = data.configs;
-  let handleSave: (update: Partial<SystemConfigDto>) => Promise<void>;
+  let { data }: Props = $props();
 
-  type SettingsComponent = ComponentType<SvelteComponent<SettingsComponentProps>>;
+  let config = $state(data.configs);
+  let adminSettingElement = $state<ReturnType<typeof AdminSettings>>();
+
+  type SettingsComponent = Component<SettingsComponentProps>;
+
+  // https://stackoverflow.com/questions/16167581/sort-object-properties-and-json-stringify/43636793#43636793
+  const jsonReplacer = (key: string, value: unknown) =>
+    value instanceof Object && !Array.isArray(value)
+      ? Object.keys(value)
+          .sort()
+          // eslint-disable-next-line unicorn/no-array-reduce
+          .reduce((sorted: { [key: string]: unknown }, key) => {
+            sorted[key] = (value as { [key: string]: unknown })[key];
+            return sorted;
+          }, {})
+      : value;
 
   const downloadConfig = () => {
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(config, jsonReplacer, 2)], { type: 'application/json' });
     const downloadKey = 'immich-config.json';
     downloadManager.add(downloadKey, blob.size);
     downloadManager.update(downloadKey, blob.size);
@@ -71,7 +86,8 @@
     setTimeout(() => downloadManager.clear(downloadKey), 5000);
   };
 
-  let inputElement: HTMLInputElement;
+  let inputElement: HTMLInputElement | undefined = $state();
+
   const uploadConfig = (e: Event) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) {
@@ -80,7 +96,7 @@
     const reader = async () => {
       const text = await file.text();
       const newConfig = JSON.parse(text);
-      await handleSave(newConfig);
+      await adminSettingElement?.handleSave(newConfig);
     };
     reader().catch((error) => console.error('Error handling JSON config upload', error));
   };
@@ -98,6 +114,13 @@
       subtitle: $t('admin.authentication_settings_description'),
       key: 'authentication',
       icon: mdiLockOutline,
+    },
+    {
+      component: BackupSettings,
+      title: $t('admin.backup_settings'),
+      subtitle: $t('admin.backup_settings_description'),
+      key: 'backup',
+      icon: mdiBackupRestore,
     },
     {
       component: ImageSettings,
@@ -206,56 +229,57 @@
     },
   ];
 
-  let searchQuery = '';
+  let searchQuery = $state('');
 
-  $: filteredSettings = settings.filter(({ title, subtitle }) => {
-    const query = searchQuery.toLowerCase();
-    return title.toLowerCase().includes(query) || subtitle.toLowerCase().includes(query);
-  });
+  let filteredSettings = $derived(
+    settings.filter(({ title, subtitle }) => {
+      const query = searchQuery.toLowerCase();
+      return title.toLowerCase().includes(query) || subtitle.toLowerCase().includes(query);
+    }),
+  );
 </script>
 
-<input bind:this={inputElement} type="file" accept=".json" style="display: none" on:change={uploadConfig} />
+<input bind:this={inputElement} type="file" accept=".json" style="display: none" onchange={uploadConfig} />
 
-<div class="h-svh flex flex-col overflow-hidden">
-  {#if $featureFlags.configFile}
-    <div class="flex flex-row items-center gap-2 bg-gray-100 p-3 dark:bg-gray-800">
-      <Icon path={mdiAlert} class="text-yellow-400" size={18} />
-      <h2 class="text-md text-immich-primary dark:text-immich-dark-primary">
-        {$t('admin.config_set_by_file')}
-      </h2>
-    </div>
-  {/if}
-
-  <UserPageLayout title={data.meta.title} admin>
-    <div class="flex justify-end gap-2" slot="buttons">
+<UserPageLayout title={data.meta.title} admin>
+  {#snippet buttons()}
+    <HStack gap={1}>
       <div class="hidden lg:block">
         <SearchBar placeholder={$t('search_settings')} bind:name={searchQuery} showLoadingSpinner={false} />
       </div>
-      <LinkButton on:click={() => copyToClipboard(JSON.stringify(config, null, 2))}>
-        <div class="flex place-items-center gap-2 text-sm">
-          <Icon path={mdiContentCopy} size="18" />
-          {$t('copy_to_clipboard')}
-        </div>
-      </LinkButton>
-      <LinkButton on:click={() => downloadConfig()}>
-        <div class="flex place-items-center gap-2 text-sm">
-          <Icon path={mdiDownload} size="18" />
-          {$t('export_as_json')}
-        </div>
-      </LinkButton>
+      <Button
+        leadingIcon={mdiContentCopy}
+        onclick={() => copyToClipboard(JSON.stringify(config, jsonReplacer, 2))}
+        size="small"
+        variant="ghost"
+        color="secondary"
+      >
+        <Text class="hidden md:block">{$t('copy_to_clipboard')}</Text>
+      </Button>
+      <Button leadingIcon={mdiDownload} onclick={() => downloadConfig()} size="small" variant="ghost" color="secondary">
+        <Text class="hidden md:block">{$t('export_as_json')}</Text>
+      </Button>
       {#if !$featureFlags.configFile}
-        <LinkButton on:click={() => inputElement?.click()}>
-          <div class="flex place-items-center gap-2 text-sm">
-            <Icon path={mdiUpload} size="18" />
-            {$t('import_from_json')}
-          </div>
-        </LinkButton>
+        <Button
+          leadingIcon={mdiUpload}
+          onclick={() => inputElement?.click()}
+          size="small"
+          variant="ghost"
+          color="secondary"
+        >
+          <Text class="hidden md:block">{$t('import_from_json')}</Text>
+        </Button>
       {/if}
-    </div>
+    </HStack>
+  {/snippet}
 
-    <AdminSettings bind:config let:handleReset bind:handleSave let:savedConfig let:defaultConfig>
+  <AdminSettings bind:config bind:this={adminSettingElement}>
+    {#snippet children({ savedConfig, defaultConfig })}
       <section id="setting-content" class="flex place-content-center sm:mx-4">
         <section class="w-full pb-28 sm:w-5/6 md:w-[896px]">
+          {#if $featureFlags.configFile}
+            <Alert color="warning" class="text-dark my-4" title={$t('admin.config_set_by_file')} />
+          {/if}
           <div class="block lg:hidden">
             <SearchBar placeholder={$t('search_settings')} bind:name={searchQuery} showLoadingSpinner={false} />
           </div>
@@ -263,11 +287,11 @@
             {#each filteredSettings as { component: Component, title, subtitle, key, icon } (key)}
               <SettingAccordion {title} {subtitle} {key} {icon}>
                 <Component
-                  onSave={(config) => handleSave(config)}
-                  onReset={(options) => handleReset(options)}
+                  onSave={(config) => adminSettingElement?.handleSave(config)}
+                  onReset={(options) => adminSettingElement?.handleReset(options)}
                   disabled={$featureFlags.configFile}
+                  bind:config
                   {defaultConfig}
-                  {config}
                   {savedConfig}
                 />
               </SettingAccordion>
@@ -275,6 +299,6 @@
           </SettingAccordionState>
         </section>
       </section>
-    </AdminSettings>
-  </UserPageLayout>
-</div>
+    {/snippet}
+  </AdminSettings>
+</UserPageLayout>

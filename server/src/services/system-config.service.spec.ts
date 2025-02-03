@@ -12,15 +12,13 @@ import {
   VideoCodec,
   VideoContainer,
 } from 'src/enum';
-import { IConfigRepository } from 'src/interfaces/config.interface';
 import { IEventRepository } from 'src/interfaces/event.interface';
 import { QueueName } from 'src/interfaces/job.interface';
-import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { ISystemMetadataRepository } from 'src/interfaces/system-metadata.interface';
 import { SystemConfigService } from 'src/services/system-config.service';
+import { DeepPartial, IConfigRepository, ILoggingRepository } from 'src/types';
 import { mockEnvData } from 'test/repositories/config.repository.mock';
 import { newTestService } from 'test/utils';
-import { DeepPartial } from 'typeorm';
 import { Mocked } from 'vitest';
 
 const partialConfig = {
@@ -44,12 +42,19 @@ const updatedConfig = Object.freeze<SystemConfig>({
     [QueueName.VIDEO_CONVERSION]: { concurrency: 1 },
     [QueueName.NOTIFICATION]: { concurrency: 5 },
   },
+  backup: {
+    database: {
+      enabled: true,
+      cronExpression: '0 02 * * *',
+      keepLastAmount: 14,
+    },
+  },
   ffmpeg: {
     crf: 30,
     threads: 0,
     preset: 'ultrafast',
     targetAudioCodec: AudioCodec.AAC,
-    acceptedAudioCodecs: [AudioCodec.AAC, AudioCodec.MP3, AudioCodec.LIBOPUS],
+    acceptedAudioCodecs: [AudioCodec.AAC, AudioCodec.MP3, AudioCodec.LIBOPUS, AudioCodec.PCMS16LE],
     targetResolution: '720',
     targetVideoCodec: VideoCodec.H264,
     acceptedVideoCodecs: [VideoCodec.H264],
@@ -58,7 +63,6 @@ const updatedConfig = Object.freeze<SystemConfig>({
     bframes: -1,
     refs: 0,
     gopSize: 0,
-    npl: 0,
     temporalAQ: false,
     cqMode: CQMode.AUTO,
     twoPass: false,
@@ -79,7 +83,7 @@ const updatedConfig = Object.freeze<SystemConfig>({
   },
   machineLearning: {
     enabled: true,
-    url: 'http://immich-machine-learning:3003',
+    urls: ['http://immich-machine-learning:3003'],
     clip: {
       enabled: true,
       modelName: 'ViT-B-32__openai',
@@ -127,6 +131,7 @@ const updatedConfig = Object.freeze<SystemConfig>({
   server: {
     externalDomain: '',
     loginPageMessage: '',
+    publicUsers: true,
   },
   storageTemplate: {
     enabled: false,
@@ -183,6 +188,13 @@ const updatedConfig = Object.freeze<SystemConfig>({
       },
     },
   },
+  templates: {
+    email: {
+      albumInviteTemplate: '',
+      welcomeTemplate: '',
+      albumUpdateTemplate: '',
+    },
+  },
 });
 
 describe(SystemConfigService.name, () => {
@@ -190,7 +202,7 @@ describe(SystemConfigService.name, () => {
 
   let configMock: Mocked<IConfigRepository>;
   let eventMock: Mocked<IEventRepository>;
-  let loggerMock: Mocked<ILoggerRepository>;
+  let loggerMock: Mocked<ILoggingRepository>;
   let systemMock: Mocked<ISystemMetadataRepository>;
 
   beforeEach(() => {
@@ -235,6 +247,47 @@ describe(SystemConfigService.name, () => {
       await expect(sut.getSystemConfig()).resolves.toEqual(updatedConfig);
 
       expect(systemMock.readFile).toHaveBeenCalledWith('immich-config.json');
+    });
+
+    it('should transform booleans', async () => {
+      configMock.getEnv.mockReturnValue(mockEnvData({ configFile: 'immich-config.json' }));
+      systemMock.readFile.mockResolvedValue(JSON.stringify({ ffmpeg: { twoPass: 'false' } }));
+
+      await expect(sut.getSystemConfig()).resolves.toMatchObject({
+        ffmpeg: expect.objectContaining({ twoPass: false }),
+      });
+    });
+
+    it('should transform numbers', async () => {
+      configMock.getEnv.mockReturnValue(mockEnvData({ configFile: 'immich-config.json' }));
+      systemMock.readFile.mockResolvedValue(JSON.stringify({ ffmpeg: { threads: '42' } }));
+
+      await expect(sut.getSystemConfig()).resolves.toMatchObject({
+        ffmpeg: expect.objectContaining({ threads: 42 }),
+      });
+    });
+
+    it('should accept valid cron expressions', async () => {
+      configMock.getEnv.mockReturnValue(mockEnvData({ configFile: 'immich-config.json' }));
+      systemMock.readFile.mockResolvedValue(JSON.stringify({ library: { scan: { cronExpression: '0 0 * * *' } } }));
+
+      await expect(sut.getSystemConfig()).resolves.toMatchObject({
+        library: {
+          scan: {
+            enabled: true,
+            cronExpression: '0 0 * * *',
+          },
+        },
+      });
+    });
+
+    it('should reject invalid cron expressions', async () => {
+      configMock.getEnv.mockReturnValue(mockEnvData({ configFile: 'immich-config.json' }));
+      systemMock.readFile.mockResolvedValue(JSON.stringify({ library: { scan: { cronExpression: 'foo' } } }));
+
+      await expect(sut.getSystemConfig()).rejects.toThrow(
+        'library.scan.cronExpression has failed the following constraints: cronValidator',
+      );
     });
 
     it('should log errors with the config file', async () => {
@@ -282,11 +335,11 @@ describe(SystemConfigService.name, () => {
 
     it('should allow underscores in the machine learning url', async () => {
       configMock.getEnv.mockReturnValue(mockEnvData({ configFile: 'immich-config.json' }));
-      const partialConfig = { machineLearning: { url: 'immich_machine_learning' } };
+      const partialConfig = { machineLearning: { urls: ['immich_machine_learning'] } };
       systemMock.readFile.mockResolvedValue(JSON.stringify(partialConfig));
 
       const config = await sut.getSystemConfig();
-      expect(config.machineLearning.url).toEqual('immich_machine_learning');
+      expect(config.machineLearning.urls).toEqual(['immich_machine_learning']);
     });
 
     const externalDomainTests = [
@@ -339,41 +392,6 @@ describe(SystemConfigService.name, () => {
         }
       });
     }
-  });
-
-  describe('getStorageTemplateOptions', () => {
-    it('should send back the datetime variables', () => {
-      expect(sut.getStorageTemplateOptions()).toEqual({
-        dayOptions: ['d', 'dd'],
-        hourOptions: ['h', 'hh', 'H', 'HH'],
-        minuteOptions: ['m', 'mm'],
-        monthOptions: ['M', 'MM', 'MMM', 'MMMM'],
-        presetOptions: [
-          '{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}',
-          '{{y}}/{{MM}}-{{dd}}/{{filename}}',
-          '{{y}}/{{MMMM}}-{{dd}}/{{filename}}',
-          '{{y}}/{{MM}}/{{filename}}',
-          '{{y}}/{{#if album}}{{album}}{{else}}Other/{{MM}}{{/if}}/{{filename}}',
-          '{{y}}/{{MMM}}/{{filename}}',
-          '{{y}}/{{MMMM}}/{{filename}}',
-          '{{y}}/{{MM}}/{{dd}}/{{filename}}',
-          '{{y}}/{{MMMM}}/{{dd}}/{{filename}}',
-          '{{y}}/{{y}}-{{MM}}/{{y}}-{{MM}}-{{dd}}/{{filename}}',
-          '{{y}}-{{MM}}-{{dd}}/{{filename}}',
-          '{{y}}-{{MMM}}-{{dd}}/{{filename}}',
-          '{{y}}-{{MMMM}}-{{dd}}/{{filename}}',
-          '{{y}}/{{y}}-{{MM}}/{{filename}}',
-          '{{y}}/{{y}}-{{WW}}/{{filename}}',
-          '{{y}}/{{y}}-{{MM}}-{{dd}}/{{assetId}}',
-          '{{y}}/{{y}}-{{MM}}/{{assetId}}',
-          '{{y}}/{{y}}-{{WW}}/{{assetId}}',
-          '{{album}}/{{filename}}',
-        ],
-        secondOptions: ['s', 'ss', 'SSS'],
-        weekOptions: ['W', 'WW'],
-        yearOptions: ['y', 'yy'],
-      });
-    });
   });
 
   describe('updateConfig', () => {

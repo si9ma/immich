@@ -1,12 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import archiver from 'archiver';
 import chokidar, { WatchOptions } from 'chokidar';
 import { escapePath, glob, globStream } from 'fast-glob';
-import { constants, createReadStream, existsSync, mkdirSync } from 'node:fs';
+import { constants, createReadStream, createWriteStream, existsSync, mkdirSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { Writable } from 'node:stream';
 import { CrawlOptionsDto, WalkOptionsDto } from 'src/dtos/library.dto';
-import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import {
   DiskUsage,
   IStorageRepository,
@@ -14,13 +14,12 @@ import {
   ImmichZipStream,
   WatchEvents,
 } from 'src/interfaces/storage.interface';
-import { Instrumentation } from 'src/utils/instrumentation';
+import { LoggingRepository } from 'src/repositories/logging.repository';
 import { mimeTypes } from 'src/utils/mime-types';
 
-@Instrumentation()
 @Injectable()
 export class StorageRepository implements IStorageRepository {
-  constructor(@Inject(ILoggerRepository) private logger: ILoggerRepository) {
+  constructor(private logger: LoggingRepository) {
     this.logger.setContext(StorageRepository.name);
   }
 
@@ -42,6 +41,10 @@ export class StorageRepository implements IStorageRepository {
 
   createFile(filepath: string, buffer: Buffer) {
     return fs.writeFile(filepath, buffer, { flag: 'wx' });
+  }
+
+  createWriteStream(filepath: string): Writable {
+    return createWriteStream(filepath, { flags: 'w' });
   }
 
   createOrOverwriteFile(filepath: string, buffer: Buffer) {
@@ -211,7 +214,7 @@ export class StorageRepository implements IStorageRepository {
   }
 
   private asGlob(pathToCrawl: string): string {
-    const escapedPath = escapePath(pathToCrawl);
+    const escapedPath = escapePath(pathToCrawl).replaceAll('"', '["]').replaceAll("'", "[']").replaceAll('`', '[`]');
     const extensions = `*{${mimeTypes.getSupportedFileExtensions().join(',')}}`;
     return `${escapedPath}/**/${extensions}`;
   }

@@ -1,6 +1,5 @@
 import { BadRequestException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import _ from 'lodash';
-import { DEFAULT_EXTERNAL_DOMAIN } from 'src/constants';
 import { AssetIdErrorReason } from 'src/dtos/asset-ids.response.dto';
 import { SharedLinkType } from 'src/enum';
 import { ISharedLinkRepository } from 'src/interfaces/shared-link.interface';
@@ -77,7 +76,6 @@ describe(SharedLinkService.name, () => {
 
   describe('get', () => {
     it('should throw an error for an invalid shared link', async () => {
-      sharedLinkMock.get.mockResolvedValue(null);
       await expect(sut.get(authStub.user1, 'missing-id')).rejects.toBeInstanceOf(BadRequestException);
       expect(sharedLinkMock.get).toHaveBeenCalledWith(authStub.user1.user.id, 'missing-id');
       expect(sharedLinkMock.update).not.toHaveBeenCalled();
@@ -131,7 +129,6 @@ describe(SharedLinkService.name, () => {
         albumId: albumStub.oneAsset.id,
         allowDownload: true,
         allowUpload: true,
-        assets: [],
         description: null,
         expiresAt: null,
         showExif: true,
@@ -161,7 +158,7 @@ describe(SharedLinkService.name, () => {
         albumId: null,
         allowDownload: true,
         allowUpload: true,
-        assets: [{ id: assetStub.image.id }],
+        assetIds: [assetStub.image.id],
         description: null,
         expiresAt: null,
         showExif: true,
@@ -191,7 +188,7 @@ describe(SharedLinkService.name, () => {
         albumId: null,
         allowDownload: false,
         allowUpload: true,
-        assets: [{ id: assetStub.image.id }],
+        assetIds: [assetStub.image.id],
         description: null,
         expiresAt: null,
         showExif: false,
@@ -202,7 +199,6 @@ describe(SharedLinkService.name, () => {
 
   describe('update', () => {
     it('should throw an error for an invalid shared link', async () => {
-      sharedLinkMock.get.mockResolvedValue(null);
       await expect(sut.update(authStub.user1, 'missing-id', {})).rejects.toBeInstanceOf(BadRequestException);
       expect(sharedLinkMock.get).toHaveBeenCalledWith(authStub.user1.user.id, 'missing-id');
       expect(sharedLinkMock.update).not.toHaveBeenCalled();
@@ -223,7 +219,6 @@ describe(SharedLinkService.name, () => {
 
   describe('remove', () => {
     it('should throw an error for an invalid shared link', async () => {
-      sharedLinkMock.get.mockResolvedValue(null);
       await expect(sut.remove(authStub.user1, 'missing-id')).rejects.toBeInstanceOf(BadRequestException);
       expect(sharedLinkMock.get).toHaveBeenCalledWith(authStub.user1.user.id, 'missing-id');
       expect(sharedLinkMock.update).not.toHaveBeenCalled();
@@ -259,9 +254,10 @@ describe(SharedLinkService.name, () => {
       ]);
 
       expect(accessMock.asset.checkOwnerAccess).toHaveBeenCalledTimes(1);
+      expect(sharedLinkMock.update).toHaveBeenCalled();
       expect(sharedLinkMock.update).toHaveBeenCalledWith({
         ...sharedLinkStub.individual,
-        assets: [assetStub.image, { id: 'asset-3' }],
+        assetIds: ['asset-3'],
       });
     });
   });
@@ -304,7 +300,7 @@ describe(SharedLinkService.name, () => {
       sharedLinkMock.get.mockResolvedValue(sharedLinkStub.individual);
       await expect(sut.getMetadataTags(authStub.adminSharedLink)).resolves.toEqual({
         description: '1 shared photos & videos',
-        imageUrl: `${DEFAULT_EXTERNAL_DOMAIN}/api/assets/asset-id/thumbnail?key=LCtkaJX4R1O_9D-2lq0STzsPryoL1UdAbyb6Sna1xxmQCSuqU2J1ZUsqt6GR-yGm1s0`,
+        imageUrl: `http://localhost:2283/api/assets/asset-id/thumbnail?key=LCtkaJX4R1O_9D-2lq0STzsPryoL1UdAbyb6Sna1xxmQCSuqU2J1ZUsqt6GR-yGm1s0`,
         title: 'Public Share',
       });
       expect(sharedLinkMock.get).toHaveBeenCalled();
@@ -314,7 +310,7 @@ describe(SharedLinkService.name, () => {
       sharedLinkMock.get.mockResolvedValue({ ...sharedLinkStub.individual, album: undefined, assets: [] });
       await expect(sut.getMetadataTags(authStub.adminSharedLink)).resolves.toEqual({
         description: '0 shared photos & videos',
-        imageUrl: `${DEFAULT_EXTERNAL_DOMAIN}/feature-panel.png`,
+        imageUrl: `http://localhost:2283/feature-panel.png`,
         title: 'Public Share',
       });
       expect(sharedLinkMock.get).toHaveBeenCalled();

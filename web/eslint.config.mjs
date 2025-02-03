@@ -33,6 +33,7 @@ export default [
       'eslint.config.mjs',
       'postcss.config.cjs',
       'tailwind.config.js',
+      'coverage',
     ],
   },
   ...compat.extends(
@@ -80,6 +81,7 @@ export default [
       'unicorn/prevent-abbreviations': 'off',
       'unicorn/no-nested-ternary': 'off',
       'unicorn/consistent-function-scoping': 'off',
+      'unicorn/filename-case': 'off',
       'unicorn/prefer-top-level-await': 'off',
       'unicorn/import-style': 'off',
       'svelte/button-has-type': 'error',

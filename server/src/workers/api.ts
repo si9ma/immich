@@ -7,41 +7,31 @@ import sirv from 'sirv';
 import { ApiModule } from 'src/app.module';
 import { excludePaths, serverVersion } from 'src/constants';
 import { ImmichEnvironment } from 'src/enum';
-import { IConfigRepository } from 'src/interfaces/config.interface';
-import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { WebSocketAdapter } from 'src/middleware/websocket.adapter';
+import { ConfigRepository } from 'src/repositories/config.repository';
+import { LoggingRepository } from 'src/repositories/logging.repository';
+import { bootstrapTelemetry } from 'src/repositories/telemetry.repository';
 import { ApiService } from 'src/services/api.service';
-import { isStartUpError } from 'src/services/storage.service';
-import { otelStart } from 'src/utils/instrumentation';
-import { useSwagger } from 'src/utils/misc';
-
-const host = process.env.HOST;
-
-function parseTrustedProxy(input?: string) {
-  if (!input) {
-    return [];
-  }
-  // Split on ',' char to allow multiple IPs
-  return input.split(',');
-}
+import { isStartUpError, useSwagger } from 'src/utils/misc';
 
 async function bootstrap() {
   process.title = 'immich-api';
-  const otelPort = Number.parseInt(process.env.IMMICH_API_METRICS_PORT ?? '8081');
-  const trustedProxies = parseTrustedProxy(process.env.IMMICH_TRUSTED_PROXIES ?? '');
 
-  otelStart(otelPort);
+  const { telemetry, network } = new ConfigRepository().getEnv();
+  if (telemetry.metrics.size > 0) {
+    bootstrapTelemetry(telemetry.apiPort);
+  }
 
   const app = await NestFactory.create<NestExpressApplication>(ApiModule, { bufferLogs: true });
-  const logger = await app.resolve<ILoggerRepository>(ILoggerRepository);
-  const configRepository = app.get<IConfigRepository>(IConfigRepository);
+  const logger = await app.resolve(LoggingRepository);
+  const configRepository = app.get(ConfigRepository);
 
-  const { environment, port, resourcePaths } = configRepository.getEnv();
+  const { environment, host, port, resourcePaths } = configRepository.getEnv();
   const isDev = environment === ImmichEnvironment.DEVELOPMENT;
 
   logger.setContext('Bootstrap');
   app.useLogger(logger);
-  app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal', ...trustedProxies]);
+  app.set('trust proxy', ['loopback', ...network.trustedProxies]);
   app.set('etag', 'strong');
   app.use(cookieParser());
   app.use(json({ limit: '10mb' }));
@@ -72,7 +62,7 @@ async function bootstrap() {
   app.use(app.get(ApiService).ssr(excludePaths));
 
   const server = await (host ? app.listen(port, host) : app.listen(port));
-  server.requestTimeout = 30 * 60 * 1000;
+  server.requestTimeout = 24 * 60 * 60 * 1000;
 
   logger.log(`Immich Server is listening on ${await app.getUrl()} [v${serverVersion}] [${environment}] `);
 }

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   // Necessary for eslint
   /* eslint-disable @typescript-eslint/no-explicit-any */
   type T = any;
@@ -11,28 +11,38 @@
 </script>
 
 <script lang="ts" generics="T">
+  import { clickOutside } from '$lib/actions/click-outside';
+  import { Button, Text } from '@immich/ui';
+  import { mdiCheck } from '@mdi/js';
+  import { isEqual } from 'lodash-es';
+  import { fly } from 'svelte/transition';
   import Icon from './icon.svelte';
 
-  import { mdiCheck } from '@mdi/js';
+  interface Props {
+    class?: string;
+    options: T[];
+    selectedOption?: any;
+    showMenu?: boolean;
+    controlable?: boolean;
+    hideTextOnSmallScreen?: boolean;
+    title?: string | undefined;
+    onSelect: (option: T) => void;
+    onClickOutside?: () => void;
+    render?: (item: T) => string | RenderedOption;
+  }
 
-  import { isEqual } from 'lodash-es';
-  import LinkButton from './buttons/link-button.svelte';
-  import { clickOutside } from '$lib/actions/click-outside';
-  import { fly } from 'svelte/transition';
-
-  let className = '';
-  export { className as class };
-
-  export let options: T[];
-  export let selectedOption = options[0];
-  export let showMenu = false;
-  export let controlable = false;
-  export let hideTextOnSmallScreen = true;
-  export let title: string | undefined = undefined;
-  export let onSelect: (option: T) => void;
-  export let onClickOutside: () => void = () => {};
-
-  export let render: (item: T) => string | RenderedOption = String;
+  let {
+    class: className = '',
+    options,
+    selectedOption = $bindable(options[0]),
+    showMenu = $bindable(false),
+    controlable = false,
+    hideTextOnSmallScreen = true,
+    title = undefined,
+    onSelect,
+    onClickOutside = () => {},
+    render = String,
+  }: Props = $props();
 
   const handleClickOutside = () => {
     if (!controlable) {
@@ -65,19 +75,17 @@
     }
   };
 
-  $: renderedSelectedOption = renderOption(selectedOption);
+  let renderedSelectedOption = $derived(renderOption(selectedOption));
 </script>
 
 <div use:clickOutside={{ onOutclick: handleClickOutside, onEscape: handleClickOutside }}>
   <!-- BUTTON TITLE -->
-  <LinkButton on:click={() => (showMenu = true)} fullwidth {title}>
-    <div class="flex place-items-center gap-2 text-sm">
-      {#if renderedSelectedOption?.icon}
-        <Icon path={renderedSelectedOption.icon} size="18" />
-      {/if}
-      <p class={hideTextOnSmallScreen ? 'hidden sm:block' : ''}>{renderedSelectedOption.title}</p>
-    </div>
-  </LinkButton>
+  <Button onclick={() => (showMenu = true)} fullWidth {title} variant="ghost" color="secondary" size="small">
+    {#if renderedSelectedOption?.icon}
+      <Icon path={renderedSelectedOption.icon} />
+    {/if}
+    <Text class={hideTextOnSmallScreen ? 'hidden sm:block' : ''}>{renderedSelectedOption.title}</Text>
+  </Button>
 
   <!-- DROP DOWN MENU -->
   {#if showMenu}
@@ -92,17 +100,17 @@
           type="button"
           class="grid grid-cols-[36px,1fr] place-items-center p-2 disabled:opacity-40 {buttonStyle}"
           disabled={renderedOption.disabled}
-          on:click={() => !renderedOption.disabled && handleSelectOption(option)}
+          onclick={() => !renderedOption.disabled && handleSelectOption(option)}
         >
           {#if isEqual(selectedOption, option)}
             <div class="text-immich-primary dark:text-immich-dark-primary">
-              <Icon path={mdiCheck} size="18" />
+              <Icon path={mdiCheck} />
             </div>
             <p class="justify-self-start text-immich-primary dark:text-immich-dark-primary">
               {renderedOption.title}
             </p>
           {:else}
-            <div />
+            <div></div>
             <p class="justify-self-start">
               {renderedOption.title}
             </p>

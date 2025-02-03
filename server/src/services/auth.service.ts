@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { isNumber, isString } from 'class-validator';
+import { isString } from 'class-validator';
 import cookieParser from 'cookie';
 import { DateTime } from 'luxon';
 import { IncomingHttpHeaders } from 'node:http';
@@ -8,9 +8,6 @@ import { OnEvent } from 'src/decorators';
 import {
   AuthDto,
   ChangePasswordDto,
-  ImmichCookie,
-  ImmichHeader,
-  ImmichQuery,
   LoginCredentialDto,
   LogoutResponseDto,
   OAuthAuthorizeResponseDto,
@@ -21,12 +18,12 @@ import {
 } from 'src/dtos/auth.dto';
 import { UserAdminResponseDto, mapUserAdmin } from 'src/dtos/user.dto';
 import { UserEntity } from 'src/entities/user.entity';
-import { AuthType, Permission } from 'src/enum';
-import { OAuthProfile } from 'src/interfaces/oauth.interface';
+import { AuthType, ImmichCookie, ImmichHeader, ImmichQuery, Permission } from 'src/enum';
+import { OAuthProfile } from 'src/repositories/oauth.repository';
 import { BaseService } from 'src/services/base.service';
+import { AuthApiKey } from 'src/types';
 import { isGranted } from 'src/utils/access';
 import { HumanReadableSize } from 'src/utils/bytes';
-import { createUser } from 'src/utils/user';
 
 export interface LoginDetails {
   isSecure: boolean;
@@ -69,7 +66,7 @@ export class AuthService extends BaseService {
     if (user) {
       const isAuthenticated = this.validatePassword(dto.password, user);
       if (!isAuthenticated) {
-        user = null;
+        user = undefined;
       }
     }
 
@@ -118,16 +115,13 @@ export class AuthService extends BaseService {
       throw new BadRequestException('The server already has an admin');
     }
 
-    const admin = await createUser(
-      { userRepo: this.userRepository, cryptoRepo: this.cryptoRepository },
-      {
-        isAdmin: true,
-        email: dto.email,
-        name: dto.name,
-        password: dto.password,
-        storageLabel: 'admin',
-      },
-    );
+    const admin = await this.createUser({
+      isAdmin: true,
+      email: dto.email,
+      name: dto.name,
+      password: dto.password,
+      storageLabel: 'admin',
+    });
 
     return mapUserAdmin(admin);
   }
@@ -188,13 +182,13 @@ export class AuthService extends BaseService {
       throw new BadRequestException('OAuth is not enabled');
     }
 
-    const url = await this.oauthRepository.authorize(oauth, dto.redirectUri);
+    const url = await this.oauthRepository.authorize(oauth, this.resolveRedirectUri(oauth, dto.redirectUri));
     return { url };
   }
 
   async callback(dto: OAuthCallbackDto, loginDetails: LoginDetails) {
     const { oauth } = await this.getConfig({ withCache: false });
-    const profile = await this.oauthRepository.getProfile(oauth, dto.url, this.normalize(oauth, dto.url.split('?')[0]));
+    const profile = await this.oauthRepository.getProfile(oauth, dto.url, this.resolveRedirectUri(oauth, dto.url));
     const { autoRegister, defaultStorageQuota, storageLabelClaim, storageQuotaClaim } = oauth;
     this.logger.debug(`Logging in with OAuth: ${JSON.stringify(profile)}`);
     let user = await this.userRepository.getByOAuthId(profile.sub);
@@ -233,20 +227,17 @@ export class AuthService extends BaseService {
       const storageQuota = this.getClaim(profile, {
         key: storageQuotaClaim,
         default: defaultStorageQuota,
-        isValid: (value: unknown) => isNumber(value) && value >= 0,
+        isValid: (value: unknown) => Number(value) >= 0,
       });
 
       const userName = profile.name ?? `${profile.given_name || ''} ${profile.family_name || ''}`;
-      user = await createUser(
-        { userRepo: this.userRepository, cryptoRepo: this.cryptoRepository },
-        {
-          name: userName,
-          email: profile.email,
-          oauthId: profile.sub,
-          quotaSizeInBytes: storageQuota * HumanReadableSize.GiB || null,
-          storageLabel: storageLabel || null,
-        },
-      );
+      user = await this.createUser({
+        name: userName,
+        email: profile.email,
+        oauthId: profile.sub,
+        quotaSizeInBytes: storageQuota * HumanReadableSize.GiB || null,
+        storageLabel: storageLabel || null,
+      });
     }
 
     return this.createLoginResponse(user, loginDetails);
@@ -257,7 +248,7 @@ export class AuthService extends BaseService {
     const { sub: oauthId } = await this.oauthRepository.getProfile(
       oauth,
       dto.url,
-      this.normalize(oauth, dto.url.split('?')[0]),
+      this.resolveRedirectUri(oauth, dto.url),
     );
     const duplicate = await this.userRepository.getByOAuthId(oauthId);
     if (duplicate && duplicate.id !== auth.user.id) {
@@ -318,8 +309,11 @@ export class AuthService extends BaseService {
   private async validateApiKey(key: string): Promise<AuthDto> {
     const hashedKey = this.cryptoRepository.hashSha256(key);
     const apiKey = await this.keyRepository.getKey(hashedKey);
-    if (apiKey?.user) {
-      return { user: apiKey.user, apiKey };
+    if (apiKey) {
+      return {
+        user: apiKey.user as unknown as UserEntity,
+        apiKey: apiKey as unknown as AuthApiKey,
+      };
     }
 
     throw new UnauthorizedException('Invalid API key');
@@ -341,7 +335,7 @@ export class AuthService extends BaseService {
       const updatedAt = DateTime.fromJSDate(session.updatedAt);
       const diff = now.diff(updatedAt, ['hours']);
       if (diff.hours > 1) {
-        await this.sessionRepository.update({ id: session.id, updatedAt: new Date() });
+        await this.sessionRepository.update(session.id, { id: session.id, updatedAt: new Date() });
       }
 
       return { user: session.user, session };
@@ -356,9 +350,9 @@ export class AuthService extends BaseService {
 
     await this.sessionRepository.create({
       token,
-      user,
       deviceOS: loginDetails.deviceOS,
       deviceType: loginDetails.deviceType,
+      userId: user.id,
     });
 
     return mapLoginResponse(user, key);
@@ -369,10 +363,11 @@ export class AuthService extends BaseService {
     return options.isValid(value) ? (value as T) : options.default;
   }
 
-  private normalize(
+  private resolveRedirectUri(
     { mobileRedirectUri, mobileOverrideEnabled }: { mobileRedirectUri: string; mobileOverrideEnabled: boolean },
-    redirectUri: string,
+    url: string,
   ) {
+    const redirectUri = url.split('?')[0];
     const isMobile = redirectUri.startsWith('app.immich:/');
     if (isMobile && mobileOverrideEnabled && mobileRedirectUri) {
       return mobileRedirectUri;
