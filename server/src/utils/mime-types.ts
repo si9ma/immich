@@ -43,6 +43,7 @@ const image: Record<string, string[]> = {
   '.heif': ['image/heif'],
   '.hif': ['image/hif'],
   '.insp': ['image/jpeg'],
+  '.jp2': ['image/jp2'],
   '.jpe': ['image/jpeg'],
   '.jpeg': ['image/jpeg'],
   '.jpg': ['image/jpeg'],
@@ -65,6 +66,7 @@ const video: Record<string, string[]> = {
   '.avi': ['video/avi', 'video/msvideo', 'video/vnd.avi', 'video/x-msvideo'],
   '.flv': ['video/x-flv'],
   '.insv': ['video/mp4'],
+  '.m2t': ['video/mp2t'],
   '.m2ts': ['video/mp2t'],
   '.m4v': ['video/x-m4v'],
   '.mkv': ['video/x-matroska'],
@@ -74,6 +76,7 @@ const video: Record<string, string[]> = {
   '.mpeg': ['video/mpeg'],
   '.mpg': ['video/mpeg'],
   '.mts': ['video/mp2t'],
+  '.vob': ['video/mpeg'],
   '.webm': ['video/webm'],
   '.wmv': ['video/x-ms-wmv'],
 };

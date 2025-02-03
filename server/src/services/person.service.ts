@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FACE_THUMBNAIL_SIZE } from 'src/constants';
 import { StorageCore } from 'src/cores/storage.core';
+import { OnJob } from 'src/decorators';
 import { BulkIdErrorReason, BulkIdResponseDto } from 'src/dtos/asset-ids.response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
 import {
@@ -33,40 +34,45 @@ import {
 } from 'src/enum';
 import { WithoutProperty } from 'src/interfaces/asset.interface';
 import {
-  IBaseJob,
-  IDeferrableJob,
-  IEntityJob,
-  INightlyJob,
   JOBS_ASSET_PAGINATION_SIZE,
   JobItem,
   JobName,
+  JobOf,
   JobStatus,
   QueueName,
 } from 'src/interfaces/job.interface';
 import { BoundingBox } from 'src/interfaces/machine-learning.interface';
-import { CropOptions, ImageDimensions, InputDimensions } from 'src/interfaces/media.interface';
 import { UpdateFacesData } from 'src/interfaces/person.interface';
 import { BaseService } from 'src/services/base.service';
+import { CropOptions, ImageDimensions, InputDimensions } from 'src/types';
 import { getAssetFiles } from 'src/utils/asset.util';
 import { ImmichFileResponse } from 'src/utils/file';
 import { mimeTypes } from 'src/utils/mime-types';
 import { isFaceImportEnabled, isFacialRecognitionEnabled } from 'src/utils/misc';
 import { usePagination } from 'src/utils/pagination';
-import { IsNull } from 'typeorm';
 
 @Injectable()
 export class PersonService extends BaseService {
   async getAll(auth: AuthDto, dto: PersonSearchDto): Promise<PeopleResponseDto> {
-    const { withHidden = false, page, size } = dto;
+    const { withHidden = false, closestAssetId, closestPersonId, page, size } = dto;
+    let closestFaceAssetId = closestAssetId;
     const pagination = {
       take: size,
       skip: (page - 1) * size,
     };
 
+    if (closestPersonId) {
+      const person = await this.personRepository.getById(closestPersonId);
+      if (!person?.faceAssetId) {
+        throw new NotFoundException('Person not found');
+      }
+      closestFaceAssetId = person.faceAssetId;
+    }
     const { machineLearning } = await this.getConfig({ withCache: false });
     const { items, hasNextPage } = await this.personRepository.getAllForUser(pagination, auth.user.id, {
       minimumFaceCount: machineLearning.facialRecognition.minFaces,
       withHidden,
+      closestFaceAssetId,
     });
     const { total, hidden } = await this.personRepository.getNumberOfPeople(auth.user.id);
 
@@ -139,7 +145,7 @@ export class PersonService extends BaseService {
     for (const personId of changeFeaturePhoto) {
       const assetFace = await this.personRepository.getRandomFace(personId);
 
-      if (assetFace !== null) {
+      if (assetFace) {
         await this.personRepository.update({ id: personId, faceAssetId: assetFace.id });
         jobs.push({ name: JobName.GENERATE_PERSON_THUMBNAIL, data: { id: personId } });
       }
@@ -231,13 +237,15 @@ export class PersonService extends BaseService {
     this.logger.debug(`Deleted ${people.length} people`);
   }
 
+  @OnJob({ name: JobName.PERSON_CLEANUP, queue: QueueName.BACKGROUND_TASK })
   async handlePersonCleanup(): Promise<JobStatus> {
     const people = await this.personRepository.getAllWithoutFaces();
     await this.delete(people);
     return JobStatus.SUCCESS;
   }
 
-  async handleQueueDetectFaces({ force }: IBaseJob): Promise<JobStatus> {
+  @OnJob({ name: JobName.QUEUE_FACE_DETECTION, queue: QueueName.FACE_DETECTION })
+  async handleQueueDetectFaces({ force }: JobOf<JobName.QUEUE_FACE_DETECTION>): Promise<JobStatus> {
     const { machineLearning } = await this.getConfig({ withCache: false });
     if (!isFacialRecognitionEnabled(machineLearning)) {
       return JobStatus.SKIPPED;
@@ -252,7 +260,7 @@ export class PersonService extends BaseService {
       return force === false
         ? this.assetRepository.getWithout(pagination, WithoutProperty.FACES)
         : this.assetRepository.getAll(pagination, {
-            orderDirection: 'DESC',
+            orderDirection: 'desc',
             withFaces: true,
             withArchived: true,
             isVisible: true,
@@ -272,19 +280,14 @@ export class PersonService extends BaseService {
     return JobStatus.SUCCESS;
   }
 
-  async handleDetectFaces({ id }: IEntityJob): Promise<JobStatus> {
+  @OnJob({ name: JobName.FACE_DETECTION, queue: QueueName.FACE_DETECTION })
+  async handleDetectFaces({ id }: JobOf<JobName.FACE_DETECTION>): Promise<JobStatus> {
     const { machineLearning } = await this.getConfig({ withCache: true });
     if (!isFacialRecognitionEnabled(machineLearning)) {
       return JobStatus.SKIPPED;
     }
 
-    const relations = {
-      exifInfo: true,
-      faces: {
-        person: false,
-      },
-      files: true,
-    };
+    const relations = { exifInfo: true, faces: { person: false }, files: true };
     const [asset] = await this.assetRepository.getByIds([id], relations);
     const { previewFile } = getAssetFiles(asset.files);
     if (!asset || !previewFile) {
@@ -296,13 +299,13 @@ export class PersonService extends BaseService {
     }
 
     const { imageHeight, imageWidth, faces } = await this.machineLearningRepository.detectFaces(
-      machineLearning.url,
+      machineLearning.urls,
       previewFile.path,
       machineLearning.facialRecognition,
     );
     this.logger.debug(`${faces.length} faces detected in ${previewFile.path}`);
 
-    const facesToAdd: (Partial<AssetFaceEntity> & { id: string })[] = [];
+    const facesToAdd: (Partial<AssetFaceEntity> & { id: string; assetId: string })[] = [];
     const embeddings: FaceSearchEntity[] = [];
     const mlFaceIds = new Set<string>();
     for (const face of asset.faces) {
@@ -376,7 +379,8 @@ export class PersonService extends BaseService {
     return intersection / union;
   }
 
-  async handleQueueRecognizeFaces({ force, nightly }: INightlyJob): Promise<JobStatus> {
+  @OnJob({ name: JobName.QUEUE_FACIAL_RECOGNITION, queue: QueueName.FACIAL_RECOGNITION })
+  async handleQueueRecognizeFaces({ force, nightly }: JobOf<JobName.QUEUE_FACIAL_RECOGNITION>): Promise<JobStatus> {
     const { machineLearning } = await this.getConfig({ withCache: false });
     if (!isFacialRecognitionEnabled(machineLearning)) {
       return JobStatus.SKIPPED;
@@ -409,24 +413,29 @@ export class PersonService extends BaseService {
     }
 
     const lastRun = new Date().toISOString();
-    const facePagination = usePagination(JOBS_ASSET_PAGINATION_SIZE, (pagination) =>
-      this.personRepository.getAllFaces(pagination, {
-        where: force ? undefined : { personId: IsNull(), sourceType: SourceType.MACHINE_LEARNING },
-      }),
+    const facePagination = this.personRepository.getAllFaces(
+      force ? undefined : { personId: null, sourceType: SourceType.MACHINE_LEARNING },
     );
 
-    for await (const page of facePagination) {
-      await this.jobRepository.queueAll(
-        page.map((face) => ({ name: JobName.FACIAL_RECOGNITION, data: { id: face.id, deferred: false } })),
-      );
+    let jobs: { name: JobName.FACIAL_RECOGNITION; data: { id: string; deferred: false } }[] = [];
+    for await (const face of facePagination) {
+      jobs.push({ name: JobName.FACIAL_RECOGNITION, data: { id: face.id, deferred: false } });
+
+      if (jobs.length === JOBS_ASSET_PAGINATION_SIZE) {
+        await this.jobRepository.queueAll(jobs);
+        jobs = [];
+      }
     }
+
+    await this.jobRepository.queueAll(jobs);
 
     await this.systemMetadataRepository.set(SystemMetadataKey.FACIAL_RECOGNITION_STATE, { lastRun });
 
     return JobStatus.SUCCESS;
   }
 
-  async handleRecognizeFaces({ id, deferred }: IDeferrableJob): Promise<JobStatus> {
+  @OnJob({ name: JobName.FACIAL_RECOGNITION, queue: QueueName.FACIAL_RECOGNITION })
+  async handleRecognizeFaces({ id, deferred }: JobOf<JobName.FACIAL_RECOGNITION>): Promise<JobStatus> {
     const { machineLearning } = await this.getConfig({ withCache: true });
     if (!isFacialRecognitionEnabled(machineLearning)) {
       return JobStatus.SKIPPED;
@@ -435,7 +444,7 @@ export class PersonService extends BaseService {
     const face = await this.personRepository.getFaceByIdWithAssets(
       id,
       { person: true, asset: true, faceSearch: true },
-      { id: true, personId: true, sourceType: true, faceSearch: { embedding: true } },
+      ['id', 'personId', 'sourceType'],
     );
     if (!face || !face.asset) {
       this.logger.warn(`Face ${id} not found`);
@@ -479,7 +488,7 @@ export class PersonService extends BaseService {
       return JobStatus.SKIPPED;
     }
 
-    let personId = matches.find((match) => match.face.personId)?.face.personId;
+    let personId = matches.find((match) => match.personId)?.personId;
     if (!personId) {
       const matchWithPerson = await this.searchRepository.searchFaces({
         userIds: [face.asset.ownerId],
@@ -490,7 +499,7 @@ export class PersonService extends BaseService {
       });
 
       if (matchWithPerson.length > 0) {
-        personId = matchWithPerson[0].face.personId;
+        personId = matchWithPerson[0].personId;
       }
     }
 
@@ -509,7 +518,8 @@ export class PersonService extends BaseService {
     return JobStatus.SUCCESS;
   }
 
-  async handlePersonMigration({ id }: IEntityJob): Promise<JobStatus> {
+  @OnJob({ name: JobName.MIGRATE_PERSON, queue: QueueName.MIGRATION })
+  async handlePersonMigration({ id }: JobOf<JobName.MIGRATE_PERSON>): Promise<JobStatus> {
     const person = await this.personRepository.getById(id);
     if (!person) {
       return JobStatus.FAILED;
@@ -520,7 +530,8 @@ export class PersonService extends BaseService {
     return JobStatus.SUCCESS;
   }
 
-  async handleGeneratePersonThumbnail(data: IEntityJob): Promise<JobStatus> {
+  @OnJob({ name: JobName.GENERATE_PERSON_THUMBNAIL, queue: QueueName.THUMBNAIL_GENERATION })
+  async handleGeneratePersonThumbnail(data: JobOf<JobName.GENERATE_PERSON_THUMBNAIL>): Promise<JobStatus> {
     const { machineLearning, metadata, image } = await this.getConfig({ withCache: true });
     if (!isFacialRecognitionEnabled(machineLearning) && !isFaceImportEnabled(metadata)) {
       return JobStatus.SKIPPED;
@@ -533,7 +544,7 @@ export class PersonService extends BaseService {
     }
 
     const face = await this.personRepository.getFaceByIdWithAssets(person.faceAssetId);
-    if (face === null) {
+    if (!face) {
       this.logger.error(`Could not generate person thumbnail: face ${person.faceAssetId} not found`);
       return JobStatus.FAILED;
     }

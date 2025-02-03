@@ -1,4 +1,4 @@
-import { IMapRepository } from 'src/interfaces/map.interface';
+import { IMapRepository } from 'src/types';
 import { Mocked } from 'vitest';
 
 export const newMapRepositoryMock = (): Mocked<IMapRepository> => {
@@ -6,6 +6,5 @@ export const newMapRepositoryMock = (): Mocked<IMapRepository> => {
     init: vitest.fn(),
     reverseGeocode: vitest.fn(),
     getMapMarkers: vitest.fn(),
-    fetchStyle: vitest.fn(),
   };
 };

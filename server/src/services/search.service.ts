@@ -34,18 +34,10 @@ export class SearchService extends BaseService {
 
   async getExploreData(auth: AuthDto): Promise<SearchExploreItem<AssetResponseDto>[]> {
     const options = { maxFields: 12, minAssetsPerField: 5 };
-    const results = await Promise.all([
-      this.assetRepository.getAssetIdByCity(auth.user.id, options),
-      this.assetRepository.getAssetIdByTag(auth.user.id, options),
-    ]);
-    const assetIds = new Set<string>(results.flatMap((field) => field.items.map((item) => item.data)));
-    const assets = await this.assetRepository.getByIdsWithAllRelations([...assetIds]);
-    const assetMap = new Map<string, AssetResponseDto>(assets.map((asset) => [asset.id, mapAsset(asset)]));
-
-    return results.map(({ fieldName, items }) => ({
-      fieldName,
-      items: items.map(({ value, data }) => ({ value, data: assetMap.get(data) as AssetResponseDto })),
-    }));
+    const cities = await this.assetRepository.getAssetIdByCity(auth.user.id, options);
+    const assets = await this.assetRepository.getByIdsWithAllRelations(cities.items.map(({ data }) => data));
+    const items = assets.map((asset) => ({ value: asset.exifInfo!.city!, data: mapAsset(asset, { auth }) }));
+    return [{ fieldName: cities.fieldName, items }];
   }
 
   async searchMetadata(auth: AuthDto, dto: MetadataSearchDto): Promise<SearchResponseDto> {
@@ -59,14 +51,13 @@ export class SearchService extends BaseService {
 
     const page = dto.page ?? 1;
     const size = dto.size || 250;
-    const enumToOrder = { [AssetOrder.ASC]: 'ASC', [AssetOrder.DESC]: 'DESC' } as const;
     const { hasNextPage, items } = await this.searchRepository.searchMetadata(
       { page, size },
       {
         ...dto,
         checksum,
         userIds,
-        orderDirection: dto.order ? enumToOrder[dto.order] : 'DESC',
+        orderDirection: dto.order ?? AssetOrder.DESC,
       },
     );
 
@@ -96,7 +87,7 @@ export class SearchService extends BaseService {
     const userIds = await this.getUserIdsToSearch(auth);
 
     const embedding = await this.machineLearningRepository.encodeText(
-      machineLearning.url,
+      machineLearning.urls,
       dto.query,
       machineLearning.clip,
     );
@@ -131,7 +122,7 @@ export class SearchService extends BaseService {
               ...searchByDateDto,
               checksum,
               userIds,
-              orderDirection: 'DESC',
+              orderDirection: 'desc',
             },
           );
 
@@ -158,8 +149,11 @@ export class SearchService extends BaseService {
 
   async getSearchSuggestions(auth: AuthDto, dto: SearchSuggestionRequestDto) {
     const userIds = await this.getUserIdsToSearch(auth);
-    const results = await this.getSuggestions(userIds, dto);
-    return results.filter((result) => (dto.includeNull ? true : result !== null));
+    const suggestions = await this.getSuggestions(userIds, dto);
+    if (dto.includeNull) {
+      suggestions.push(null);
+    }
+    return suggestions;
   }
 
   private getSuggestions(userIds: string[], dto: SearchSuggestionRequestDto) {
@@ -168,19 +162,19 @@ export class SearchService extends BaseService {
         return this.searchRepository.getCountries(userIds);
       }
       case SearchSuggestionType.STATE: {
-        return this.searchRepository.getStates(userIds, dto.country);
+        return this.searchRepository.getStates(userIds, dto);
       }
       case SearchSuggestionType.CITY: {
-        return this.searchRepository.getCities(userIds, dto.country, dto.state);
+        return this.searchRepository.getCities(userIds, dto);
       }
       case SearchSuggestionType.CAMERA_MAKE: {
-        return this.searchRepository.getCameraMakes(userIds, dto.model);
+        return this.searchRepository.getCameraMakes(userIds, dto);
       }
       case SearchSuggestionType.CAMERA_MODEL: {
-        return this.searchRepository.getCameraModels(userIds, dto.make);
+        return this.searchRepository.getCameraModels(userIds, dto);
       }
       default: {
-        return [];
+        return [] as (string | null)[];
       }
     }
   }

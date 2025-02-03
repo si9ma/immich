@@ -6,19 +6,51 @@ from pathlib import Path
 from socket import socket
 
 from gunicorn.arbiter import Arbiter
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
 from rich.logging import RichHandler
 from uvicorn import Server
 from uvicorn.workers import UvicornWorker
 
 
+class ClipSettings(BaseModel):
+    textual: str | None = None
+    visual: str | None = None
+
+
+class FacialRecognitionSettings(BaseModel):
+    recognition: str | None = None
+    detection: str | None = None
+
+
 class PreloadModelData(BaseModel):
-    clip: str | None
-    facial_recognition: str | None
+    clip_fallback: str | None = os.getenv("MACHINE_LEARNING_PRELOAD__CLIP", None)
+    facial_recognition_fallback: str | None = os.getenv("MACHINE_LEARNING_PRELOAD__FACIAL_RECOGNITION", None)
+    if clip_fallback is not None:
+        os.environ["MACHINE_LEARNING_PRELOAD__CLIP__TEXTUAL"] = clip_fallback
+        os.environ["MACHINE_LEARNING_PRELOAD__CLIP__VISUAL"] = clip_fallback
+        del os.environ["MACHINE_LEARNING_PRELOAD__CLIP"]
+    if facial_recognition_fallback is not None:
+        os.environ["MACHINE_LEARNING_PRELOAD__FACIAL_RECOGNITION__RECOGNITION"] = facial_recognition_fallback
+        os.environ["MACHINE_LEARNING_PRELOAD__FACIAL_RECOGNITION__DETECTION"] = facial_recognition_fallback
+        del os.environ["MACHINE_LEARNING_PRELOAD__FACIAL_RECOGNITION"]
+    clip: ClipSettings = ClipSettings()
+    facial_recognition: FacialRecognitionSettings = FacialRecognitionSettings()
+
+
+class MaxBatchSize(BaseModel):
+    facial_recognition: int | None = None
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="MACHINE_LEARNING_",
+        case_sensitive=False,
+        env_nested_delimiter="__",
+        protected_namespaces=("settings_",),
+    )
+
     cache_folder: Path = Path("/cache")
     model_ttl: int = 300
     model_ttl_poll_s: int = 10
@@ -33,11 +65,7 @@ class Settings(BaseSettings):
     ann_fp16_turbo: bool = False
     ann_tuning_level: int = 2
     preload: PreloadModelData | None = None
-
-    class Config:
-        env_prefix = "MACHINE_LEARNING_"
-        case_sensitive = False
-        env_nested_delimiter = "__"
+    max_batch_size: MaxBatchSize | None = None
 
     @property
     def device_id(self) -> str:
@@ -45,11 +73,10 @@ class Settings(BaseSettings):
 
 
 class LogSettings(BaseSettings):
+    model_config = SettingsConfigDict(case_sensitive=False)
+
     immich_log_level: str = "info"
     no_color: bool = False
-
-    class Config:
-        case_sensitive = False
 
 
 _clean_name = str.maketrans(":\\/", "___", ".")

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy';
+
   import { goto } from '$app/navigation';
   import UserPageLayout from '$lib/components/layouts/user-page-layout.svelte';
   import MapSettingsModal from '$lib/components/map-page/map-settings-modal.svelte';
@@ -17,15 +19,19 @@
   import { handlePromiseError } from '$lib/utils';
   import { navigate } from '$lib/utils/navigation';
 
-  export let data: PageData;
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
 
   let { isViewing: showAssetViewer, asset: viewingAsset, setAssetId } = assetViewingStore;
 
   let abortController: AbortController;
-  let mapMarkers: MapMarkerResponseDto[] = [];
-  let viewingAssets: string[] = [];
+  let mapMarkers: MapMarkerResponseDto[] = $state([]);
+  let viewingAssets: string[] = $state([]);
   let viewingAssetCursor = 0;
-  let showSettingsModal = false;
+  let showSettingsModal = $state(false);
 
   onMount(async () => {
     mapMarkers = await loadMapMarkers();
@@ -36,9 +42,11 @@
     assetViewingStore.showAssetViewer(false);
   });
 
-  $: if (!$featureFlags.map) {
-    handlePromiseError(goto(AppRoute.PHOTOS));
-  }
+  run(() => {
+    if (!$featureFlags.map) {
+      handlePromiseError(goto(AppRoute.PHOTOS));
+    }
+  });
   const omit = (obj: MapSettings, key: string) => {
     return Object.fromEntries(Object.entries(obj).filter(([k]) => k !== key));
   };
@@ -99,14 +107,28 @@
     if (viewingAssetCursor < viewingAssets.length - 1) {
       await setAssetId(viewingAssets[++viewingAssetCursor]);
       await navigate({ targetRoute: 'current', assetId: $viewingAsset.id });
+      return true;
     }
+    return false;
   }
 
   async function navigatePrevious() {
     if (viewingAssetCursor > 0) {
       await setAssetId(viewingAssets[--viewingAssetCursor]);
       await navigate({ targetRoute: 'current', assetId: $viewingAsset.id });
+      return true;
     }
+    return false;
+  }
+
+  async function navigateRandom() {
+    if (viewingAssets.length <= 0) {
+      return null;
+    }
+    const index = Math.floor(Math.random() * viewingAssets.length);
+    const asset = await setAssetId(viewingAssets[index]);
+    await navigate({ targetRoute: 'current', assetId: $viewingAsset.id });
+    return asset;
   }
 </script>
 
@@ -124,6 +146,7 @@
           showNavigation={viewingAssets.length > 1}
           onNext={navigateNext}
           onPrevious={navigatePrevious}
+          onRandom={navigateRandom}
           onClose={() => {
             assetViewingStore.showAssetViewer(false);
             handlePromiseError(navigate({ targetRoute: 'current', assetId: null }));

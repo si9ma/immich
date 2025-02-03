@@ -1,15 +1,29 @@
 <script lang="ts">
-  import LinkButton from '$lib/components/elements/buttons/link-button.svelte';
   import Dropdown from '$lib/components/elements/dropdown.svelte';
-  import Icon from '$lib/components/elements/icon.svelte';
+  import GroupTab from '$lib/components/elements/group-tab.svelte';
+  import SearchBar from '$lib/components/elements/search-bar.svelte';
   import {
     AlbumFilter,
-    AlbumSortBy,
     AlbumGroupBy,
+    AlbumSortBy,
     AlbumViewMode,
     albumViewSettings,
     SortOrder,
   } from '$lib/stores/preferences.store';
+  import {
+    type AlbumGroupOptionMetadata,
+    type AlbumSortOptionMetadata,
+    collapseAllAlbumGroups,
+    createAlbumAndRedirect,
+    expandAllAlbumGroups,
+    findFilterOption,
+    findGroupOptionMetadata,
+    findSortOptionMetadata,
+    getSelectedAlbumGroupOption,
+    groupOptionsMetadata,
+    sortOptionsMetadata,
+  } from '$lib/utils/album-utils';
+  import { Button, IconButton, Text } from '@immich/ui';
   import {
     mdiArrowDownThin,
     mdiArrowUpThin,
@@ -22,24 +36,15 @@
     mdiUnfoldMoreHorizontal,
     mdiViewGridOutline,
   } from '@mdi/js';
-  import {
-    type AlbumGroupOptionMetadata,
-    type AlbumSortOptionMetadata,
-    findGroupOptionMetadata,
-    findFilterOption,
-    findSortOptionMetadata,
-    getSelectedAlbumGroupOption,
-    groupOptionsMetadata,
-    sortOptionsMetadata,
-  } from '$lib/utils/album-utils';
-  import SearchBar from '$lib/components/elements/search-bar.svelte';
-  import GroupTab from '$lib/components/elements/group-tab.svelte';
-  import { createAlbumAndRedirect, collapseAllAlbumGroups, expandAllAlbumGroups } from '$lib/utils/album-utils';
-  import { fly } from 'svelte/transition';
   import { t } from 'svelte-i18n';
+  import { fly } from 'svelte/transition';
 
-  export let albumGroups: string[];
-  export let searchQuery: string;
+  interface Props {
+    albumGroups: string[];
+    searchQuery: string;
+  }
+
+  let { albumGroups, searchQuery = $bindable() }: Props = $props();
 
   const flipOrdering = (ordering: string) => {
     return ordering === SortOrder.Asc ? SortOrder.Desc : SortOrder.Asc;
@@ -73,57 +78,38 @@
       $albumViewSettings.view === AlbumViewMode.Cover ? AlbumViewMode.List : AlbumViewMode.Cover;
   };
 
-  let selectedGroupOption: AlbumGroupOptionMetadata;
-  let groupIcon: string;
-
-  $: selectedFilterOption = albumFilterNames[findFilterOption($albumViewSettings.filter)];
-
-  $: selectedSortOption = findSortOptionMetadata($albumViewSettings.sortBy);
-
-  $: {
-    selectedGroupOption = findGroupOptionMetadata($albumViewSettings.groupBy);
-    if (selectedGroupOption.isDisabled()) {
-      selectedGroupOption = findGroupOptionMetadata(AlbumGroupBy.None);
+  let groupIcon = $derived.by(() => {
+    if (selectedGroupOption?.id === AlbumGroupBy.None) {
+      return mdiFolderRemoveOutline;
     }
-  }
+    return $albumViewSettings.groupOrder === SortOrder.Desc ? mdiFolderArrowDownOutline : mdiFolderArrowUpOutline;
+  });
 
-  $: {
-    if (selectedGroupOption.id === AlbumGroupBy.None) {
-      groupIcon = mdiFolderRemoveOutline;
-    } else {
-      groupIcon =
-        $albumViewSettings.groupOrder === SortOrder.Desc ? mdiFolderArrowDownOutline : mdiFolderArrowUpOutline;
-    }
-  }
+  let albumFilterNames: Record<AlbumFilter, string> = $derived({
+    [AlbumFilter.All]: $t('all'),
+    [AlbumFilter.Owned]: $t('owned'),
+    [AlbumFilter.Shared]: $t('shared'),
+  });
 
-  $: sortIcon = $albumViewSettings.sortOrder === SortOrder.Desc ? mdiArrowDownThin : mdiArrowUpThin;
+  let selectedFilterOption = $derived(albumFilterNames[findFilterOption($albumViewSettings.filter)]);
+  let selectedSortOption = $derived(findSortOptionMetadata($albumViewSettings.sortBy));
+  let selectedGroupOption = $derived(findGroupOptionMetadata($albumViewSettings.groupBy));
+  let sortIcon = $derived($albumViewSettings.sortOrder === SortOrder.Desc ? mdiArrowDownThin : mdiArrowUpThin);
 
-  $: albumFilterNames = ((): Record<AlbumFilter, string> => {
-    return {
-      [AlbumFilter.All]: $t('all'),
-      [AlbumFilter.Owned]: $t('owned'),
-      [AlbumFilter.Shared]: $t('shared'),
-    };
-  })();
+  let albumSortByNames: Record<AlbumSortBy, string> = $derived({
+    [AlbumSortBy.Title]: $t('sort_title'),
+    [AlbumSortBy.ItemCount]: $t('sort_items'),
+    [AlbumSortBy.DateModified]: $t('sort_modified'),
+    [AlbumSortBy.DateCreated]: $t('sort_created'),
+    [AlbumSortBy.MostRecentPhoto]: $t('sort_recent'),
+    [AlbumSortBy.OldestPhoto]: $t('sort_oldest'),
+  });
 
-  $: albumSortByNames = ((): Record<AlbumSortBy, string> => {
-    return {
-      [AlbumSortBy.Title]: $t('sort_title'),
-      [AlbumSortBy.ItemCount]: $t('sort_items'),
-      [AlbumSortBy.DateModified]: $t('sort_modified'),
-      [AlbumSortBy.DateCreated]: $t('sort_created'),
-      [AlbumSortBy.MostRecentPhoto]: $t('sort_recent'),
-      [AlbumSortBy.OldestPhoto]: $t('sort_oldest'),
-    };
-  })();
-
-  $: albumGroupByNames = ((): Record<AlbumGroupBy, string> => {
-    return {
-      [AlbumGroupBy.None]: $t('group_no'),
-      [AlbumGroupBy.Owner]: $t('group_owner'),
-      [AlbumGroupBy.Year]: $t('group_year'),
-    };
-  })();
+  let albumGroupByNames: Record<AlbumGroupBy, string> = $derived({
+    [AlbumGroupBy.None]: $t('group_no'),
+    [AlbumGroupBy.Owner]: $t('group_owner'),
+    [AlbumGroupBy.Year]: $t('group_year'),
+  });
 </script>
 
 <!-- Filter Albums by Sharing Status (All, Owned, Shared) -->
@@ -142,12 +128,15 @@
 </div>
 
 <!-- Create Album -->
-<LinkButton on:click={() => createAlbumAndRedirect()}>
-  <div class="flex place-items-center gap-2 text-sm">
-    <Icon path={mdiPlusBoxOutline} size="18" />
-    <p class="hidden md:block">{$t('create_album')}</p>
-  </div>
-</LinkButton>
+<Button
+  leadingIcon={mdiPlusBoxOutline}
+  onclick={() => createAlbumAndRedirect()}
+  size="small"
+  variant="ghost"
+  color="secondary"
+>
+  <p class="hidden md:block">{$t('create_album')}</p>
+</Button>
 
 <!-- Sort Albums -->
 <Dropdown
@@ -179,34 +168,50 @@
     <!-- Expand Album Groups -->
     <div class="hidden xl:flex gap-0">
       <div class="block">
-        <LinkButton title={$t('expand_all')} on:click={() => expandAllAlbumGroups()}>
-          <div class="flex place-items-center gap-2 text-sm">
-            <Icon path={mdiUnfoldMoreHorizontal} size="18" />
-          </div>
-        </LinkButton>
+        <IconButton
+          title={$t('expand_all')}
+          onclick={() => expandAllAlbumGroups()}
+          variant="ghost"
+          color="secondary"
+          shape="round"
+          icon={mdiUnfoldMoreHorizontal}
+        />
       </div>
 
       <!-- Collapse Album Groups -->
       <div class="block">
-        <LinkButton title={$t('collapse_all')} on:click={() => collapseAllAlbumGroups(albumGroups)}>
-          <div class="flex place-items-center gap-2 text-sm">
-            <Icon path={mdiUnfoldLessHorizontal} size="18" />
-          </div>
-        </LinkButton>
+        <IconButton
+          title={$t('collapse_all')}
+          onclick={() => collapseAllAlbumGroups(albumGroups)}
+          variant="ghost"
+          color="secondary"
+          shape="round"
+          icon={mdiUnfoldLessHorizontal}
+        />
       </div>
     </div>
   </span>
 {/if}
 
 <!-- Cover/List Display Toggle -->
-<LinkButton on:click={() => handleChangeListMode()}>
-  <div class="flex place-items-center gap-2 text-sm">
-    {#if $albumViewSettings.view === AlbumViewMode.List}
-      <Icon path={mdiViewGridOutline} size="18" />
-      <p class="hidden md:block">{$t('covers')}</p>
-    {:else}
-      <Icon path={mdiFormatListBulletedSquare} size="18" />
-      <p class="hidden md:block">{$t('list')}</p>
-    {/if}
-  </div>
-</LinkButton>
+{#if $albumViewSettings.view === AlbumViewMode.List}
+  <Button
+    leadingIcon={mdiViewGridOutline}
+    onclick={() => handleChangeListMode()}
+    size="small"
+    variant="ghost"
+    color="secondary"
+  >
+    <Text class="hidden md:block">{$t('covers')}</Text>
+  </Button>
+{:else}
+  <Button
+    leadingIcon={mdiFormatListBulletedSquare}
+    onclick={() => handleChangeListMode()}
+    size="small"
+    variant="ghost"
+    color="secondary"
+  >
+    <Text class="hidden md:block">{$t('list')}</Text>
+  </Button>
+{/if}

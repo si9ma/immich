@@ -136,17 +136,10 @@ class AlbumAssetSelectionRouteArgs {
 
 /// generated route for
 /// [AlbumOptionsPage]
-class AlbumOptionsRoute extends PageRouteInfo<AlbumOptionsRouteArgs> {
-  AlbumOptionsRoute({
-    Key? key,
-    required Album album,
-    List<PageRouteInfo>? children,
-  }) : super(
+class AlbumOptionsRoute extends PageRouteInfo<void> {
+  const AlbumOptionsRoute({List<PageRouteInfo>? children})
+      : super(
           AlbumOptionsRoute.name,
-          args: AlbumOptionsRouteArgs(
-            key: key,
-            album: album,
-          ),
           initialChildren: children,
         );
 
@@ -155,29 +148,9 @@ class AlbumOptionsRoute extends PageRouteInfo<AlbumOptionsRouteArgs> {
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      final args = data.argsAs<AlbumOptionsRouteArgs>();
-      return AlbumOptionsPage(
-        key: args.key,
-        album: args.album,
-      );
+      return const AlbumOptionsPage();
     },
   );
-}
-
-class AlbumOptionsRouteArgs {
-  const AlbumOptionsRouteArgs({
-    this.key,
-    required this.album,
-  });
-
-  final Key? key;
-
-  final Album album;
-
-  @override
-  String toString() {
-    return 'AlbumOptionsRouteArgs{key: $key, album: $album}';
-  }
 }
 
 /// generated route for
@@ -1080,6 +1053,64 @@ class MemoryRouteArgs {
 }
 
 /// generated route for
+/// [NativeVideoViewerPage]
+class NativeVideoViewerRoute extends PageRouteInfo<NativeVideoViewerRouteArgs> {
+  NativeVideoViewerRoute({
+    Key? key,
+    required Asset asset,
+    required Widget image,
+    bool showControls = true,
+    List<PageRouteInfo>? children,
+  }) : super(
+          NativeVideoViewerRoute.name,
+          args: NativeVideoViewerRouteArgs(
+            key: key,
+            asset: asset,
+            image: image,
+            showControls: showControls,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'NativeVideoViewerRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<NativeVideoViewerRouteArgs>();
+      return NativeVideoViewerPage(
+        key: args.key,
+        asset: args.asset,
+        image: args.image,
+        showControls: args.showControls,
+      );
+    },
+  );
+}
+
+class NativeVideoViewerRouteArgs {
+  const NativeVideoViewerRouteArgs({
+    this.key,
+    required this.asset,
+    required this.image,
+    this.showControls = true,
+  });
+
+  final Key? key;
+
+  final Asset asset;
+
+  final Widget image;
+
+  final bool showControls;
+
+  @override
+  String toString() {
+    return 'NativeVideoViewerRouteArgs{key: $key, asset: $asset, image: $image, showControls: $showControls}';
+  }
+}
+
+/// generated route for
 /// [PartnerDetailPage]
 class PartnerDetailRoute extends PageRouteInfo<PartnerDetailRouteArgs> {
   PartnerDetailRoute({
@@ -1292,29 +1323,29 @@ class RecentlyAddedRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [SearchInputPage]
-class SearchInputRoute extends PageRouteInfo<SearchInputRouteArgs> {
-  SearchInputRoute({
+/// [SearchPage]
+class SearchRoute extends PageRouteInfo<SearchRouteArgs> {
+  SearchRoute({
     Key? key,
     SearchFilter? prefilter,
     List<PageRouteInfo>? children,
   }) : super(
-          SearchInputRoute.name,
-          args: SearchInputRouteArgs(
+          SearchRoute.name,
+          args: SearchRouteArgs(
             key: key,
             prefilter: prefilter,
           ),
           initialChildren: children,
         );
 
-  static const String name = 'SearchInputRoute';
+  static const String name = 'SearchRoute';
 
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      final args = data.argsAs<SearchInputRouteArgs>(
-          orElse: () => const SearchInputRouteArgs());
-      return SearchInputPage(
+      final args =
+          data.argsAs<SearchRouteArgs>(orElse: () => const SearchRouteArgs());
+      return SearchPage(
         key: args.key,
         prefilter: args.prefilter,
       );
@@ -1322,8 +1353,8 @@ class SearchInputRoute extends PageRouteInfo<SearchInputRouteArgs> {
   );
 }
 
-class SearchInputRouteArgs {
-  const SearchInputRouteArgs({
+class SearchRouteArgs {
+  const SearchRouteArgs({
     this.key,
     this.prefilter,
   });
@@ -1334,27 +1365,8 @@ class SearchInputRouteArgs {
 
   @override
   String toString() {
-    return 'SearchInputRouteArgs{key: $key, prefilter: $prefilter}';
+    return 'SearchRouteArgs{key: $key, prefilter: $prefilter}';
   }
-}
-
-/// generated route for
-/// [SearchPage]
-class SearchRoute extends PageRouteInfo<void> {
-  const SearchRoute({List<PageRouteInfo>? children})
-      : super(
-          SearchRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'SearchRoute';
-
-  static PageInfo page = PageInfo(
-    name,
-    builder: (data) {
-      return const SearchPage();
-    },
-  );
 }
 
 /// generated route for
@@ -1419,6 +1431,52 @@ class SettingsSubRouteArgs {
   @override
   String toString() {
     return 'SettingsSubRouteArgs{section: $section, key: $key}';
+  }
+}
+
+/// generated route for
+/// [ShareIntentPage]
+class ShareIntentRoute extends PageRouteInfo<ShareIntentRouteArgs> {
+  ShareIntentRoute({
+    Key? key,
+    required List<ShareIntentAttachment> attachments,
+    List<PageRouteInfo>? children,
+  }) : super(
+          ShareIntentRoute.name,
+          args: ShareIntentRouteArgs(
+            key: key,
+            attachments: attachments,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'ShareIntentRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<ShareIntentRouteArgs>();
+      return ShareIntentPage(
+        key: args.key,
+        attachments: args.attachments,
+      );
+    },
+  );
+}
+
+class ShareIntentRouteArgs {
+  const ShareIntentRouteArgs({
+    this.key,
+    required this.attachments,
+  });
+
+  final Key? key;
+
+  final List<ShareIntentAttachment> attachments;
+
+  @override
+  String toString() {
+    return 'ShareIntentRouteArgs{key: $key, attachments: $attachments}';
   }
 }
 

@@ -1,29 +1,37 @@
 <script lang="ts">
+  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import UserPageLayout from '$lib/components/layouts/user-page-layout.svelte';
   import { dialogController } from '$lib/components/shared-components/dialog/dialog';
+  import DuplicatesModal from '$lib/components/shared-components/duplicates-modal.svelte';
   import {
     NotificationType,
     notificationController,
   } from '$lib/components/shared-components/notification/notification';
+  import ShowShortcuts from '$lib/components/shared-components/show-shortcuts.svelte';
   import DuplicatesCompareControl from '$lib/components/utilities-page/duplicates/duplicates-compare-control.svelte';
-  import type { AssetResponseDto } from '@immich/sdk';
+  import { locale } from '$lib/stores/preferences.store';
   import { featureFlags } from '$lib/stores/server-config.store';
+  import { stackAssets } from '$lib/utils/asset-utils';
+  import { suggestDuplicate } from '$lib/utils/duplicate-utils';
   import { handleError } from '$lib/utils/handle-error';
+  import type { AssetResponseDto } from '@immich/sdk';
   import { deleteAssets, updateAssets } from '@immich/sdk';
+  import { Button, HStack, IconButton, Text } from '@immich/ui';
+  import { mdiCheckOutline, mdiInformationOutline, mdiKeyboard, mdiTrashCanOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
-  import { suggestDuplicateByFileSize } from '$lib/utils';
-  import LinkButton from '$lib/components/elements/buttons/link-button.svelte';
-  import { mdiCheckOutline, mdiTrashCanOutline } from '@mdi/js';
-  import { stackAssets } from '$lib/utils/asset-utils';
-  import ShowShortcuts from '$lib/components/shared-components/show-shortcuts.svelte';
-  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
-  import { mdiKeyboard } from '@mdi/js';
-  import Icon from '$lib/components/elements/icon.svelte';
-  import { locale } from '$lib/stores/preferences.store';
 
-  export let data: PageData;
-  export let isShowKeyboardShortcut = false;
+  interface Props {
+    data: PageData;
+    isShowKeyboardShortcut?: boolean;
+    isShowDuplicateInfo?: boolean;
+  }
+
+  let {
+    data = $bindable(),
+    isShowKeyboardShortcut = $bindable(false),
+    isShowDuplicateInfo = $bindable(false),
+  }: Props = $props();
 
   interface Shortcuts {
     general: ExplainedShortcut[];
@@ -46,8 +54,8 @@
     ],
   };
 
-  $: hasDuplicates = data.duplicates.length > 0;
-
+  let duplicates = $state(data.duplicates);
+  let hasDuplicates = $derived(duplicates.length > 0);
   const withConfirmation = async (callback: () => Promise<void>, prompt?: string, confirmText?: string) => {
     if (prompt && confirmText) {
       const isConfirmed = await dialogController.show({ prompt, confirmText });
@@ -82,7 +90,7 @@
         await deleteAssets({ assetBulkDeleteDto: { ids: trashIds, force: !$featureFlags.trash } });
         await updateAssets({ assetBulkUpdateDto: { ids: duplicateAssetIds, duplicateId: null } });
 
-        data.duplicates = data.duplicates.filter((duplicate) => duplicate.duplicateId !== duplicateId);
+        duplicates = duplicates.filter((duplicate) => duplicate.duplicateId !== duplicateId);
 
         deletedNotification(trashIds.length);
       },
@@ -95,14 +103,12 @@
     await stackAssets(assets, false);
     const duplicateAssetIds = assets.map((asset) => asset.id);
     await updateAssets({ assetBulkUpdateDto: { ids: duplicateAssetIds, duplicateId: null } });
-    data.duplicates = data.duplicates.filter((duplicate) => duplicate.duplicateId !== duplicateId);
+    duplicates = duplicates.filter((duplicate) => duplicate.duplicateId !== duplicateId);
   };
 
   const handleDeduplicateAll = async () => {
-    const idsToKeep = data.duplicates
-      .map((group) => suggestDuplicateByFileSize(group.assets))
-      .map((asset) => asset?.id);
-    const idsToDelete = data.duplicates.flatMap((group, i) =>
+    const idsToKeep = duplicates.map((group) => suggestDuplicate(group.assets)).map((asset) => asset?.id);
+    const idsToDelete = duplicates.flatMap((group, i) =>
       group.assets.map((asset) => asset.id).filter((asset) => asset !== idsToKeep[i]),
     );
 
@@ -125,7 +131,7 @@
           },
         });
 
-        data.duplicates = [];
+        duplicates = [];
 
         deletedNotification(idsToDelete.length);
       },
@@ -135,12 +141,12 @@
   };
 
   const handleKeepAll = async () => {
-    const ids = data.duplicates.flatMap((group) => group.assets.map((asset) => asset.id));
+    const ids = duplicates.flatMap((group) => group.assets.map((asset) => asset.id));
     return withConfirmation(
       async () => {
         await updateAssets({ assetBulkUpdateDto: { ids, duplicateId: null } });
 
-        data.duplicates = [];
+        duplicates = [];
 
         notificationController.show({
           message: $t('resolved_all_duplicates'),
@@ -153,38 +159,62 @@
   };
 </script>
 
-<UserPageLayout title={data.meta.title + ` (${data.duplicates.length.toLocaleString($locale)})`} scrollbar={true}>
-  <div class="flex place-items-center gap-2" slot="buttons">
-    <LinkButton on:click={() => handleDeduplicateAll()} disabled={!hasDuplicates}>
-      <div class="flex place-items-center gap-2 text-sm">
-        <Icon path={mdiTrashCanOutline} size="18" />
-        {$t('deduplicate_all')}
-      </div>
-    </LinkButton>
-    <LinkButton on:click={() => handleKeepAll()} disabled={!hasDuplicates}>
-      <div class="flex place-items-center gap-2 text-sm">
-        <Icon path={mdiCheckOutline} size="18" />
-        {$t('keep_all')}
-      </div>
-    </LinkButton>
-    <CircleIconButton
-      icon={mdiKeyboard}
-      title={$t('show_keyboard_shortcuts')}
-      on:click={() => (isShowKeyboardShortcut = !isShowKeyboardShortcut)}
-    />
-  </div>
+<UserPageLayout title={data.meta.title + ` (${duplicates.length.toLocaleString($locale)})`} scrollbar={true}>
+  {#snippet buttons()}
+    <HStack gap={0}>
+      <Button
+        leadingIcon={mdiTrashCanOutline}
+        onclick={() => handleDeduplicateAll()}
+        disabled={!hasDuplicates}
+        size="small"
+        variant="ghost"
+        color="secondary"
+      >
+        <Text class="hidden md:block">{$t('deduplicate_all')}</Text>
+      </Button>
+      <Button
+        leadingIcon={mdiCheckOutline}
+        onclick={() => handleKeepAll()}
+        disabled={!hasDuplicates}
+        size="small"
+        variant="ghost"
+        color="secondary"
+      >
+        <Text class="hidden md:block">{$t('keep_all')}</Text>
+      </Button>
+      <IconButton
+        shape="round"
+        variant="ghost"
+        color="secondary"
+        size="large"
+        icon={mdiKeyboard}
+        title={$t('show_keyboard_shortcuts')}
+        onclick={() => (isShowKeyboardShortcut = !isShowKeyboardShortcut)}
+      />
+    </HStack>
+  {/snippet}
 
-  <div class="mt-4">
-    {#if data.duplicates && data.duplicates.length > 0}
-      <div class="mb-4 text-sm dark:text-white">
-        <p>{$t('duplicates_description')}</p>
+  <div class="">
+    {#if duplicates && duplicates.length > 0}
+      <div class="flex items-center mb-2">
+        <div class="text-sm dark:text-white">
+          <p>{$t('duplicates_description')}</p>
+        </div>
+        <CircleIconButton
+          icon={mdiInformationOutline}
+          title={$t('deduplication_info')}
+          size="16"
+          padding="2"
+          onclick={() => (isShowDuplicateInfo = true)}
+        />
       </div>
-      {#key data.duplicates[0].duplicateId}
+
+      {#key duplicates[0].duplicateId}
         <DuplicatesCompareControl
-          assets={data.duplicates[0].assets}
+          assets={duplicates[0].assets}
           onResolve={(duplicateAssetIds, trashIds) =>
-            handleResolve(data.duplicates[0].duplicateId, duplicateAssetIds, trashIds)}
-          onStack={(assets) => handleStack(data.duplicates[0].duplicateId, assets)}
+            handleResolve(duplicates[0].duplicateId, duplicateAssetIds, trashIds)}
+          onStack={(assets) => handleStack(duplicates[0].duplicateId, assets)}
         />
       {/key}
     {:else}
@@ -197,4 +227,7 @@
 
 {#if isShowKeyboardShortcut}
   <ShowShortcuts shortcuts={duplicateShortcuts} onClose={() => (isShowKeyboardShortcut = false)} />
+{/if}
+{#if isShowDuplicateInfo}
+  <DuplicatesModal onClose={() => (isShowDuplicateInfo = false)} />
 {/if}

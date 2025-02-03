@@ -33,20 +33,43 @@ describe(UserService.name, () => {
     ({ sut, albumMock, jobMock, storageMock, systemMock, userMock } = newTestService(UserService));
 
     userMock.get.mockImplementation((userId) =>
-      Promise.resolve([userStub.admin, userStub.user1].find((user) => user.id === userId) ?? null),
+      Promise.resolve([userStub.admin, userStub.user1].find((user) => user.id === userId) ?? undefined),
     );
   });
 
   describe('getAll', () => {
-    it('should get all users', async () => {
+    it('admin should get all users', async () => {
       userMock.getList.mockResolvedValue([userStub.admin]);
-      await expect(sut.search()).resolves.toEqual([
+      await expect(sut.search(authStub.admin)).resolves.toEqual([
         expect.objectContaining({
           id: authStub.admin.user.id,
           email: authStub.admin.user.email,
         }),
       ]);
       expect(userMock.getList).toHaveBeenCalledWith({ withDeleted: false });
+    });
+
+    it('non-admin should get all users when publicUsers enabled', async () => {
+      userMock.getList.mockResolvedValue([userStub.user1]);
+      await expect(sut.search(authStub.user1)).resolves.toEqual([
+        expect.objectContaining({
+          id: authStub.user1.user.id,
+          email: authStub.user1.user.email,
+        }),
+      ]);
+      expect(userMock.getList).toHaveBeenCalledWith({ withDeleted: false });
+    });
+
+    it('non-admin user should only receive itself when publicUsers is disabled', async () => {
+      userMock.getList.mockResolvedValue([userStub.user1]);
+      systemMock.get.mockResolvedValue(systemConfigStub.publicUsersDisabled);
+      await expect(sut.search(authStub.user1)).resolves.toEqual([
+        expect.objectContaining({
+          id: authStub.user1.user.id,
+          email: authStub.user1.user.email,
+        }),
+      ]);
+      expect(userMock.getList).not.toHaveBeenCalledWith({ withDeleted: false });
     });
   });
 
@@ -58,7 +81,7 @@ describe(UserService.name, () => {
     });
 
     it('should throw an error if a user is not found', async () => {
-      userMock.get.mockResolvedValue(null);
+      userMock.get.mockResolvedValue(void 0);
       await expect(sut.get(authStub.admin.user.id)).rejects.toBeInstanceOf(BadRequestException);
       expect(userMock.get).toHaveBeenCalledWith(authStub.admin.user.id, { withDeleted: false });
     });
@@ -77,7 +100,7 @@ describe(UserService.name, () => {
   describe('createProfileImage', () => {
     it('should throw an error if the user does not exist', async () => {
       const file = { path: '/profile/path' } as Express.Multer.File;
-      userMock.get.mockResolvedValue(null);
+      userMock.get.mockResolvedValue(void 0);
       userMock.update.mockResolvedValue({ ...userStub.admin, profileImagePath: file.path });
 
       await expect(sut.createProfileImage(authStub.admin, file)).rejects.toThrowError(BadRequestException);
@@ -132,7 +155,7 @@ describe(UserService.name, () => {
 
   describe('getUserProfileImage', () => {
     it('should throw an error if the user does not exist', async () => {
-      userMock.get.mockResolvedValue(null);
+      userMock.get.mockResolvedValue(void 0);
 
       await expect(sut.getProfileImage(userStub.admin.id)).rejects.toBeInstanceOf(BadRequestException);
 
