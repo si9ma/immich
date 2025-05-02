@@ -213,6 +213,8 @@ export interface Exif {
   rating: number | null;
   state: string | null;
   timeZone: string | null;
+  district: string | null;
+  address: string | null;
 }
 
 export interface FaceSearch {

@@ -97,4 +97,10 @@ export class ExifTable {
 
   @UpdateIdColumn({ indexName: 'IDX_asset_exif_update_id' })
   updateId?: string;
+
+  @Column({ type: 'character varying', nullable: true })
+  district!: string | null;
+
+  @Column({ type: 'character varying', nullable: true })
+  address!: string | null;
 }

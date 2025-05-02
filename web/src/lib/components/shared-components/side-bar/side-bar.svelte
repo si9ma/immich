@@ -84,7 +84,8 @@
       bind:isSelected={isSharingSelected}
     ></SideBarLink>
 
-    <p class="text-xs p-6 dark:text-immich-dark-fg">{$t('library').toUpperCase()}</p>
+    <hr class="ml-6 mt-4 mb-4" />
+    <!-- <p class="text-xs p-6 dark:text-immich-dark-fg">{$t('library').toUpperCase()}</p> -->
 
     <SideBarLink
       title={$t('favorites')}
@@ -139,5 +140,5 @@
     {/if}
   </nav>
 
-  <BottomInfo />
+  <!-- <BottomInfo /> -->
 </SideBarSection>

@@ -16,6 +16,7 @@
     title?: string | undefined;
     description?: string | undefined;
     scrollbar?: boolean;
+    isWide?: boolean;
     admin?: boolean;
     use?: ActionArray;
     header?: Snippet;
@@ -31,6 +32,7 @@
     description = undefined,
     scrollbar = true,
     admin = false,
+    isWide = true,
     use = [],
     header,
     sidebar,
@@ -40,6 +42,7 @@
 
   let scrollbarClass = $derived(scrollbar ? 'immich-scrollbar p-2' : 'scrollbar-hidden');
   let hasTitleClass = $derived(title ? 'top-16 h-[calc(100%-theme(spacing.16))]' : 'top-0 h-full');
+  let isWideClass = $derived(isWide ? 'md:grid-cols-[theme(spacing.18)_auto]' : 'md:grid-cols-[theme(spacing.64)_auto]');
 </script>
 
 <header>
@@ -49,9 +52,10 @@
 
   {@render header?.()}
 </header>
+<!-- class="relative grid h-dvh grid-cols-[theme(spacing.0)_auto] overflow-hidden bg-immich-bg max-md:pt-[var(--navbar-height-md)] pt-[var(--navbar-height)] dark:bg-immich-dark-bg sidebar:grid-cols-[theme(spacing.64)_auto] {isWideClass}" -->
 <main
   tabindex="-1"
-  class="relative grid h-dvh grid-cols-[theme(spacing.0)_auto] overflow-hidden bg-immich-bg max-md:pt-[var(--navbar-height-md)] pt-[var(--navbar-height)] dark:bg-immich-dark-bg sidebar:grid-cols-[theme(spacing.64)_auto]"
+  class="relative grid h-screen grid-cols-[theme(spacing.18)_auto] overflow-hidden bg-immich-bg pt-[var(--navbar-height)] dark:bg-immich-dark-bg {isWideClass}"
 >
   {#if sidebar}{@render sidebar()}{:else if admin}
     <AdminSideBar />

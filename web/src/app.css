@@ -149,4 +149,17 @@ input:focus-visible {
   .scrollbar-stable {
     scrollbar-gutter: stable both-edges;
   }
+
+  .z-10000 {
+    z-index: 10000;
+  }
+}
+
+.tooltip {
+  @apply invisible fixed
+}
+
+.has-tooltip:hover .tooltip {
+  visibility: visible;
+  z-index: 99999;
 }

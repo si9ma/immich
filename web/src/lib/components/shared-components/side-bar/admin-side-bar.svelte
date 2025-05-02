@@ -1,5 +1,4 @@
 <script lang="ts">
-  import BottomInfo from '$lib/components/shared-components/side-bar/bottom-info.svelte';
   import SideBarLink from '$lib/components/shared-components/side-bar/side-bar-link.svelte';
   import SideBarSection from '$lib/components/shared-components/side-bar/side-bar-section.svelte';
   import { AppRoute } from '$lib/constants';
@@ -16,5 +15,5 @@
     <SideBarLink title={$t('server_stats')} routeId={AppRoute.ADMIN_STATS} icon={mdiServer} />
   </nav>
 
-  <BottomInfo />
+  <!-- <BottomInfo /> -->
 </SideBarSection>

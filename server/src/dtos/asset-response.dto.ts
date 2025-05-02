@@ -107,6 +107,7 @@ export type AssetMapOptions = {
   stripMetadata?: boolean;
   withStack?: boolean;
   auth?: AuthDto;
+  exifAddressAsCity?: boolean;
 };
 
 // TODO: this is inefficient
@@ -150,7 +151,7 @@ export const hexOrBufferToBase64 = (encoded: string | Buffer) => {
 };
 
 export function mapAsset(entity: MapAsset, options: AssetMapOptions = {}): AssetResponseDto {
-  const { stripMetadata = false, withStack = false } = options;
+  const { stripMetadata = false, withStack = false, exifAddressAsCity = true } = options;
 
   if (stripMetadata) {
     const sanitizedAssetResponse: SanitizedAssetResponseDto = {
@@ -186,7 +187,7 @@ export function mapAsset(entity: MapAsset, options: AssetMapOptions = {}): Asset
     isArchived: entity.isArchived,
     isTrashed: !!entity.deletedAt,
     duration: entity.duration ?? '0:00:00.00000',
-    exifInfo: entity.exifInfo ? mapExif(entity.exifInfo) : undefined,
+    exifInfo: entity.exifInfo ? mapExif(entity.exifInfo, exifAddressAsCity) : undefined,
     livePhotoVideoId: entity.livePhotoVideoId,
     tags: entity.tags?.map((tag) => mapTag(tag)),
     people: peopleWithFaces(entity.faces),

@@ -128,9 +128,9 @@
   </div>
 {/if}
 
-<UserPageLayout title={data.meta.title}>
+<UserPageLayout title={data.meta.title} isWide={false}>
   {#snippet sidebar()}
-    <SideBarSection>
+    <SideBarSection isWide={true}>
       <SkipLink target={`#${headerId}`} text={$t('skip_to_folders')} breakpoint="md" />
       <section>
         <div class="text-xs pl-4 mb-2 dark:text-white">{$t('explorer').toUpperCase()}</div>

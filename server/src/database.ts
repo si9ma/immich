@@ -396,5 +396,7 @@ export const columns = {
     'exif.rating',
     'exif.state',
     'exif.timeZone',
+    'exif.address',
+    'exif.district',
   ],
 } as const;
