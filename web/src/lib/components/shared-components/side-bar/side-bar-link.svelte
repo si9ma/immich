@@ -2,6 +2,7 @@
   import { resolveRoute } from '$app/paths';
   import { page } from '$app/state';
   import Icon from '$lib/components/elements/icon.svelte';
+  import { mdiChevronDown, mdiChevronLeft } from '@mdi/js';
   import type { Snippet } from 'svelte';
 
   interface Props {
@@ -34,12 +35,12 @@
 </script>
 
 <div class="relative">
-  <!-- {#if hasDropdown}
-    <span class="hidden md:block absolute left-1 z-50 h-full">
+  {#if hasDropdown}
+    <span class="hidden md:block absolute start-1 h-full">
       <button
         type="button"
         aria-label={$t('recent-albums')}
-        class="relative flex cursor-default pt-4 pb-4 select-none justify-center hover:cursor-pointer hover:bg-immich-gray hover:fill-gray hover:text-immich-primary dark:text-immich-dark-fg dark:hover:bg-immich-dark-gray dark:hover:text-immich-dark-primary rounded h-fill"
+        class="relative flex cursor-default pt-4 pb-4 select-none justify-center hover:cursor-pointer hover:bg-subtle hover:fill-gray hover:text-immich-primary dark:text-immich-dark-fg dark:hover:bg-immich-dark-gray dark:hover:text-immich-dark-primary rounded h-fill"
         onclick={() => (dropdownOpen = !dropdownOpen)}
       >
         <Icon
@@ -57,16 +58,16 @@
     data-sveltekit-preload-data={preloadData ? 'hover' : 'off'}
     draggable="false"
     aria-current={isSelected ? 'page' : undefined}
-    class="flex w-full place-items-start justify-start py-3 mx-3 rounded-lg transition-[padding] delay-100 duration-100 hover:cursor-pointer hover:bg-immich-gray hover:text-immich-primary dark:text-immich-dark-fg dark:hover:bg-immich-dark-gray dark:hover:text-immich-dark-primary
+    class="flex w-full place-items-center gap-4 rounded-e-full py-3 transition-[padding] delay-100 duration-100 hover:cursor-pointer hover:bg-subtle hover:text-immich-primary dark:text-immich-dark-fg dark:hover:bg-immich-dark-gray dark:hover:text-immich-dark-primary
     {isSelected
       ? 'bg-immich-primary/10 text-immich-primary hover:bg-immich-primary/25 dark:bg-immich-dark-primary/10 dark:text-immich-dark-primary'
       : ''}
   xt-immich-primary hork:text-immich-dark-primary'm:px-3 md:px-3
   "
   >
-    <div class="flex place-items-center overflow-hidden truncate">
-      <Icon path={icon} size="1.2em" class="shrink-0" flipped={flippedLogo} ariaHidden />
-      <!-- <span class="text-sm font-medium">{title}</span> -->
+    <div class="flex w-full place-items-center gap-4 ps-5 overflow-hidden truncate">
+      <Icon path={icon} size="1.5em" class="shrink-0" flipped={flippedLogo} ariaHidden />
+      <span class="text-sm font-medium">{title}</span>
     </div>
     <div></div>
   </a>
