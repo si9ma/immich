@@ -42,7 +42,7 @@
     <div class="flex gap-4">
       <div><Icon path={mdiMapMarkerOutline} size="24" /></div>
 
-      <div>
+      <!-- <div>
         {#if asset.exifInfo?.city}
           <p>{asset.exifInfo.city}</p>
         {/if}
@@ -56,8 +56,10 @@
             <p>{asset.exifInfo.country}</p>
           </div>
         {/if}
+      </div> -->
+      <div>
+        <p>{asset.exifInfo.address}</p>
       </div>
-    </div>
 
     {#if isOwner}
       <div>
