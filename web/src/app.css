@@ -180,17 +180,4 @@
   .icon-white-drop-shadow {
     filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.8));
   }
-
-  .z-10000 {
-    z-index: 10000;
-  }
-}
-
-.tooltip {
-  @apply invisible fixed
-}
-
-.has-tooltip:hover .tooltip {
-  visibility: visible;
-  z-index: 99999;
 }

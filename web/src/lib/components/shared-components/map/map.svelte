@@ -60,8 +60,8 @@
   let {
     mapMarkers = $bindable(),
     showSettings = true,
-    zoom = 4,
-    center = [108.89, 34.38],
+    zoom = undefined,
+    center = $bindable(undefined),
     hash = false,
     simplified = false,
     clickable = false,

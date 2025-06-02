@@ -139,7 +139,7 @@
   };
 </script>
 
-<UserPageLayout title={data.meta.title} isWide={false}>
+<UserPageLayout title={data.meta.title}>
   {#snippet sidebar()}
     <Sidebar>
       <SkipLink target={`#${headerId}`} text={$t('skip_to_tags')} breakpoint="md" />

@@ -9,13 +9,10 @@
   interface Props {
     ariaLabel?: string;
     children?: Snippet;
-    isWide?: boolean;
   }
 
   let { ariaLabel, children }: Props = $props();
 
-  let isWideClass = $derived(isWide ? 'md:w-64' : 'md:w-14');
-  let hoverIsWideClass = $derived(isWide ? 'hover:sm:w-64' : 'hover:sm:w-14');
   const isHidden = $derived(!sidebarStore.isOpen && !mobileDevice.isFullSidebar);
   const isExpanded = $derived(sidebarStore.isOpen && !mobileDevice.isFullSidebar);
 

@@ -4,6 +4,7 @@
   import Icon from '$lib/components/elements/icon.svelte';
   import { mdiChevronDown, mdiChevronLeft } from '@mdi/js';
   import type { Snippet } from 'svelte';
+  import { t } from 'svelte-i18n';
 
   interface Props {
     title: string;
@@ -52,7 +53,7 @@
         />
       </button>
     </span>
-  {/if} -->
+  {/if}
   <a
     href={routePath}
     data-sveltekit-preload-data={preloadData ? 'hover' : 'off'}
@@ -60,10 +61,8 @@
     aria-current={isSelected ? 'page' : undefined}
     class="flex w-full place-items-center gap-4 rounded-e-full py-3 transition-[padding] delay-100 duration-100 hover:cursor-pointer hover:bg-subtle hover:text-immich-primary dark:text-immich-dark-fg dark:hover:bg-immich-dark-gray dark:hover:text-immich-dark-primary
     {isSelected
-      ? 'bg-immich-primary/10 text-immich-primary hover:bg-immich-primary/25 dark:bg-immich-dark-primary/10 dark:text-immich-dark-primary'
-      : ''}
-  xt-immich-primary hork:text-immich-dark-primary'm:px-3 md:px-3
-  "
+      ? 'bg-immich-primary/10 text-immich-primary hover:bg-immich-primary/10 dark:bg-immich-dark-primary/10 dark:text-immich-dark-primary'
+      : ''}"
   >
     <div class="flex w-full place-items-center gap-4 ps-5 overflow-hidden truncate">
       <Icon path={icon} size="1.5em" class="shrink-0" flipped={flippedLogo} ariaHidden />
@@ -73,6 +72,6 @@
   </a>
 </div>
 
-<!-- {#if hasDropdown && dropdownOpen}
-  {@render hasDropdown?.()} -->
-<!-- {/if} -->
+{#if hasDropdown && dropdownOpen}
+  {@render hasDropdown?.()}
+{/if}
