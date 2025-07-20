@@ -227,6 +227,8 @@ export class MetadataService extends BaseService {
       country: geo.country,
       state: geo.state,
       city: geo.city,
+      district: geo.district,
+      address: geo.address,
 
       // image/file
       fileSizeInByte: stats.size,
