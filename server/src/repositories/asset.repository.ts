@@ -163,6 +163,8 @@ export class AssetRepository {
               longitude: eb.ref('excluded.longitude'),
               projectionType: eb.ref('excluded.projectionType'),
               city: eb.ref('excluded.city'),
+              address: eb.ref('excluded.address'),
+              district: eb.ref('excluded.district'),
               livePhotoCID: eb.ref('excluded.livePhotoCID'),
               autoStackId: eb.ref('excluded.autoStackId'),
               state: eb.ref('excluded.state'),
