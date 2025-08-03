@@ -5,11 +5,11 @@ const Map<String, Locale> locales = {
   'English (en)': Locale('en'),
   // Additional locales
   'Arabic (ar)': Locale('ar'),
+  'Bulgarian (bg)': Locale('bg'),
   'Catalan (ca)': Locale('ca'),
-  'Chinese Simplified (zh_CN)':
-      Locale.fromSubtags(languageCode: 'zh', scriptCode: 'SIMPLIFIED'),
-  'Chinese Traditional (zh_TW)':
-      Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+  'Chinese Simplified (zh_CN)': Locale.fromSubtags(languageCode: 'zh', scriptCode: 'SIMPLIFIED'),
+  'Chinese Traditional (zh_TW)': Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+  'Croatian (hr)': Locale('hr'),
   'Czech (cs)': Locale('cs'),
   'Danish (da)': Locale('da'),
   'Dutch (nl)': Locale('nl'),
@@ -31,17 +31,18 @@ const Map<String, Locale> locales = {
   'Mongolian (mn)': Locale('mn'),
   'Norwegian Bokmål (nb_NO)': Locale('nb', 'NO'),
   'Polish (pl)': Locale('pl'),
+  'Brazilian Portuguese (pt_BR)': Locale('pt', 'BR'),
   'Portuguese (pt)': Locale('pt'),
   'Romanian (ro)': Locale('ro'),
   'Russian (ru)': Locale('ru'),
-  'Serbian Cyrillic (sr_Cyrl)':
-      Locale.fromSubtags(languageCode: 'sr', scriptCode: 'Cyrl'),
-  'Serbian Latin (sr_Latn)':
-      Locale.fromSubtags(languageCode: 'sr', scriptCode: 'Latn'),
+  'Serbian Cyrillic (sr_Cyrl)': Locale.fromSubtags(languageCode: 'sr', scriptCode: 'Cyrl'),
+  'Serbian Latin (sr_Latn)': Locale.fromSubtags(languageCode: 'sr', scriptCode: 'Latn'),
   'Slovak (sk)': Locale('sk'),
   'Slovenian (sl)': Locale('sl'),
   'Spanish (es)': Locale('es'),
   'Swedish (sv)': Locale('sv'),
+  'Tamil (ta)': Locale('ta'),
+  'Telugu (te)': Locale('te'),
   'Thai (th)': Locale('th'),
   'Turkish (tr)': Locale('tr'),
   'Ukrainian (uk)': Locale('uk'),
@@ -50,7 +51,4 @@ const Map<String, Locale> locales = {
 
 const String translationsPath = 'assets/i18n';
 
-const List<Locale> localesNotSupportedByOverpass = [
-  Locale('el', 'GR'),
-  Locale('sr', 'Cyrl'),
-];
+const List<Locale> localesNotSupportedByOverpass = [Locale('el', 'GR'), Locale('sr', 'Cyrl')];

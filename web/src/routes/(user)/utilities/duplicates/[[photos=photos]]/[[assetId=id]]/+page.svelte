@@ -1,12 +1,10 @@
 <script lang="ts">
-  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import UserPageLayout from '$lib/components/layouts/user-page-layout.svelte';
   import {
-    NotificationType,
     notificationController,
+    NotificationType,
   } from '$lib/components/shared-components/notification/notification';
   import DuplicatesCompareControl from '$lib/components/utilities-page/duplicates/duplicates-compare-control.svelte';
-  import { modalManager } from '$lib/managers/modal-manager.svelte';
   import DuplicatesInformationModal from '$lib/modals/DuplicatesInformationModal.svelte';
   import ShortcutsModal from '$lib/modals/ShortcutsModal.svelte';
   import { locale } from '$lib/stores/preferences.store';
@@ -15,8 +13,8 @@
   import { suggestDuplicate } from '$lib/utils/duplicate-utils';
   import { handleError } from '$lib/utils/handle-error';
   import type { AssetResponseDto } from '@immich/sdk';
-  import { deleteAssets, updateAssets } from '@immich/sdk';
-  import { Button, HStack, IconButton, Text } from '@immich/ui';
+  import { deleteAssets, deleteDuplicates, updateAssets } from '@immich/sdk';
+  import { Button, HStack, IconButton, modalManager, Text } from '@immich/ui';
   import { mdiCheckOutline, mdiInformationOutline, mdiKeyboard, mdiTrashCanOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
@@ -135,10 +133,10 @@
   };
 
   const handleKeepAll = async () => {
-    const ids = duplicates.flatMap((group) => group.assets.map((asset) => asset.id));
+    const ids = duplicates.map(({ duplicateId }) => duplicateId);
     return withConfirmation(
       async () => {
-        await updateAssets({ assetBulkUpdateDto: { ids, duplicateId: null } });
+        await deleteDuplicates({ bulkIdsDto: { ids } });
 
         duplicates = [];
 
@@ -194,12 +192,14 @@
         <div class="text-sm dark:text-white">
           <p>{$t('duplicates_description')}</p>
         </div>
-        <CircleIconButton
+        <IconButton
+          shape="round"
+          variant="ghost"
+          color="secondary"
           icon={mdiInformationOutline}
-          title={$t('deduplication_info')}
-          size="16"
-          padding="2"
-          onclick={() => modalManager.show(DuplicatesInformationModal, {})}
+          aria-label={$t('deduplication_info')}
+          size="small"
+          onclick={() => modalManager.show(DuplicatesInformationModal)}
         />
       </div>
 

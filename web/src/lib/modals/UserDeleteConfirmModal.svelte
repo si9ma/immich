@@ -1,10 +1,9 @@
 <script lang="ts">
   import FormatMessage from '$lib/components/i18n/format-message.svelte';
-  import ConfirmModal from '$lib/modals/ConfirmModal.svelte';
   import { serverConfig } from '$lib/stores/server-config.store';
   import { handleError } from '$lib/utils/handle-error';
   import { deleteUserAdmin, type UserAdminResponseDto, type UserResponseDto } from '@immich/sdk';
-  import { Checkbox, Label } from '@immich/ui';
+  import { Checkbox, ConfirmModal, Label } from '@immich/ui';
   import { t } from 'svelte-i18n';
 
   interface Props {
@@ -77,7 +76,7 @@
       </div>
 
       {#if forceDelete}
-        <p class="text-immich-error">{$t('admin.force_delete_user_warning')}</p>
+        <p class="text-danger">{$t('admin.force_delete_user_warning')}</p>
 
         <p class="immich-form-label text-sm" id="confirm-user-desc">
           {$t('admin.confirm_email_below', { values: { email: user.email } })}

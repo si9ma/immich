@@ -1,9 +1,7 @@
 <script lang="ts">
-  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import Icon from '$lib/components/elements/icon.svelte';
   import LoadingSpinner from '$lib/components/shared-components/loading-spinner.svelte';
   import { timeBeforeShowLoadingSpinner } from '$lib/constants';
-  import { modalManager } from '$lib/managers/modal-manager.svelte';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
   import { photoViewerImgElement } from '$lib/stores/assets-store.svelte';
   import { boundingBoxesArray } from '$lib/stores/people.store';
@@ -21,6 +19,7 @@
     type AssetFaceResponseDto,
     type PersonResponseDto,
   } from '@immich/sdk';
+  import { IconButton, modalManager } from '@immich/ui';
   import { mdiAccountOff, mdiArrowLeftThin, mdiPencil, mdiRestart, mdiTrashCan } from '@mdi/js';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -197,7 +196,14 @@
 >
   <div class="flex place-items-center justify-between gap-2">
     <div class="flex items-center gap-2">
-      <CircleIconButton icon={mdiArrowLeftThin} title={$t('back')} onclick={onClose} />
+      <IconButton
+        shape="round"
+        color="secondary"
+        variant="ghost"
+        icon={mdiArrowLeftThin}
+        aria-label={$t('back')}
+        onclick={onClose}
+      />
       <p class="flex text-lg text-immich-fg dark:text-immich-dark-fg">{$t('edit_faces')}</p>
     </div>
     {#if !isShowLoadingDone}
@@ -302,46 +308,47 @@
                 </p>
               {/if}
 
-              <div class="absolute -end-[5px] -top-[5px] h-[20px] w-[20px] rounded-full">
+              <div class="absolute -end-[3px] -top-[3px] h-[20px] w-[20px] rounded-full">
                 {#if selectedPersonToCreate[face.id] || selectedPersonToReassign[face.id]}
-                  <CircleIconButton
+                  <IconButton
+                    shape="round"
+                    variant="ghost"
                     color="primary"
                     icon={mdiRestart}
-                    title={$t('reset')}
-                    size="18"
-                    padding="1"
+                    aria-label={$t('reset')}
+                    size="small"
                     class="absolute start-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] transform"
                     onclick={() => handleReset(face.id)}
                   />
                 {:else}
-                  <CircleIconButton
+                  <IconButton
+                    shape="round"
                     color="primary"
                     icon={mdiPencil}
-                    title={$t('select_new_face')}
-                    size="18"
-                    padding="1"
+                    aria-label={$t('select_new_face')}
+                    size="small"
                     class="absolute start-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] transform"
                     onclick={() => handleFacePicker(face)}
                   />
                 {/if}
               </div>
-              <div class="absolute end-[25px] -top-[5px] h-[20px] w-[20px] rounded-full">
+              <div class="absolute end-[33px] -top-[3px] h-[20px] w-[20px] rounded-full">
                 {#if !selectedPersonToCreate[face.id] && !selectedPersonToReassign[face.id] && !face.person}
                   <div
                     class="flex place-content-center place-items-center rounded-full bg-[#d3d3d3] p-1 transition-all absolute start-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] transform"
                   >
-                    <Icon color="primary" path={mdiAccountOff} ariaHidden size="18" />
+                    <Icon color="primary" path={mdiAccountOff} ariaHidden size="24" />
                   </div>
                 {/if}
               </div>
               {#if face.person != null}
-                <div class="absolute -end-[5px] top-[25px] h-[20px] w-[20px] rounded-full">
-                  <CircleIconButton
-                    color="red"
+                <div class="absolute -end-[3px] top-[33px] h-[20px] w-[20px] rounded-full">
+                  <IconButton
+                    shape="round"
+                    color="danger"
                     icon={mdiTrashCan}
-                    title={$t('delete_face')}
-                    size="18"
-                    padding="1"
+                    aria-label={$t('delete_face')}
+                    size="small"
                     class="absolute start-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] transform"
                     onclick={() => deleteAssetFace(face)}
                   />

@@ -19,30 +19,22 @@ class ImageLoader {
   }) async {
     final headers = ApiService.getRequestHeaders();
 
-    final stream = cache.getFileStream(
-      uri,
-      withProgress: chunkEvents != null,
-      headers: headers,
-    );
+    final stream = cache.getFileStream(uri, withProgress: chunkEvents != null, headers: headers);
 
     await for (final result in stream) {
       if (result is DownloadProgress) {
         // We are downloading the file, so update the [chunkEvents]
         chunkEvents?.add(
-          ImageChunkEvent(
-            cumulativeBytesLoaded: result.downloaded,
-            expectedTotalBytes: result.totalSize,
-          ),
+          ImageChunkEvent(cumulativeBytesLoaded: result.downloaded, expectedTotalBytes: result.totalSize),
         );
       } else if (result is FileInfo) {
         // We have the file
         final buffer = await ui.ImmutableBuffer.fromFilePath(result.file.path);
-        final decoded = await decode(buffer);
-        return decoded;
+        return decode(buffer);
       }
     }
 
     // If we get here, the image failed to load from the cache stream
-    throw ImageLoadingException('Could not load image from stream');
+    throw const ImageLoadingException('Could not load image from stream');
   }
 }

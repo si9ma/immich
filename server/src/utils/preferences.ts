@@ -1,12 +1,15 @@
 import _ from 'lodash';
 import { UserPreferencesUpdateDto } from 'src/dtos/user-preferences.dto';
-import { UserMetadataKey } from 'src/enum';
+import { AssetOrder, UserMetadataKey } from 'src/enum';
 import { DeepPartial, UserMetadataItem, UserPreferences } from 'src/types';
 import { HumanReadableSize } from 'src/utils/bytes';
 import { getKeysDeep } from 'src/utils/misc';
 
 const getDefaultPreferences = (): UserPreferences => {
   return {
+    albums: {
+      defaultAssetOrder: AssetOrder.Desc,
+    },
     folders: {
       enabled: false,
       sidebarWeb: false,
@@ -42,12 +45,15 @@ const getDefaultPreferences = (): UserPreferences => {
       showSupportBadge: true,
       hideBuyButtonUntil: new Date(2022, 1, 12).toISOString(),
     },
+    cast: {
+      gCastEnabled: false,
+    },
   };
 };
 
 export const getPreferences = (metadata: UserMetadataItem[]): UserPreferences => {
   const preferences = getDefaultPreferences();
-  const item = metadata.find(({ key }) => key === UserMetadataKey.PREFERENCES);
+  const item = metadata.find(({ key }) => key === UserMetadataKey.Preferences);
   const partial = item?.value || {};
   for (const property of getKeysDeep(partial)) {
     _.set(preferences, property, _.get(partial, property));

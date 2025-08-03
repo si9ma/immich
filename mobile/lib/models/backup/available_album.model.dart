@@ -1,23 +1,12 @@
-import 'dart:typed_data';
-
 import 'package:immich_mobile/entities/album.entity.dart';
 
 class AvailableAlbum {
   final Album album;
   final int assetCount;
   final DateTime? lastBackup;
-  AvailableAlbum({
-    required this.album,
-    required this.assetCount,
-    this.lastBackup,
-  });
+  const AvailableAlbum({required this.album, required this.assetCount, this.lastBackup});
 
-  AvailableAlbum copyWith({
-    Album? album,
-    int? assetCount,
-    DateTime? lastBackup,
-    Uint8List? thumbnailData,
-  }) {
+  AvailableAlbum copyWith({Album? album, int? assetCount, DateTime? lastBackup}) {
     return AvailableAlbum(
       album: album ?? this.album,
       assetCount: assetCount ?? this.assetCount,
@@ -32,8 +21,7 @@ class AvailableAlbum {
   bool get isAll => album.isAll;
 
   @override
-  String toString() =>
-      'AvailableAlbum(albumEntity: $album, lastBackup: $lastBackup)';
+  String toString() => 'AvailableAlbum(albumEntity: $album, lastBackup: $lastBackup)';
 
   @override
   bool operator ==(Object other) {

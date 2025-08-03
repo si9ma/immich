@@ -1,12 +1,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import Icon from '$lib/components/elements/icon.svelte';
   import ImmichLogo from '$lib/components/shared-components/immich-logo.svelte';
   import Portal from '$lib/components/shared-components/portal/portal.svelte';
   import SupporterBadge from '$lib/components/shared-components/side-bar/supporter-badge.svelte';
   import { AppRoute } from '$lib/constants';
-  import { modalManager } from '$lib/managers/modal-manager.svelte';
   import PurchaseModal from '$lib/modals/PurchaseModal.svelte';
   import { purchaseStore } from '$lib/stores/purchase.store';
   import { preferences } from '$lib/stores/user.store';
@@ -14,9 +12,10 @@
   import { handleError } from '$lib/utils/handle-error';
   import { getButtonVisibility } from '$lib/utils/purchase-utils';
   import { updateMyPreferences } from '@immich/sdk';
-  import { Button } from '@immich/ui';
+  import { Button, IconButton, modalManager } from '@immich/ui';
   import { mdiClose, mdiInformationOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
+  import { SvelteDate } from 'svelte/reactivity';
   import { fade } from 'svelte/transition';
 
   let showMessage = $state(false);
@@ -28,7 +27,7 @@
   const { isPurchased } = purchaseStore;
 
   const openPurchaseModal = async () => {
-    await modalManager.show(PurchaseModal, {});
+    await modalManager.show(PurchaseModal);
     showMessage = false;
   };
 
@@ -38,7 +37,7 @@
   };
 
   const hideButton = async (always: boolean) => {
-    const hideBuyButtonUntil = new Date();
+    const hideBuyButtonUntil = new SvelteDate();
 
     if (always) {
       hideBuyButtonUntil.setFullYear(2124); // see ya in 100 years
@@ -130,13 +129,16 @@
         <div class="h-10 w-10">
           <ImmichLogo noText class="h-[32px]" />
         </div>
-        <CircleIconButton
+        <IconButton
+          shape="round"
+          color="secondary"
+          variant="ghost"
           icon={mdiClose}
           onclick={() => {
             showMessage = false;
           }}
-          title={$t('close')}
-          size="18"
+          aria-label={$t('close')}
+          size="medium"
           class="text-immich-dark-gray/85 dark:text-immich-gray"
         />
       </div>

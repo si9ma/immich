@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:immich_mobile/domain/services/log.service.dart';
 import 'package:immich_mobile/providers/db.provider.dart';
 import 'package:immich_mobile/providers/infrastructure/cancel.provider.dart';
 import 'package:immich_mobile/providers/infrastructure/db.provider.dart';
 import 'package:immich_mobile/utils/bootstrap.dart';
+import 'package:immich_mobile/utils/http_ssl_options.dart';
 import 'package:logging/logging.dart';
 import 'package:worker_manager/worker_manager.dart';
 
@@ -14,8 +17,7 @@ class InvalidIsolateUsageException implements Exception {
   const InvalidIsolateUsageException();
 
   @override
-  String toString() =>
-      "IsolateHelper should only be used from the root isolate";
+  String toString() => "IsolateHelper should only be used from the root isolate";
 }
 
 // !! Should be used only from the root isolate
@@ -46,23 +48,35 @@ Cancelable<T?> runInIsolateGentle<T>({
     Logger log = Logger("IsolateLogger");
 
     try {
+      HttpSSLOptions.apply(applyNative: false);
       return await computation(ref);
     } on CanceledError {
-      log.warning(
-        "Computation cancelled ${debugLabel == null ? '' : ' for $debugLabel'}",
-      );
+      log.warning("Computation cancelled ${debugLabel == null ? '' : ' for $debugLabel'}");
     } catch (error, stack) {
-      log.severe(
-        "Error in runInIsolateGentle ${debugLabel == null ? '' : ' for $debugLabel'}",
-        error,
-        stack,
-      );
+      log.severe("Error in runInIsolateGentle ${debugLabel == null ? '' : ' for $debugLabel'}", error, stack);
     } finally {
-      // Wait for the logs to flush
-      await Future.delayed(const Duration(seconds: 2));
-      // Always close the new db connection on Isolate end
-      ref.read(driftProvider).close();
-      ref.read(isarProvider).close();
+      try {
+        await LogService.I.flushBuffer();
+        await ref.read(driftProvider).close();
+
+        // Close Isar safely
+        try {
+          final isar = ref.read(isarProvider);
+          if (isar.isOpen) {
+            await isar.close();
+          }
+        } catch (e) {
+          debugPrint("Error closing Isar: $e");
+        }
+
+        ref.dispose();
+      } catch (error) {
+        debugPrint("Error closing resources in isolate: $error");
+      } finally {
+        ref.dispose();
+        // Delay to ensure all resources are released
+        await Future.delayed(const Duration(seconds: 2));
+      }
     }
     return null;
   });

@@ -8,9 +8,9 @@
   import { AssetAction, ProjectionType } from '$lib/constants';
   import { activityManager } from '$lib/managers/activity-manager.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
+  import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
   import { closeEditorCofirm } from '$lib/stores/asset-editor.store';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
-  import type { TimelineAsset } from '$lib/stores/assets-store.svelte';
   import { isShowDetail } from '$lib/stores/preferences.store';
   import { SlideshowNavigation, SlideshowState, slideshowStore } from '$lib/stores/slideshow.store';
   import { user } from '$lib/stores/user.store';
@@ -91,6 +91,8 @@
     slideshowState,
     slideshowTransition,
   } = slideshowStore;
+  const stackThumbnailSize = 60;
+  const stackSelectedThumbnailSize = 65;
 
   let appearsInAlbums: AlbumResponseDto[] = $state([]);
   let shouldPlayMotionPhoto = $state(false);
@@ -109,7 +111,7 @@
   let zoomToggle = $state(() => void 0);
 
   const refreshStack = async () => {
-    if (authManager.key) {
+    if (authManager.isSharedLink) {
       return;
     }
 
@@ -134,16 +136,6 @@
         await activityManager.toggleLike();
       } catch (error) {
         handleError(error, $t('errors.unable_to_change_favorite'));
-      }
-    }
-  };
-
-  const updateComments = async () => {
-    if (album) {
-      try {
-        await activityManager.refreshActivities(album.id, asset.id);
-      } catch (error) {
-        handleError(error, $t('errors.unable_to_get_comments_number'));
       }
     }
   };
@@ -180,10 +172,6 @@
     if (!sharedLink) {
       await handleGetAllAlbums();
     }
-
-    if (album) {
-      activityManager.init(album.id, asset.id);
-    }
   });
 
   onDestroy(() => {
@@ -203,7 +191,7 @@
   });
 
   const handleGetAllAlbums = async () => {
-    if (authManager.key) {
+    if (authManager.isSharedLink) {
       return;
     }
 
@@ -314,8 +302,10 @@
 
   const handleStopSlideshow = async () => {
     try {
+      // eslint-disable-next-line tscompat/tscompat
       if (document.fullscreenElement) {
         document.body.style.cursor = '';
+        // eslint-disable-next-line tscompat/tscompat
         await document.exitFullscreen();
       }
     } catch (error) {
@@ -338,7 +328,17 @@
         await handleGetAllAlbums();
         break;
       }
-
+      case AssetAction.REMOVE_ASSET_FROM_STACK: {
+        stack = action.stack;
+        if (stack) {
+          asset = stack.assets[0];
+        }
+        break;
+      }
+      case AssetAction.SET_STACK_PRIMARY_ASSET: {
+        stack = action.stack;
+        break;
+      }
       case AssetAction.KEEP_THIS_DELETE_OTHERS:
       case AssetAction.UNSTACK: {
         closeViewer();
@@ -352,7 +352,9 @@
   const handleUpdateSelectedEditType = (type: string) => {
     selectedEditType = type;
   };
+
   let isFullScreen = $derived(fullscreenElement !== null);
+
   $effect(() => {
     if (asset) {
       previewStackedAsset = undefined;
@@ -365,8 +367,8 @@
     }
   });
   $effect(() => {
-    if (isShared && asset.id) {
-      handlePromiseError(updateComments());
+    if (album && isShared && asset.id) {
+      handlePromiseError(activityManager.init(album.id, asset.id));
     }
   });
   $effect(() => {
@@ -505,12 +507,13 @@
             onVideoStarted={handleVideoStarted}
           />
         {/if}
-        {#if $slideshowState === SlideshowState.None && isShared && ((album && album.isActivityEnabled) || activityManager.commentCount > 0)}
+        {#if $slideshowState === SlideshowState.None && isShared && ((album && album.isActivityEnabled) || activityManager.commentCount > 0) && !activityManager.isLoading}
           <div class="absolute bottom-0 end-0 mb-20 me-8">
             <ActivityStatus
               disabled={!album?.isActivityEnabled}
               isLiked={activityManager.isLiked}
               numberOfComments={activityManager.commentCount}
+              numberOfLikes={activityManager.likeCount}
               onFavorite={handleFavorite}
               onOpenActivityTab={handleOpenActivity}
             />
@@ -550,11 +553,8 @@
 
   {#if stack && withStacked}
     {@const stackedAssets = stack.assets}
-    <div
-      id="stack-slideshow"
-      class="flex place-item-center place-content-center absolute bottom-0 w-full col-span-4 col-start-1 overflow-x-auto horizontal-scrollbar"
-    >
-      <div class="relative w-full">
+    <div id="stack-slideshow" class="absolute bottom-0 w-full col-span-4 col-start-1">
+      <div class="relative flex flex-row no-wrap overflow-x-auto overflow-y-hidden horizontal-scrollbar">
         {#each stackedAssets as stackedAsset (stackedAsset.id)}
           <div
             class={['inline-block px-1 relative transition-all pb-2']}
@@ -567,10 +567,11 @@
               asset={toTimelineAsset(stackedAsset)}
               onClick={() => {
                 asset = stackedAsset;
+                previewStackedAsset = undefined;
               }}
               onMouseEvent={({ isMouseOver }) => handleStackedAssetMouseEvent(isMouseOver, stackedAsset)}
               readonly
-              thumbnailSize={stackedAsset.id === asset.id ? 65 : 60}
+              thumbnailSize={stackedAsset.id === asset.id ? stackSelectedThumbnailSize : stackThumbnailSize}
               showStackedIcon={false}
               disableLinkMouseOver
             />

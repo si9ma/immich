@@ -35,7 +35,7 @@ export class UserAdminService extends BaseService {
 
     const user = await this.createUser(userDto);
 
-    await this.eventRepository.emit('user.signup', {
+    await this.eventRepository.emit('UserSignup', {
       notify: !!notify,
       id: user.id,
       tempPassword: user.shouldChangePassword ? userDto.password : undefined,
@@ -51,6 +51,10 @@ export class UserAdminService extends BaseService {
 
   async update(auth: AuthDto, id: string, dto: UserAdminUpdateDto): Promise<UserAdminResponseDto> {
     const user = await this.findOrFail(id, {});
+
+    if (dto.isAdmin !== undefined && dto.isAdmin !== auth.user.isAdmin && auth.user.id === id) {
+      throw new BadRequestException('Admin status can only be changed by another admin');
+    }
 
     if (dto.quotaSizeInBytes && user.quotaSizeInBytes !== dto.quotaSizeInBytes) {
       await this.userRepository.syncUsage(id);
@@ -89,18 +93,18 @@ export class UserAdminService extends BaseService {
 
   async delete(auth: AuthDto, id: string, dto: UserAdminDeleteDto): Promise<UserAdminResponseDto> {
     const { force } = dto;
-    const { isAdmin } = await this.findOrFail(id, {});
-    if (isAdmin) {
-      throw new ForbiddenException('Cannot delete admin user');
+    await this.findOrFail(id, {});
+    if (auth.user.id === id) {
+      throw new ForbiddenException('Cannot delete your own account');
     }
 
     await this.albumRepository.softDeleteAll(id);
 
-    const status = force ? UserStatus.REMOVING : UserStatus.DELETED;
+    const status = force ? UserStatus.Removing : UserStatus.Deleted;
     const user = await this.userRepository.update(id, { status, deletedAt: new Date() });
 
     if (force) {
-      await this.jobRepository.queue({ name: JobName.USER_DELETION, data: { id: user.id, force } });
+      await this.jobRepository.queue({ name: JobName.UserDelete, data: { id: user.id, force } });
     }
 
     return mapUserAdmin(user);
@@ -130,7 +134,7 @@ export class UserAdminService extends BaseService {
     const newPreferences = mergePreferences(getPreferences(metadata), dto);
 
     await this.userRepository.upsertMetadata(id, {
-      key: UserMetadataKey.PREFERENCES,
+      key: UserMetadataKey.Preferences,
       value: getPreferencesPartial(newPreferences),
     });
 

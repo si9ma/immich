@@ -1,7 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/domain/services/user.service.dart';
 import 'package:immich_mobile/entities/asset.entity.dart';
-import 'package:immich_mobile/interfaces/asset.interface.dart';
 import 'package:immich_mobile/providers/api.provider.dart';
 import 'package:immich_mobile/providers/infrastructure/user.provider.dart';
 import 'package:immich_mobile/repositories/asset.repository.dart';
@@ -18,20 +17,14 @@ final trashServiceProvider = Provider<TrashService>((ref) {
 
 class TrashService {
   final ApiService _apiService;
-  final IAssetRepository _assetRepository;
+  final AssetRepository _assetRepository;
   final UserService _userService;
 
-  const TrashService(
-    this._apiService,
-    this._assetRepository,
-    this._userService,
-  );
+  const TrashService(this._apiService, this._assetRepository, this._userService);
 
   Future<void> restoreAssets(Iterable<Asset> assetList) async {
     final remoteAssets = assetList.where((a) => a.isRemote);
-    await _apiService.trashApi.restoreAssets(
-      BulkIdsDto(ids: remoteAssets.map((e) => e.remoteId!).toList()),
-    );
+    await _apiService.trashApi.restoreAssets(BulkIdsDto(ids: remoteAssets.map((e) => e.remoteId!).toList()));
 
     final updatedAssets = remoteAssets.map((asset) {
       asset.isTrashed = false;
@@ -50,15 +43,9 @@ class TrashService {
     final ids = trashedAssets.map((e) => e.remoteId!).toList();
 
     await _assetRepository.transaction(() async {
-      await _assetRepository.deleteAllByRemoteId(
-        ids,
-        state: AssetState.remote,
-      );
+      await _assetRepository.deleteAllByRemoteId(ids, state: AssetState.remote);
 
-      final merged = await _assetRepository.getAllByRemoteId(
-        ids,
-        state: AssetState.merged,
-      );
+      final merged = await _assetRepository.getAllByRemoteId(ids, state: AssetState.merged);
       if (merged.isEmpty) {
         return;
       }

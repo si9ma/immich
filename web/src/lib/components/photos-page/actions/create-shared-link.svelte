@@ -1,10 +1,9 @@
 <script lang="ts">
-  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import { getAssetControlContext } from '$lib/components/photos-page/asset-select-control-bar.svelte';
-  import { modalManager } from '$lib/managers/modal-manager.svelte';
   import QrCodeModal from '$lib/modals/QrCodeModal.svelte';
   import SharedLinkCreateModal from '$lib/modals/SharedLinkCreateModal.svelte';
   import { makeSharedLinkUrl } from '$lib/utils';
+  import { IconButton, modalManager } from '@immich/ui';
   import { mdiShareVariantOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
@@ -16,9 +15,16 @@
     });
 
     if (sharedLink) {
-      await modalManager.show(QrCodeModal, { title: $t('view_link'), value: makeSharedLinkUrl(sharedLink.key) });
+      await modalManager.show(QrCodeModal, { title: $t('view_link'), value: makeSharedLinkUrl(sharedLink) });
     }
   };
 </script>
 
-<CircleIconButton title={$t('share')} icon={mdiShareVariantOutline} onclick={handleClick} />
+<IconButton
+  shape="round"
+  color="secondary"
+  variant="ghost"
+  aria-label={$t('share')}
+  icon={mdiShareVariantOutline}
+  onclick={handleClick}
+/>

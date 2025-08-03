@@ -60,7 +60,7 @@ export const updateConfig = async (repos: RepoDeps, newConfig: SystemConfig): Pr
     _.set(partialConfig, property, newValue);
   }
 
-  await metadataRepo.set(SystemMetadataKey.SYSTEM_CONFIG, partialConfig);
+  await metadataRepo.set(SystemMetadataKey.SystemConfig, partialConfig);
 
   return getConfig(repos, { withCache: false });
 };
@@ -83,7 +83,7 @@ const buildConfig = async (repos: RepoDeps) => {
   // load partial
   const partial = configFile
     ? await loadFromFile(repos, configFile)
-    : await metadataRepo.get(SystemMetadataKey.SYSTEM_CONFIG);
+    : await metadataRepo.get(SystemMetadataKey.SystemConfig);
 
   // merge with defaults
   const rawConfig = _.cloneDeep(defaults);
@@ -116,7 +116,14 @@ const buildConfig = async (repos: RepoDeps) => {
   const config = instanceToPlain(instance) as SystemConfig;
 
   if (config.server.externalDomain.length > 0) {
-    config.server.externalDomain = new URL(config.server.externalDomain).origin;
+    const domain = new URL(config.server.externalDomain);
+
+    let externalDomain = domain.origin;
+    if (domain.password && domain.username) {
+      externalDomain = `${domain.protocol}//${domain.username}:${domain.password}@${domain.host}`;
+    }
+
+    config.server.externalDomain = externalDomain;
   }
 
   if (!config.ffmpeg.acceptedVideoCodecs.includes(config.ffmpeg.targetVideoCodec)) {

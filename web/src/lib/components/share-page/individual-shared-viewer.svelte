@@ -4,8 +4,8 @@
   import ImmichLogoSmallLink from '$lib/components/shared-components/immich-logo-small-link.svelte';
   import { AppRoute, AssetAction } from '$lib/constants';
   import { authManager } from '$lib/managers/auth-manager.svelte';
+  import type { Viewport } from '$lib/managers/timeline-manager/types';
   import { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
-  import type { Viewport } from '$lib/stores/assets-store.svelte';
   import { dragAndDropFilesStore } from '$lib/stores/drag-and-drop-files.store';
   import { handlePromiseError } from '$lib/utils';
   import { cancelMultiselect, downloadArchive } from '$lib/utils/asset-utils';
@@ -13,10 +13,10 @@
   import { handleError } from '$lib/utils/handle-error';
   import { toTimelineAsset } from '$lib/utils/timeline-util';
   import { addSharedLinkAssets, getAssetInfo, type SharedLinkResponseDto } from '@immich/sdk';
+  import { IconButton } from '@immich/ui';
   import { mdiArrowLeft, mdiFileImagePlusOutline, mdiFolderDownloadOutline, mdiSelectAll } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import AssetViewer from '../asset-viewer/asset-viewer.svelte';
-  import CircleIconButton from '../elements/buttons/circle-icon-button.svelte';
   import DownloadAction from '../photos-page/actions/download-action.svelte';
   import RemoveFromSharedLink from '../photos-page/actions/remove-from-shared-link.svelte';
   import AssetSelectControlBar from '../photos-page/asset-select-control-bar.svelte';
@@ -52,13 +52,13 @@
       let results: (string | undefined)[] = [];
       results = await (!files || files.length === 0 || !Array.isArray(files)
         ? openFileUploadDialog()
-        : fileUploadHandler(files));
+        : fileUploadHandler({ files }));
       const data = await addSharedLinkAssets({
+        ...authManager.params,
         id: sharedLink.id,
         assetIdsDto: {
           assetIds: results.filter((id) => !!id) as string[],
         },
-        key: authManager.key,
       });
 
       const added = data.filter((item) => item.success).length;
@@ -95,7 +95,14 @@
         assets={assetInteraction.selectedAssets}
         clearSelect={() => cancelMultiselect(assetInteraction)}
       >
-        <CircleIconButton title={$t('select_all')} icon={mdiSelectAll} onclick={handleSelectAll} />
+        <IconButton
+          shape="round"
+          color="secondary"
+          variant="ghost"
+          aria-label={$t('select_all')}
+          icon={mdiSelectAll}
+          onclick={handleSelectAll}
+        />
         {#if sharedLink?.allowDownload}
           <DownloadAction filename="immich-shared.zip" />
         {/if}
@@ -111,15 +118,25 @@
 
         {#snippet trailing()}
           {#if sharedLink?.allowUpload}
-            <CircleIconButton
-              title={$t('add_photos')}
+            <IconButton
+              shape="round"
+              color="secondary"
+              variant="ghost"
+              aria-label={$t('add_photos')}
               onclick={() => handleUploadAssets()}
               icon={mdiFileImagePlusOutline}
             />
           {/if}
 
           {#if sharedLink?.allowDownload}
-            <CircleIconButton title={$t('download')} onclick={downloadAssets} icon={mdiFolderDownloadOutline} />
+            <IconButton
+              shape="round"
+              color="secondary"
+              variant="ghost"
+              aria-label={$t('download')}
+              onclick={downloadAssets}
+              icon={mdiFolderDownloadOutline}
+            />
           {/if}
         {/snippet}
       </ControlAppBar>
@@ -128,7 +145,7 @@
       <GalleryViewer {assets} {assetInteraction} {viewport} />
     </section>
   {:else if assets.length === 1}
-    {#await getAssetInfo({ id: assets[0].id, key: authManager.key }) then asset}
+    {#await getAssetInfo({ ...authManager.params, id: assets[0].id }) then asset}
       <AssetViewer
         {asset}
         showCloseButton={false}

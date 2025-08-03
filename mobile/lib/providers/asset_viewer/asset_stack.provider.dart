@@ -32,13 +32,11 @@ class AssetStackNotifier extends StateNotifier<List<Asset>> {
   }
 }
 
-final assetStackStateProvider = StateNotifierProvider.autoDispose
-    .family<AssetStackNotifier, List<Asset>, String>(
-  (ref, stackId) =>
-      AssetStackNotifier(ref.watch(assetServiceProvider), stackId),
+final assetStackStateProvider = StateNotifierProvider.autoDispose.family<AssetStackNotifier, List<Asset>, String>(
+  (ref, stackId) => AssetStackNotifier(ref.watch(assetServiceProvider), stackId),
 );
 
 @riverpod
-int assetStackIndex(Ref ref, Asset asset) {
+int assetStackIndex(Ref _) {
   return -1;
 }

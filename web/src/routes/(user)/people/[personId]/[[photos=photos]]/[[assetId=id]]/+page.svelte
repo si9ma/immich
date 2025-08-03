@@ -31,12 +31,12 @@
     notificationController,
   } from '$lib/components/shared-components/notification/notification';
   import { AppRoute, PersonPageViewMode, QueryParameter, SessionStorageKey } from '$lib/constants';
-  import { modalManager } from '$lib/managers/modal-manager.svelte';
+  import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
+  import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
   import PersonEditBirthDateModal from '$lib/modals/PersonEditBirthDateModal.svelte';
   import PersonMergeSuggestionModal from '$lib/modals/PersonMergeSuggestionModal.svelte';
   import { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
-  import { AssetStore, type TimelineAsset } from '$lib/stores/assets-store.svelte';
   import { locale } from '$lib/stores/preferences.store';
   import { preferences } from '$lib/stores/user.store';
   import { websocketEvents } from '$lib/stores/websocket';
@@ -50,6 +50,7 @@
     updatePerson,
     type PersonResponseDto,
   } from '@immich/sdk';
+  import { modalManager } from '@immich/ui';
   import {
     mdiAccountBoxOutline,
     mdiAccountMultipleCheckOutline,
@@ -76,9 +77,9 @@
   let numberOfAssets = $state(data.statistics.assets);
   let { isViewing: showAssetViewer } = assetViewingStore;
 
-  const assetStore = new AssetStore();
-  $effect(() => void assetStore.updateOptions({ visibility: AssetVisibility.Timeline, personId: data.person.id }));
-  onDestroy(() => assetStore.destroy());
+  const timelineManager = new TimelineManager();
+  $effect(() => void timelineManager.updateOptions({ visibility: AssetVisibility.Timeline, personId: data.person.id }));
+  onDestroy(() => timelineManager.destroy());
 
   const assetInteraction = new AssetInteraction();
 
@@ -151,7 +152,7 @@
   });
 
   const handleUnmerge = () => {
-    assetStore.removeAssets(assetInteraction.selectedAssets.map((a) => a.id));
+    timelineManager.removeAssets(assetInteraction.selectedAssets.map((a) => a.id));
     assetInteraction.clearMultiselect();
     viewMode = PersonPageViewMode.VIEW_ASSETS;
   };
@@ -220,9 +221,9 @@
     viewMode = PersonPageViewMode.VIEW_ASSETS;
   };
 
-  const handleMergeSuggestion = async () => {
+  const handleMergeSuggestion = async (): Promise<{ merged: boolean }> => {
     if (!personMerge1 || !personMerge2) {
-      return;
+      return { merged: false };
     }
 
     const result = await modalManager.show(PersonMergeSuggestionModal, {
@@ -232,7 +233,7 @@
     });
 
     if (!result) {
-      return;
+      return { merged: false };
     }
 
     const [personToMerge, personToBeMergedInto] = result;
@@ -240,9 +241,10 @@
     people = people.filter((person: PersonResponseDto) => person.id !== personToMerge.id);
     if (personToBeMergedInto.name != personName && person.id === personToBeMergedInto.id) {
       await updateAssetCount();
-      return;
+      return { merged: true };
     }
     await goto(`${AppRoute.PEOPLE}/${personToBeMergedInto.id}`, { replaceState: true });
+    return { merged: true };
   };
 
   const handleSuggestPeople = async (person2: PersonResponseDto) => {
@@ -316,8 +318,10 @@
             !person.isHidden,
         )
         .slice(0, 3);
-      await handleMergeSuggestion();
-      return;
+      const { merged } = await handleMergeSuggestion();
+      if (merged) {
+        return;
+      }
     }
     await changeName();
   };
@@ -347,7 +351,12 @@
   };
 
   const handleDeleteAssets = async (assetIds: string[]) => {
-    assetStore.removeAssets(assetIds);
+    timelineManager.removeAssets(assetIds);
+    await updateAssetCount();
+  };
+
+  const handleUndoDeleteAssets = async (assets: TimelineAsset[]) => {
+    timelineManager.addAssets(assets);
     await updateAssetCount();
   };
 
@@ -362,13 +371,13 @@
   });
 
   const handleSetVisibility = (assetIds: string[]) => {
-    assetStore.removeAssets(assetIds);
+    timelineManager.removeAssets(assetIds);
     assetInteraction.clearMultiselect();
   };
 </script>
 
 <main
-  class="relative z-0 h-dvh overflow-hidden tall:ms-4 md:pt-(--navbar-height-md) pt-(--navbar-height)"
+  class="relative z-0 h-dvh overflow-hidden px-2 md:px-6 md:pt-(--navbar-height-md) pt-(--navbar-height)"
   use:scrollMemoryClearer={{
     routeStartsWith: AppRoute.PEOPLE,
     beforeClear: () => {
@@ -380,7 +389,7 @@
     <AssetGrid
       enableRouting={true}
       {person}
-      {assetStore}
+      {timelineManager}
       {assetInteraction}
       isSelectionMode={viewMode === PersonPageViewMode.SELECT_PERSON}
       singleSelect={viewMode === PersonPageViewMode.SELECT_PERSON}
@@ -500,7 +509,7 @@
       clearSelect={() => assetInteraction.clearMultiselect()}
     >
       <CreateSharedLink />
-      <SelectAllAssets {assetStore} {assetInteraction} />
+      <SelectAllAssets {timelineManager} {assetInteraction} />
       <ButtonContextMenu icon={mdiPlus} title={$t('add_to')}>
         <AddToAlbum />
         <AddToAlbum shared />
@@ -508,7 +517,7 @@
       <FavoriteAction
         removeFavorite={assetInteraction.isAllFavorite}
         onFavorite={(ids, isFavorite) =>
-          assetStore.updateAssetOperation(ids, (asset) => {
+          timelineManager.updateAssetOperation(ids, (asset) => {
             asset.isFavorite = isFavorite;
             return { remove: false };
           })}
@@ -526,13 +535,17 @@
         <ArchiveAction
           menuItem
           unarchive={assetInteraction.isAllArchived}
-          onArchive={(assetIds) => assetStore.removeAssets(assetIds)}
+          onArchive={(assetIds) => timelineManager.removeAssets(assetIds)}
         />
         {#if $preferences.tags.enabled && assetInteraction.isAllUserOwned}
           <TagAction menuItem />
         {/if}
         <SetVisibilityAction menuItem onVisibilitySet={handleSetVisibility} />
-        <DeleteAssets menuItem onAssetDelete={(assetIds) => handleDeleteAssets(assetIds)} />
+        <DeleteAssets
+          menuItem
+          onAssetDelete={(assetIds) => handleDeleteAssets(assetIds)}
+          onUndoDelete={(assets) => handleUndoDeleteAssets(assets)}
+        />
       </ButtonContextMenu>
     </AssetSelectControlBar>
   {:else}
