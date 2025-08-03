@@ -18,17 +18,14 @@ class DownloadStateNotifier extends StateNotifier<DownloadState> {
   final ShareService _shareService;
   final AlbumService _albumService;
 
-  DownloadStateNotifier(
-    this._downloadService,
-    this._shareService,
-    this._albumService,
-  ) : super(
-          DownloadState(
-            downloadStatus: TaskStatus.complete,
-            showProgress: false,
-            taskProgress: <String, DownloadInfo>{},
-          ),
-        ) {
+  DownloadStateNotifier(this._downloadService, this._shareService, this._albumService)
+    : super(
+        const DownloadState(
+          downloadStatus: TaskStatus.complete,
+          showProgress: false,
+          taskProgress: <String, DownloadInfo>{},
+        ),
+      ) {
     _downloadService.onImageDownloadStatus = _downloadImageCallback;
     _downloadService.onVideoDownloadStatus = _downloadVideoCallback;
     _downloadService.onLivePhotoDownloadStatus = _downloadLivePhotoCallback;
@@ -62,8 +59,7 @@ class DownloadStateNotifier extends StateNotifier<DownloadState> {
         if (update.task.metaData.isEmpty) {
           return;
         }
-        final livePhotosId =
-            LivePhotosMetadata.fromJson(update.task.metaData).id;
+        final livePhotosId = LivePhotosMetadata.fromJson(update.task.metaData).id;
         _downloadService.saveLivePhotos(update.task, livePhotosId);
         _onDownloadComplete(update.task.taskId);
         break;
@@ -132,15 +128,17 @@ class DownloadStateNotifier extends StateNotifier<DownloadState> {
       );
 
       if (state.taskProgress.isEmpty) {
-        state = state.copyWith(
-          showProgress: false,
-        );
+        state = state.copyWith(showProgress: false);
       }
       _albumService.refreshDeviceAlbums();
     });
   }
 
-  void downloadAsset(Asset asset, BuildContext context) async {
+  Future<List<bool>> downloadAllAsset(List<Asset> assets) async {
+    return await _downloadService.downloadAll(assets);
+  }
+
+  void downloadAsset(Asset asset) async {
     await _downloadService.download(asset);
   }
 
@@ -156,9 +154,7 @@ class DownloadStateNotifier extends StateNotifier<DownloadState> {
     }
 
     if (state.taskProgress.isEmpty) {
-      state = state.copyWith(
-        showProgress: false,
-      );
+      state = state.copyWith(showProgress: false);
     }
   }
 
@@ -166,31 +162,29 @@ class DownloadStateNotifier extends StateNotifier<DownloadState> {
     showDialog(
       context: context,
       builder: (BuildContext buildContext) {
-        _shareService.shareAsset(asset, context).then(
-          (bool status) {
-            if (!status) {
-              ImmichToast.show(
-                context: context,
-                msg: 'image_viewer_page_state_provider_share_error'.tr(),
-                toastType: ToastType.error,
-                gravity: ToastGravity.BOTTOM,
-              );
-            }
-            buildContext.pop();
-          },
-        );
+        _shareService.shareAsset(asset, context).then((bool status) {
+          if (!status) {
+            ImmichToast.show(
+              context: context,
+              msg: 'image_viewer_page_state_provider_share_error'.tr(),
+              toastType: ToastType.error,
+              gravity: ToastGravity.BOTTOM,
+            );
+          }
+          buildContext.pop();
+        });
         return const ShareDialog();
       },
       barrierDismissible: false,
+      useRootNavigator: false,
     );
   }
 }
 
-final downloadStateProvider =
-    StateNotifierProvider<DownloadStateNotifier, DownloadState>(
+final downloadStateProvider = StateNotifierProvider<DownloadStateNotifier, DownloadState>(
   ((ref) => DownloadStateNotifier(
-        ref.watch(downloadServiceProvider),
-        ref.watch(shareServiceProvider),
-        ref.watch(albumServiceProvider),
-      )),
+    ref.watch(downloadServiceProvider),
+    ref.watch(shareServiceProvider),
+    ref.watch(albumServiceProvider),
+  )),
 );

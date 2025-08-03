@@ -1,4 +1,5 @@
 import { APIKeyController } from 'src/controllers/api-key.controller';
+import { Permission } from 'src/enum';
 import { ApiKeyService } from 'src/services/api-key.service';
 import request from 'supertest';
 import { factory } from 'test/small.factory';
@@ -52,9 +53,18 @@ describe(APIKeyController.name, () => {
     });
 
     it('should require a valid uuid', async () => {
-      const { status, body } = await request(ctx.getHttpServer()).put(`/api-keys/123`).send({ name: 'new name' });
+      const { status, body } = await request(ctx.getHttpServer())
+        .put(`/api-keys/123`)
+        .send({ name: 'new name', permissions: [Permission.All] });
       expect(status).toBe(400);
       expect(body).toEqual(factory.responses.badRequest(['id must be a UUID']));
+    });
+
+    it('should allow updating just the name', async () => {
+      const { status } = await request(ctx.getHttpServer())
+        .put(`/api-keys/${factory.uuid()}`)
+        .send({ name: 'new name' });
+      expect(status).toBe(200);
     });
   });
 

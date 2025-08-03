@@ -4,6 +4,7 @@ import { JobName, UserStatus } from 'src/enum';
 import { UserAdminService } from 'src/services/user-admin.service';
 import { authStub } from 'test/fixtures/auth.stub';
 import { userStub } from 'test/fixtures/user.stub';
+import { factory } from 'test/small.factory';
 import { newTestService, ServiceMocks } from 'test/utils';
 import { describe } from 'vitest';
 
@@ -116,7 +117,7 @@ describe(UserAdminService.name, () => {
     it('should throw error if user could not be found', async () => {
       mocks.user.get.mockResolvedValue(void 0);
 
-      await expect(sut.delete(authStub.admin, userStub.admin.id, {})).rejects.toThrowError(BadRequestException);
+      await expect(sut.delete(authStub.admin, 'not-found', {})).rejects.toThrowError(BadRequestException);
       expect(mocks.user.delete).not.toHaveBeenCalled();
     });
 
@@ -124,8 +125,11 @@ describe(UserAdminService.name, () => {
       await expect(sut.delete(authStub.admin, userStub.admin.id, {})).rejects.toBeInstanceOf(ForbiddenException);
     });
 
-    it('should require the auth user be an admin', async () => {
-      await expect(sut.delete(authStub.user1, authStub.admin.user.id, {})).rejects.toBeInstanceOf(ForbiddenException);
+    it('should not allow deleting own account', async () => {
+      const user = factory.userAdmin({ isAdmin: false });
+      const auth = factory.auth({ user });
+      mocks.user.get.mockResolvedValue(user);
+      await expect(sut.delete(auth, user.id, {})).rejects.toBeInstanceOf(ForbiddenException);
 
       expect(mocks.user.delete).not.toHaveBeenCalled();
     });
@@ -136,7 +140,7 @@ describe(UserAdminService.name, () => {
 
       await expect(sut.delete(authStub.admin, userStub.user1.id, {})).resolves.toEqual(mapUserAdmin(userStub.user1));
       expect(mocks.user.update).toHaveBeenCalledWith(userStub.user1.id, {
-        status: UserStatus.DELETED,
+        status: UserStatus.Deleted,
         deletedAt: expect.any(Date),
       });
     });
@@ -150,11 +154,11 @@ describe(UserAdminService.name, () => {
       );
 
       expect(mocks.user.update).toHaveBeenCalledWith(userStub.user1.id, {
-        status: UserStatus.REMOVING,
+        status: UserStatus.Removing,
         deletedAt: expect.any(Date),
       });
       expect(mocks.job.queue).toHaveBeenCalledWith({
-        name: JobName.USER_DELETION,
+        name: JobName.UserDelete,
         data: { id: userStub.user1.id, force: true },
       });
     });

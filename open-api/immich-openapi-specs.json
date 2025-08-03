@@ -77,7 +77,9 @@
         ],
         "tags": [
           "Activities"
-        ]
+        ],
+        "x-immich-permission": "activity.read",
+        "description": "This endpoint requires the `activity.read` permission."
       },
       "post": {
         "operationId": "createActivity",
@@ -117,7 +119,9 @@
         ],
         "tags": [
           "Activities"
-        ]
+        ],
+        "x-immich-permission": "activity.create",
+        "description": "This endpoint requires the `activity.create` permission."
       }
     },
     "/activities/statistics": {
@@ -168,7 +172,9 @@
         ],
         "tags": [
           "Activities"
-        ]
+        ],
+        "x-immich-permission": "activity.statistics",
+        "description": "This endpoint requires the `activity.statistics` permission."
       }
     },
     "/activities/{id}": {
@@ -203,7 +209,9 @@
         ],
         "tags": [
           "Activities"
-        ]
+        ],
+        "x-immich-permission": "activity.delete",
+        "description": "This endpoint requires the `activity.delete` permission."
       }
     },
     "/admin/notifications": {
@@ -245,7 +253,8 @@
         ],
         "tags": [
           "Notifications (Admin)"
-        ]
+        ],
+        "x-immich-admin-only": true
       }
     },
     "/admin/notifications/templates/{name}": {
@@ -296,7 +305,8 @@
         ],
         "tags": [
           "Notifications (Admin)"
-        ]
+        ],
+        "x-immich-admin-only": true
       }
     },
     "/admin/notifications/test-email": {
@@ -338,7 +348,8 @@
         ],
         "tags": [
           "Notifications (Admin)"
-        ]
+        ],
+        "x-immich-admin-only": true
       }
     },
     "/admin/users": {
@@ -391,7 +402,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.read",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.read` permission."
       },
       "post": {
         "operationId": "createUserAdmin",
@@ -431,7 +445,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.create",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.create` permission."
       }
     },
     "/admin/users/{id}": {
@@ -483,7 +500,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.delete",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.delete` permission."
       },
       "get": {
         "operationId": "getUserAdmin",
@@ -523,7 +543,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.read",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.read` permission."
       },
       "put": {
         "operationId": "updateUserAdmin",
@@ -573,7 +596,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.update",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.update` permission."
       }
     },
     "/admin/users/{id}/preferences": {
@@ -615,7 +641,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.read",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.read` permission."
       },
       "put": {
         "operationId": "updateUserPreferencesAdmin",
@@ -665,7 +694,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.update",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.update` permission."
       }
     },
     "/admin/users/{id}/restore": {
@@ -707,7 +739,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.delete",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.delete` permission."
       }
     },
     "/admin/users/{id}/statistics": {
@@ -773,7 +808,10 @@
         ],
         "tags": [
           "Users (admin)"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "adminUser.read",
+        "description": "This endpoint is an admin-only route, and requires the `adminUser.read` permission."
       }
     },
     "/albums": {
@@ -827,7 +865,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "album.read",
+        "description": "This endpoint requires the `album.read` permission."
       },
       "post": {
         "operationId": "createAlbum",
@@ -867,7 +907,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "album.create",
+        "description": "This endpoint requires the `album.create` permission."
       }
     },
     "/albums/statistics": {
@@ -899,7 +941,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "album.statistics",
+        "description": "This endpoint requires the `album.statistics` permission."
       }
     },
     "/albums/{id}": {
@@ -934,7 +978,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "album.delete",
+        "description": "This endpoint requires the `album.delete` permission."
       },
       "get": {
         "operationId": "getAlbumInfo",
@@ -950,6 +996,14 @@
           },
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -990,7 +1044,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "album.read",
+        "description": "This endpoint requires the `album.read` permission."
       },
       "patch": {
         "operationId": "updateAlbumInfo",
@@ -1040,7 +1096,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "album.update",
+        "description": "This endpoint requires the `album.update` permission."
       }
     },
     "/albums/{id}/assets": {
@@ -1095,7 +1153,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "albumAsset.delete",
+        "description": "This endpoint requires the `albumAsset.delete` permission."
       },
       "put": {
         "operationId": "addAssetsToAlbum",
@@ -1111,6 +1171,14 @@
           },
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -1156,7 +1224,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "albumAsset.create",
+        "description": "This endpoint requires the `albumAsset.create` permission."
       }
     },
     "/albums/{id}/user/{userId}": {
@@ -1199,7 +1269,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "albumUser.delete",
+        "description": "This endpoint requires the `albumUser.delete` permission."
       },
       "put": {
         "operationId": "updateAlbumUser",
@@ -1250,7 +1322,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "albumUser.update",
+        "description": "This endpoint requires the `albumUser.update` permission."
       }
     },
     "/albums/{id}/users": {
@@ -1302,7 +1376,9 @@
         ],
         "tags": [
           "Albums"
-        ]
+        ],
+        "x-immich-permission": "albumUser.create",
+        "description": "This endpoint requires the `albumUser.create` permission."
       }
     },
     "/api-keys": {
@@ -1337,7 +1413,9 @@
         ],
         "tags": [
           "API Keys"
-        ]
+        ],
+        "x-immich-permission": "apiKey.read",
+        "description": "This endpoint requires the `apiKey.read` permission."
       },
       "post": {
         "operationId": "createApiKey",
@@ -1377,7 +1455,9 @@
         ],
         "tags": [
           "API Keys"
-        ]
+        ],
+        "x-immich-permission": "apiKey.create",
+        "description": "This endpoint requires the `apiKey.create` permission."
       }
     },
     "/api-keys/{id}": {
@@ -1412,7 +1492,9 @@
         ],
         "tags": [
           "API Keys"
-        ]
+        ],
+        "x-immich-permission": "apiKey.delete",
+        "description": "This endpoint requires the `apiKey.delete` permission."
       },
       "get": {
         "operationId": "getApiKey",
@@ -1452,7 +1534,9 @@
         ],
         "tags": [
           "API Keys"
-        ]
+        ],
+        "x-immich-permission": "apiKey.read",
+        "description": "This endpoint requires the `apiKey.read` permission."
       },
       "put": {
         "operationId": "updateApiKey",
@@ -1502,7 +1586,9 @@
         ],
         "tags": [
           "API Keys"
-        ]
+        ],
+        "x-immich-permission": "apiKey.update",
+        "description": "This endpoint requires the `apiKey.update` permission."
       }
     },
     "/assets": {
@@ -1537,13 +1623,23 @@
         ],
         "tags": [
           "Assets"
-        ]
+        ],
+        "x-immich-permission": "asset.delete",
+        "description": "This endpoint requires the `asset.delete` permission."
       },
       "post": {
         "operationId": "uploadAsset",
         "parameters": [
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -1596,7 +1692,9 @@
         ],
         "tags": [
           "Assets"
-        ]
+        ],
+        "x-immich-permission": "asset.upload",
+        "description": "This endpoint requires the `asset.upload` permission."
       },
       "put": {
         "operationId": "updateAssets",
@@ -1629,7 +1727,9 @@
         ],
         "tags": [
           "Assets"
-        ]
+        ],
+        "x-immich-permission": "asset.update",
+        "description": "This endpoint requires the `asset.update` permission."
       }
     },
     "/assets/bulk-upload-check": {
@@ -1804,7 +1904,7 @@
     "/assets/random": {
       "get": {
         "deprecated": true,
-        "description": "This property was deprecated in v1.116.0",
+        "description": "This property was deprecated in v1.116.0. This endpoint requires the `asset.read` permission.",
         "operationId": "getRandom",
         "parameters": [
           {
@@ -1849,7 +1949,8 @@
         ],
         "x-immich-lifecycle": {
           "deprecatedAt": "v1.116.0"
-        }
+        },
+        "x-immich-permission": "asset.read"
       }
     },
     "/assets/statistics": {
@@ -1906,7 +2007,9 @@
         ],
         "tags": [
           "Assets"
-        ]
+        ],
+        "x-immich-permission": "asset.statistics",
+        "description": "This endpoint requires the `asset.statistics` permission."
       }
     },
     "/assets/{id}": {
@@ -1924,6 +2027,14 @@
           },
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -1956,7 +2067,9 @@
         ],
         "tags": [
           "Assets"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       },
       "put": {
         "operationId": "updateAsset",
@@ -2006,7 +2119,9 @@
         ],
         "tags": [
           "Assets"
-        ]
+        ],
+        "x-immich-permission": "asset.update",
+        "description": "This endpoint requires the `asset.update` permission."
       }
     },
     "/assets/{id}/original": {
@@ -2024,6 +2139,14 @@
           },
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -2057,10 +2180,12 @@
         ],
         "tags": [
           "Assets"
-        ]
+        ],
+        "x-immich-permission": "asset.download",
+        "description": "This endpoint requires the `asset.download` permission."
       },
       "put": {
-        "description": "Replace the asset with new file, without changing its id",
+        "description": "Replace the asset with new file, without changing its id. This endpoint requires the `asset.replace` permission.",
         "operationId": "replaceAsset",
         "parameters": [
           {
@@ -2074,6 +2199,14 @@
           },
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -2120,7 +2253,8 @@
         ],
         "x-immich-lifecycle": {
           "addedAt": "v1.106.0"
-        }
+        },
+        "x-immich-permission": "asset.replace"
       }
     },
     "/assets/{id}/thumbnail": {
@@ -2151,52 +2285,9 @@
             "schema": {
               "$ref": "#/components/schemas/AssetMediaSize"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "format": "binary",
-                  "type": "string"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
           },
           {
-            "cookie": []
-          },
-          {
-            "api_key": []
-          }
-        ],
-        "tags": [
-          "Assets"
-        ]
-      }
-    },
-    "/assets/{id}/video/playback": {
-      "get": {
-        "operationId": "playAssetVideo",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "key",
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -2230,7 +2321,70 @@
         ],
         "tags": [
           "Assets"
-        ]
+        ],
+        "x-immich-permission": "asset.view",
+        "description": "This endpoint requires the `asset.view` permission."
+      }
+    },
+    "/assets/{id}/video/playback": {
+      "get": {
+        "operationId": "playAssetVideo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Assets"
+        ],
+        "x-immich-permission": "asset.view",
+        "description": "This endpoint requires the `asset.view` permission."
       }
     },
     "/auth/admin-sign-up": {
@@ -2303,7 +2457,9 @@
         ],
         "tags": [
           "Authentication"
-        ]
+        ],
+        "x-immich-permission": "auth.changePassword",
+        "description": "This endpoint requires the `auth.changePassword` permission."
       }
     },
     "/auth/login": {
@@ -2401,7 +2557,9 @@
         ],
         "tags": [
           "Authentication"
-        ]
+        ],
+        "x-immich-permission": "pinCode.delete",
+        "description": "This endpoint requires the `pinCode.delete` permission."
       },
       "post": {
         "operationId": "setupPinCode",
@@ -2434,7 +2592,9 @@
         ],
         "tags": [
           "Authentication"
-        ]
+        ],
+        "x-immich-permission": "pinCode.create",
+        "description": "This endpoint requires the `pinCode.create` permission."
       },
       "put": {
         "operationId": "changePinCode",
@@ -2467,7 +2627,9 @@
         ],
         "tags": [
           "Authentication"
-        ]
+        ],
+        "x-immich-permission": "pinCode.update",
+        "description": "This endpoint requires the `pinCode.update` permission."
       }
     },
     "/auth/session/lock": {
@@ -2605,6 +2767,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2643,7 +2813,9 @@
         ],
         "tags": [
           "Download"
-        ]
+        ],
+        "x-immich-permission": "asset.download",
+        "description": "This endpoint requires the `asset.download` permission."
       }
     },
     "/download/info": {
@@ -2652,6 +2824,14 @@
         "parameters": [
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -2694,10 +2874,47 @@
         ],
         "tags": [
           "Download"
-        ]
+        ],
+        "x-immich-permission": "asset.download",
+        "description": "This endpoint requires the `asset.download` permission."
       }
     },
     "/duplicates": {
+      "delete": {
+        "operationId": "deleteDuplicates",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Duplicates"
+        ],
+        "x-immich-permission": "duplicate.delete",
+        "description": "This endpoint requires the `duplicate.delete` permission."
+      },
       "get": {
         "operationId": "getAssetDuplicates",
         "parameters": [],
@@ -2729,7 +2946,46 @@
         ],
         "tags": [
           "Duplicates"
-        ]
+        ],
+        "x-immich-permission": "duplicate.read",
+        "description": "This endpoint requires the `duplicate.read` permission."
+      }
+    },
+    "/duplicates/{id}": {
+      "delete": {
+        "operationId": "deleteDuplicate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Duplicates"
+        ],
+        "x-immich-permission": "duplicate.delete",
+        "description": "This endpoint requires the `duplicate.delete` permission."
       }
     },
     "/faces": {
@@ -2774,7 +3030,9 @@
         ],
         "tags": [
           "Faces"
-        ]
+        ],
+        "x-immich-permission": "face.read",
+        "description": "This endpoint requires the `face.read` permission."
       },
       "post": {
         "operationId": "createFace",
@@ -2807,7 +3065,9 @@
         ],
         "tags": [
           "Faces"
-        ]
+        ],
+        "x-immich-permission": "face.create",
+        "description": "This endpoint requires the `face.create` permission."
       }
     },
     "/faces/{id}": {
@@ -2852,7 +3112,9 @@
         ],
         "tags": [
           "Faces"
-        ]
+        ],
+        "x-immich-permission": "face.delete",
+        "description": "This endpoint requires the `face.delete` permission."
       },
       "put": {
         "operationId": "reassignFacesById",
@@ -2902,7 +3164,9 @@
         ],
         "tags": [
           "Faces"
-        ]
+        ],
+        "x-immich-permission": "face.update",
+        "description": "This endpoint requires the `face.update` permission."
       }
     },
     "/jobs": {
@@ -2934,7 +3198,10 @@
         ],
         "tags": [
           "Jobs"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "job.read",
+        "description": "This endpoint is an admin-only route, and requires the `job.read` permission."
       },
       "post": {
         "operationId": "createJob",
@@ -2967,7 +3234,10 @@
         ],
         "tags": [
           "Jobs"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "job.create",
+        "description": "This endpoint is an admin-only route, and requires the `job.create` permission."
       }
     },
     "/jobs/{id}": {
@@ -3018,7 +3288,10 @@
         ],
         "tags": [
           "Jobs"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "job.create",
+        "description": "This endpoint is an admin-only route, and requires the `job.create` permission."
       }
     },
     "/libraries": {
@@ -3053,7 +3326,10 @@
         ],
         "tags": [
           "Libraries"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "library.read",
+        "description": "This endpoint is an admin-only route, and requires the `library.read` permission."
       },
       "post": {
         "operationId": "createLibrary",
@@ -3093,7 +3369,10 @@
         ],
         "tags": [
           "Libraries"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "library.create",
+        "description": "This endpoint is an admin-only route, and requires the `library.create` permission."
       }
     },
     "/libraries/{id}": {
@@ -3128,7 +3407,10 @@
         ],
         "tags": [
           "Libraries"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "library.delete",
+        "description": "This endpoint is an admin-only route, and requires the `library.delete` permission."
       },
       "get": {
         "operationId": "getLibrary",
@@ -3168,7 +3450,10 @@
         ],
         "tags": [
           "Libraries"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "library.read",
+        "description": "This endpoint is an admin-only route, and requires the `library.read` permission."
       },
       "put": {
         "operationId": "updateLibrary",
@@ -3218,7 +3503,10 @@
         ],
         "tags": [
           "Libraries"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "library.update",
+        "description": "This endpoint is an admin-only route, and requires the `library.update` permission."
       }
     },
     "/libraries/{id}/scan": {
@@ -3253,7 +3541,10 @@
         ],
         "tags": [
           "Libraries"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "library.update",
+        "description": "This endpoint is an admin-only route, and requires the `library.update` permission."
       }
     },
     "/libraries/{id}/statistics": {
@@ -3295,7 +3586,10 @@
         ],
         "tags": [
           "Libraries"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "library.statistics",
+        "description": "This endpoint is an admin-only route, and requires the `library.statistics` permission."
       }
     },
     "/libraries/{id}/validate": {
@@ -3347,13 +3641,30 @@
         ],
         "tags": [
           "Libraries"
-        ]
+        ],
+        "x-immich-admin-only": true
       }
     },
     "/map/markers": {
       "get": {
         "operationId": "getMapMarkers",
         "parameters": [
+          {
+            "name": "isArchived",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isFavorite",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
           {
             "name": "fileCreatedAfter",
             "required": false,
@@ -3370,22 +3681,6 @@
             "schema": {
               "format": "date-time",
               "type": "string"
-            }
-          },
-          {
-            "name": "isArchived",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "isFavorite",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
             }
           },
           {
@@ -3556,7 +3851,9 @@
         ],
         "tags": [
           "Memories"
-        ]
+        ],
+        "x-immich-permission": "memory.read",
+        "description": "This endpoint requires the `memory.read` permission."
       },
       "post": {
         "operationId": "createMemory",
@@ -3596,7 +3893,77 @@
         ],
         "tags": [
           "Memories"
-        ]
+        ],
+        "x-immich-permission": "memory.create",
+        "description": "This endpoint requires the `memory.create` permission."
+      }
+    },
+    "/memories/statistics": {
+      "get": {
+        "operationId": "memoriesStatistics",
+        "parameters": [
+          {
+            "name": "for",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "isSaved",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isTrashed",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/MemoryType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryStatisticsResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Memories"
+        ],
+        "x-immich-permission": "memory.statistics",
+        "description": "This endpoint requires the `memory.statistics` permission."
       }
     },
     "/memories/{id}": {
@@ -3631,7 +3998,9 @@
         ],
         "tags": [
           "Memories"
-        ]
+        ],
+        "x-immich-permission": "memory.delete",
+        "description": "This endpoint requires the `memory.delete` permission."
       },
       "get": {
         "operationId": "getMemory",
@@ -3671,7 +4040,9 @@
         ],
         "tags": [
           "Memories"
-        ]
+        ],
+        "x-immich-permission": "memory.read",
+        "description": "This endpoint requires the `memory.read` permission."
       },
       "put": {
         "operationId": "updateMemory",
@@ -3721,7 +4092,9 @@
         ],
         "tags": [
           "Memories"
-        ]
+        ],
+        "x-immich-permission": "memory.update",
+        "description": "This endpoint requires the `memory.update` permission."
       }
     },
     "/memories/{id}/assets": {
@@ -3776,7 +4149,9 @@
         ],
         "tags": [
           "Memories"
-        ]
+        ],
+        "x-immich-permission": "memoryAsset.delete",
+        "description": "This endpoint requires the `memoryAsset.delete` permission."
       },
       "put": {
         "operationId": "addMemoryAssets",
@@ -3829,7 +4204,9 @@
         ],
         "tags": [
           "Memories"
-        ]
+        ],
+        "x-immich-permission": "memoryAsset.create",
+        "description": "This endpoint requires the `memoryAsset.create` permission."
       }
     },
     "/notifications": {
@@ -3864,7 +4241,9 @@
         ],
         "tags": [
           "Notifications"
-        ]
+        ],
+        "x-immich-permission": "notification.delete",
+        "description": "This endpoint requires the `notification.delete` permission."
       },
       "get": {
         "operationId": "getNotifications",
@@ -3931,7 +4310,9 @@
         ],
         "tags": [
           "Notifications"
-        ]
+        ],
+        "x-immich-permission": "notification.read",
+        "description": "This endpoint requires the `notification.read` permission."
       },
       "put": {
         "operationId": "updateNotifications",
@@ -3964,7 +4345,9 @@
         ],
         "tags": [
           "Notifications"
-        ]
+        ],
+        "x-immich-permission": "notification.update",
+        "description": "This endpoint requires the `notification.update` permission."
       }
     },
     "/notifications/{id}": {
@@ -3999,7 +4382,9 @@
         ],
         "tags": [
           "Notifications"
-        ]
+        ],
+        "x-immich-permission": "notification.delete",
+        "description": "This endpoint requires the `notification.delete` permission."
       },
       "get": {
         "operationId": "getNotification",
@@ -4039,7 +4424,9 @@
         ],
         "tags": [
           "Notifications"
-        ]
+        ],
+        "x-immich-permission": "notification.read",
+        "description": "This endpoint requires the `notification.read` permission."
       },
       "put": {
         "operationId": "updateNotification",
@@ -4089,7 +4476,9 @@
         ],
         "tags": [
           "Notifications"
-        ]
+        ],
+        "x-immich-permission": "notification.update",
+        "description": "This endpoint requires the `notification.update` permission."
       }
     },
     "/oauth/authorize": {
@@ -4283,7 +4672,9 @@
         ],
         "tags": [
           "Partners"
-        ]
+        ],
+        "x-immich-permission": "partner.read",
+        "description": "This endpoint requires the `partner.read` permission."
       }
     },
     "/partners/{id}": {
@@ -4318,7 +4709,9 @@
         ],
         "tags": [
           "Partners"
-        ]
+        ],
+        "x-immich-permission": "partner.delete",
+        "description": "This endpoint requires the `partner.delete` permission."
       },
       "post": {
         "operationId": "createPartner",
@@ -4358,7 +4751,9 @@
         ],
         "tags": [
           "Partners"
-        ]
+        ],
+        "x-immich-permission": "partner.create",
+        "description": "This endpoint requires the `partner.create` permission."
       },
       "put": {
         "operationId": "updatePartner",
@@ -4408,10 +4803,47 @@
         ],
         "tags": [
           "Partners"
-        ]
+        ],
+        "x-immich-permission": "partner.update",
+        "description": "This endpoint requires the `partner.update` permission."
       }
     },
     "/people": {
+      "delete": {
+        "operationId": "deletePeople",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "People"
+        ],
+        "x-immich-permission": "person.delete",
+        "description": "This endpoint requires the `person.delete` permission."
+      },
       "get": {
         "operationId": "getAllPeople",
         "parameters": [
@@ -4490,7 +4922,9 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.read",
+        "description": "This endpoint requires the `person.read` permission."
       },
       "post": {
         "operationId": "createPerson",
@@ -4530,7 +4964,9 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.create",
+        "description": "This endpoint requires the `person.create` permission."
       },
       "put": {
         "operationId": "updatePeople",
@@ -4573,10 +5009,47 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.update",
+        "description": "This endpoint requires the `person.update` permission."
       }
     },
     "/people/{id}": {
+      "delete": {
+        "operationId": "deletePerson",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "People"
+        ],
+        "x-immich-permission": "person.delete",
+        "description": "This endpoint requires the `person.delete` permission."
+      },
       "get": {
         "operationId": "getPerson",
         "parameters": [
@@ -4615,7 +5088,9 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.read",
+        "description": "This endpoint requires the `person.read` permission."
       },
       "put": {
         "operationId": "updatePerson",
@@ -4665,7 +5140,9 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.update",
+        "description": "This endpoint requires the `person.update` permission."
       }
     },
     "/people/{id}/merge": {
@@ -4720,7 +5197,9 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.merge",
+        "description": "This endpoint requires the `person.merge` permission."
       }
     },
     "/people/{id}/reassign": {
@@ -4775,7 +5254,9 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.reassign",
+        "description": "This endpoint requires the `person.reassign` permission."
       }
     },
     "/people/{id}/statistics": {
@@ -4817,7 +5298,9 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.statistics",
+        "description": "This endpoint requires the `person.statistics` permission."
       }
     },
     "/people/{id}/thumbnail": {
@@ -4860,7 +5343,9 @@
         ],
         "tags": [
           "People"
-        ]
+        ],
+        "x-immich-permission": "person.read",
+        "description": "This endpoint requires the `person.read` permission."
       }
     },
     "/search/cities": {
@@ -4895,7 +5380,9 @@
         ],
         "tags": [
           "Search"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       }
     },
     "/search/explore": {
@@ -4930,7 +5417,328 @@
         ],
         "tags": [
           "Search"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
+      }
+    },
+    "/search/large-assets": {
+      "post": {
+        "operationId": "searchLargeAssets",
+        "parameters": [
+          {
+            "name": "albumIds",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
+            "name": "city",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
+            "name": "country",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdAfter",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdBefore",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "deviceId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isEncoded",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isFavorite",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isMotion",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isNotInAlbum",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isOffline",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "lensModel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
+            "name": "libraryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
+            "name": "make",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minFileSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "model",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
+            "name": "personIds",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
+            "name": "rating",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": -1,
+              "maximum": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
+            "name": "tagIds",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
+            "name": "takenAfter",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "takenBefore",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "trashedAfter",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "trashedBefore",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AssetTypeEnum"
+            }
+          },
+          {
+            "name": "updatedAfter",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "updatedBefore",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "visibility",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AssetVisibility"
+            }
+          },
+          {
+            "name": "withDeleted",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "withExif",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AssetResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Search"
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       }
     },
     "/search/metadata": {
@@ -4972,7 +5780,9 @@
         ],
         "tags": [
           "Search"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       }
     },
     "/search/person": {
@@ -5024,7 +5834,9 @@
         ],
         "tags": [
           "Search"
-        ]
+        ],
+        "x-immich-permission": "person.read",
+        "description": "This endpoint requires the `person.read` permission."
       }
     },
     "/search/places": {
@@ -5068,7 +5880,9 @@
         ],
         "tags": [
           "Search"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       }
     },
     "/search/random": {
@@ -5113,7 +5927,9 @@
         ],
         "tags": [
           "Search"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       }
     },
     "/search/smart": {
@@ -5155,7 +5971,53 @@
         ],
         "tags": [
           "Search"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
+      }
+    },
+    "/search/statistics": {
+      "post": {
+        "operationId": "searchAssetStatistics",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatisticsSearchDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchStatisticsResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Search"
+        ],
+        "x-immich-permission": "asset.statistics",
+        "description": "This endpoint requires the `asset.statistics` permission."
       }
     },
     "/search/suggestions": {
@@ -5240,7 +6102,9 @@
         ],
         "tags": [
           "Search"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       }
     },
     "/server/about": {
@@ -5272,7 +6136,43 @@
         ],
         "tags": [
           "Server"
-        ]
+        ],
+        "x-immich-permission": "server.about",
+        "description": "This endpoint requires the `server.about` permission."
+      }
+    },
+    "/server/apk-links": {
+      "get": {
+        "operationId": "getApkLinks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerApkLinksDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Server"
+        ],
+        "x-immich-permission": "server.apkLinks",
+        "description": "This endpoint requires the `server.apkLinks` permission."
       }
     },
     "/server/config": {
@@ -5339,7 +6239,10 @@
         ],
         "tags": [
           "Server"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "serverLicense.delete",
+        "description": "This endpoint is an admin-only route, and requires the `serverLicense.delete` permission."
       },
       "get": {
         "operationId": "getServerLicense",
@@ -5372,7 +6275,10 @@
         ],
         "tags": [
           "Server"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "serverLicense.read",
+        "description": "This endpoint is an admin-only route, and requires the `serverLicense.read` permission."
       },
       "put": {
         "operationId": "setServerLicense",
@@ -5412,7 +6318,10 @@
         ],
         "tags": [
           "Server"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "serverLicense.update",
+        "description": "This endpoint is an admin-only route, and requires the `serverLicense.update` permission."
       }
     },
     "/server/media-types": {
@@ -5486,7 +6395,10 @@
         ],
         "tags": [
           "Server"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "server.statistics",
+        "description": "This endpoint is an admin-only route, and requires the `server.statistics` permission."
       }
     },
     "/server/storage": {
@@ -5518,7 +6430,9 @@
         ],
         "tags": [
           "Server"
-        ]
+        ],
+        "x-immich-permission": "server.storage",
+        "description": "This endpoint requires the `server.storage` permission."
       }
     },
     "/server/theme": {
@@ -5641,7 +6555,9 @@
         ],
         "tags": [
           "Sessions"
-        ]
+        ],
+        "x-immich-permission": "session.delete",
+        "description": "This endpoint requires the `session.delete` permission."
       },
       "get": {
         "operationId": "getSessions",
@@ -5674,7 +6590,9 @@
         ],
         "tags": [
           "Sessions"
-        ]
+        ],
+        "x-immich-permission": "session.read",
+        "description": "This endpoint requires the `session.read` permission."
       },
       "post": {
         "operationId": "createSession",
@@ -5714,7 +6632,9 @@
         ],
         "tags": [
           "Sessions"
-        ]
+        ],
+        "x-immich-permission": "session.create",
+        "description": "This endpoint requires the `session.create` permission."
       }
     },
     "/sessions/{id}": {
@@ -5749,7 +6669,61 @@
         ],
         "tags": [
           "Sessions"
-        ]
+        ],
+        "x-immich-permission": "session.delete",
+        "description": "This endpoint requires the `session.delete` permission."
+      },
+      "put": {
+        "operationId": "updateSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionUpdateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Sessions"
+        ],
+        "x-immich-permission": "session.update",
+        "description": "This endpoint requires the `session.update` permission."
       }
     },
     "/sessions/{id}/lock": {
@@ -5784,7 +6758,9 @@
         ],
         "tags": [
           "Sessions"
-        ]
+        ],
+        "x-immich-permission": "session.lock",
+        "description": "This endpoint requires the `session.lock` permission."
       }
     },
     "/shared-links": {
@@ -5829,7 +6805,9 @@
         ],
         "tags": [
           "Shared Links"
-        ]
+        ],
+        "x-immich-permission": "sharedLink.read",
+        "description": "This endpoint requires the `sharedLink.read` permission."
       },
       "post": {
         "operationId": "createSharedLink",
@@ -5869,21 +6847,15 @@
         ],
         "tags": [
           "Shared Links"
-        ]
+        ],
+        "x-immich-permission": "sharedLink.create",
+        "description": "This endpoint requires the `sharedLink.create` permission."
       }
     },
     "/shared-links/me": {
       "get": {
         "operationId": "getMySharedLink",
         "parameters": [
-          {
-            "name": "key",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "name": "password",
             "required": false,
@@ -5895,6 +6867,22 @@
           },
           {
             "name": "token",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -5962,7 +6950,9 @@
         ],
         "tags": [
           "Shared Links"
-        ]
+        ],
+        "x-immich-permission": "sharedLink.delete",
+        "description": "This endpoint requires the `sharedLink.delete` permission."
       },
       "get": {
         "operationId": "getSharedLinkById",
@@ -6002,7 +6992,9 @@
         ],
         "tags": [
           "Shared Links"
-        ]
+        ],
+        "x-immich-permission": "sharedLink.read",
+        "description": "This endpoint requires the `sharedLink.read` permission."
       },
       "patch": {
         "operationId": "updateSharedLink",
@@ -6052,7 +7044,9 @@
         ],
         "tags": [
           "Shared Links"
-        ]
+        ],
+        "x-immich-permission": "sharedLink.update",
+        "description": "This endpoint requires the `sharedLink.update` permission."
       }
     },
     "/shared-links/{id}/assets": {
@@ -6070,6 +7064,14 @@
           },
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -6131,6 +7133,14 @@
           },
           {
             "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
             "required": false,
             "in": "query",
             "schema": {
@@ -6211,7 +7221,9 @@
         ],
         "tags": [
           "Stacks"
-        ]
+        ],
+        "x-immich-permission": "stack.delete",
+        "description": "This endpoint requires the `stack.delete` permission."
       },
       "get": {
         "operationId": "searchStacks",
@@ -6254,7 +7266,9 @@
         ],
         "tags": [
           "Stacks"
-        ]
+        ],
+        "x-immich-permission": "stack.read",
+        "description": "This endpoint requires the `stack.read` permission."
       },
       "post": {
         "operationId": "createStack",
@@ -6294,7 +7308,9 @@
         ],
         "tags": [
           "Stacks"
-        ]
+        ],
+        "x-immich-permission": "stack.create",
+        "description": "This endpoint requires the `stack.create` permission."
       }
     },
     "/stacks/{id}": {
@@ -6329,7 +7345,9 @@
         ],
         "tags": [
           "Stacks"
-        ]
+        ],
+        "x-immich-permission": "stack.delete",
+        "description": "This endpoint requires the `stack.delete` permission."
       },
       "get": {
         "operationId": "getStack",
@@ -6369,7 +7387,9 @@
         ],
         "tags": [
           "Stacks"
-        ]
+        ],
+        "x-immich-permission": "stack.read",
+        "description": "This endpoint requires the `stack.read` permission."
       },
       "put": {
         "operationId": "updateStack",
@@ -6419,7 +7439,55 @@
         ],
         "tags": [
           "Stacks"
-        ]
+        ],
+        "x-immich-permission": "stack.update",
+        "description": "This endpoint requires the `stack.update` permission."
+      }
+    },
+    "/stacks/{id}/assets/{assetId}": {
+      "delete": {
+        "operationId": "removeAssetFromStack",
+        "parameters": [
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Stacks"
+        ],
+        "x-immich-permission": "stack.update",
+        "description": "This endpoint requires the `stack.update` permission."
       }
     },
     "/sync/ack": {
@@ -6454,7 +7522,9 @@
         ],
         "tags": [
           "Sync"
-        ]
+        ],
+        "x-immich-permission": "syncCheckpoint.delete",
+        "description": "This endpoint requires the `syncCheckpoint.delete` permission."
       },
       "get": {
         "operationId": "getSyncAck",
@@ -6487,7 +7557,9 @@
         ],
         "tags": [
           "Sync"
-        ]
+        ],
+        "x-immich-permission": "syncCheckpoint.read",
+        "description": "This endpoint requires the `syncCheckpoint.read` permission."
       },
       "post": {
         "operationId": "sendSyncAck",
@@ -6520,7 +7592,9 @@
         ],
         "tags": [
           "Sync"
-        ]
+        ],
+        "x-immich-permission": "syncCheckpoint.update",
+        "description": "This endpoint requires the `syncCheckpoint.update` permission."
       }
     },
     "/sync/delta-sync": {
@@ -6642,7 +7716,9 @@
         ],
         "tags": [
           "Sync"
-        ]
+        ],
+        "x-immich-permission": "sync.stream",
+        "description": "This endpoint requires the `sync.stream` permission."
       }
     },
     "/system-config": {
@@ -6674,7 +7750,10 @@
         ],
         "tags": [
           "System Config"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "systemConfig.read",
+        "description": "This endpoint is an admin-only route, and requires the `systemConfig.read` permission."
       },
       "put": {
         "operationId": "updateConfig",
@@ -6714,7 +7793,10 @@
         ],
         "tags": [
           "System Config"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "systemConfig.update",
+        "description": "This endpoint is an admin-only route, and requires the `systemConfig.update` permission."
       }
     },
     "/system-config/defaults": {
@@ -6746,7 +7828,10 @@
         ],
         "tags": [
           "System Config"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "systemConfig.read",
+        "description": "This endpoint is an admin-only route, and requires the `systemConfig.read` permission."
       }
     },
     "/system-config/storage-template-options": {
@@ -6778,7 +7863,10 @@
         ],
         "tags": [
           "System Config"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "systemConfig.read",
+        "description": "This endpoint is an admin-only route, and requires the `systemConfig.read` permission."
       }
     },
     "/system-metadata/admin-onboarding": {
@@ -6810,7 +7898,10 @@
         ],
         "tags": [
           "System Metadata"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "systemMetadata.read",
+        "description": "This endpoint is an admin-only route, and requires the `systemMetadata.read` permission."
       },
       "post": {
         "operationId": "updateAdminOnboarding",
@@ -6843,7 +7934,10 @@
         ],
         "tags": [
           "System Metadata"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "systemMetadata.update",
+        "description": "This endpoint is an admin-only route, and requires the `systemMetadata.update` permission."
       }
     },
     "/system-metadata/reverse-geocoding-state": {
@@ -6875,7 +7969,10 @@
         ],
         "tags": [
           "System Metadata"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "systemMetadata.read",
+        "description": "This endpoint is an admin-only route, and requires the `systemMetadata.read` permission."
       }
     },
     "/system-metadata/version-check-state": {
@@ -6907,7 +8004,10 @@
         ],
         "tags": [
           "System Metadata"
-        ]
+        ],
+        "x-immich-admin-only": true,
+        "x-immich-permission": "systemMetadata.read",
+        "description": "This endpoint is an admin-only route, and requires the `systemMetadata.read` permission."
       }
     },
     "/tags": {
@@ -6942,7 +8042,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.read",
+        "description": "This endpoint requires the `tag.read` permission."
       },
       "post": {
         "operationId": "createTag",
@@ -6982,7 +8084,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.create",
+        "description": "This endpoint requires the `tag.create` permission."
       },
       "put": {
         "operationId": "upsertTags",
@@ -7025,7 +8129,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.create",
+        "description": "This endpoint requires the `tag.create` permission."
       }
     },
     "/tags/assets": {
@@ -7067,7 +8173,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.asset",
+        "description": "This endpoint requires the `tag.asset` permission."
       }
     },
     "/tags/{id}": {
@@ -7102,7 +8210,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.delete",
+        "description": "This endpoint requires the `tag.delete` permission."
       },
       "get": {
         "operationId": "getTagById",
@@ -7142,7 +8252,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.read",
+        "description": "This endpoint requires the `tag.read` permission."
       },
       "put": {
         "operationId": "updateTag",
@@ -7192,7 +8304,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.update",
+        "description": "This endpoint requires the `tag.update` permission."
       }
     },
     "/tags/{id}/assets": {
@@ -7247,7 +8361,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.asset",
+        "description": "This endpoint requires the `tag.asset` permission."
       },
       "put": {
         "operationId": "tagAssets",
@@ -7300,7 +8416,9 @@
         ],
         "tags": [
           "Tags"
-        ]
+        ],
+        "x-immich-permission": "tag.asset",
+        "description": "This endpoint requires the `tag.asset` permission."
       }
     },
     "/timeline/bucket": {
@@ -7311,6 +8429,7 @@
             "name": "albumId",
             "required": false,
             "in": "query",
+            "description": "Filter assets belonging to a specific album",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -7320,6 +8439,7 @@
             "name": "isFavorite",
             "required": false,
             "in": "query",
+            "description": "Filter by favorite status (true for favorites only, false for non-favorites only)",
             "schema": {
               "type": "boolean"
             }
@@ -7328,6 +8448,7 @@
             "name": "isTrashed",
             "required": false,
             "in": "query",
+            "description": "Filter by trash status (true for trashed assets only, false for non-trashed only)",
             "schema": {
               "type": "boolean"
             }
@@ -7344,34 +8465,26 @@
             "name": "order",
             "required": false,
             "in": "query",
+            "description": "Sort order for assets within time buckets (ASC for oldest first, DESC for newest first)",
             "schema": {
               "$ref": "#/components/schemas/AssetOrder"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
             }
           },
           {
             "name": "personId",
             "required": false,
             "in": "query",
+            "description": "Filter assets containing a specific person (face recognition)",
             "schema": {
               "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
               "type": "string"
             }
           },
@@ -7379,6 +8492,7 @@
             "name": "tagId",
             "required": false,
             "in": "query",
+            "description": "Filter assets with a specific tag",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -7388,7 +8502,9 @@
             "name": "timeBucket",
             "required": true,
             "in": "query",
+            "description": "Time bucket identifier in YYYY-MM-DD format (e.g., \"2024-01-01\" for January 2024)",
             "schema": {
+              "example": "2024-01-01",
               "type": "string"
             }
           },
@@ -7396,6 +8512,7 @@
             "name": "userId",
             "required": false,
             "in": "query",
+            "description": "Filter assets by specific user ID",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -7405,6 +8522,7 @@
             "name": "visibility",
             "required": false,
             "in": "query",
+            "description": "Filter by asset visibility status (ARCHIVE, TIMELINE, HIDDEN, LOCKED)",
             "schema": {
               "$ref": "#/components/schemas/AssetVisibility"
             }
@@ -7413,6 +8531,7 @@
             "name": "withPartners",
             "required": false,
             "in": "query",
+            "description": "Include assets shared by partners",
             "schema": {
               "type": "boolean"
             }
@@ -7421,6 +8540,7 @@
             "name": "withStacked",
             "required": false,
             "in": "query",
+            "description": "Include stacked assets in the response. When true, only primary assets from stacks are returned.",
             "schema": {
               "type": "boolean"
             }
@@ -7451,7 +8571,9 @@
         ],
         "tags": [
           "Timeline"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       }
     },
     "/timeline/buckets": {
@@ -7462,6 +8584,7 @@
             "name": "albumId",
             "required": false,
             "in": "query",
+            "description": "Filter assets belonging to a specific album",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -7471,6 +8594,7 @@
             "name": "isFavorite",
             "required": false,
             "in": "query",
+            "description": "Filter by favorite status (true for favorites only, false for non-favorites only)",
             "schema": {
               "type": "boolean"
             }
@@ -7479,6 +8603,7 @@
             "name": "isTrashed",
             "required": false,
             "in": "query",
+            "description": "Filter by trash status (true for trashed assets only, false for non-trashed only)",
             "schema": {
               "type": "boolean"
             }
@@ -7495,6 +8620,7 @@
             "name": "order",
             "required": false,
             "in": "query",
+            "description": "Sort order for assets within time buckets (ASC for oldest first, DESC for newest first)",
             "schema": {
               "$ref": "#/components/schemas/AssetOrder"
             }
@@ -7503,8 +8629,17 @@
             "name": "personId",
             "required": false,
             "in": "query",
+            "description": "Filter assets containing a specific person (face recognition)",
             "schema": {
               "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
               "type": "string"
             }
           },
@@ -7512,6 +8647,7 @@
             "name": "tagId",
             "required": false,
             "in": "query",
+            "description": "Filter assets with a specific tag",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -7521,6 +8657,7 @@
             "name": "userId",
             "required": false,
             "in": "query",
+            "description": "Filter assets by specific user ID",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -7530,6 +8667,7 @@
             "name": "visibility",
             "required": false,
             "in": "query",
+            "description": "Filter by asset visibility status (ARCHIVE, TIMELINE, HIDDEN, LOCKED)",
             "schema": {
               "$ref": "#/components/schemas/AssetVisibility"
             }
@@ -7538,6 +8676,7 @@
             "name": "withPartners",
             "required": false,
             "in": "query",
+            "description": "Include assets shared by partners",
             "schema": {
               "type": "boolean"
             }
@@ -7546,6 +8685,7 @@
             "name": "withStacked",
             "required": false,
             "in": "query",
+            "description": "Include stacked assets in the response. When true, only primary assets from stacks are returned.",
             "schema": {
               "type": "boolean"
             }
@@ -7579,7 +8719,9 @@
         ],
         "tags": [
           "Timeline"
-        ]
+        ],
+        "x-immich-permission": "asset.read",
+        "description": "This endpoint requires the `asset.read` permission."
       }
     },
     "/trash/empty": {
@@ -7611,7 +8753,9 @@
         ],
         "tags": [
           "Trash"
-        ]
+        ],
+        "x-immich-permission": "asset.delete",
+        "description": "This endpoint requires the `asset.delete` permission."
       }
     },
     "/trash/restore": {
@@ -7643,7 +8787,9 @@
         ],
         "tags": [
           "Trash"
-        ]
+        ],
+        "x-immich-permission": "asset.delete",
+        "description": "This endpoint requires the `asset.delete` permission."
       }
     },
     "/trash/restore/assets": {
@@ -7685,7 +8831,9 @@
         ],
         "tags": [
           "Trash"
-        ]
+        ],
+        "x-immich-permission": "asset.delete",
+        "description": "This endpoint requires the `asset.delete` permission."
       }
     },
     "/users": {
@@ -7720,7 +8868,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "user.read",
+        "description": "This endpoint requires the `user.read` permission."
       }
     },
     "/users/me": {
@@ -7752,7 +8902,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "user.read",
+        "description": "This endpoint requires the `user.read` permission."
       },
       "put": {
         "operationId": "updateMyUser",
@@ -7792,7 +8944,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "user.update",
+        "description": "This endpoint requires the `user.update` permission."
       }
     },
     "/users/me/license": {
@@ -7817,7 +8971,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "userLicense.delete",
+        "description": "This endpoint requires the `userLicense.delete` permission."
       },
       "get": {
         "operationId": "getUserLicense",
@@ -7847,7 +9003,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "userLicense.read",
+        "description": "This endpoint requires the `userLicense.read` permission."
       },
       "put": {
         "operationId": "setUserLicense",
@@ -7887,7 +9045,110 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "userLicense.update",
+        "description": "This endpoint requires the `userLicense.update` permission."
+      }
+    },
+    "/users/me/onboarding": {
+      "delete": {
+        "operationId": "deleteUserOnboarding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "x-immich-permission": "userOnboarding.delete",
+        "description": "This endpoint requires the `userOnboarding.delete` permission."
+      },
+      "get": {
+        "operationId": "getUserOnboarding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "x-immich-permission": "userOnboarding.read",
+        "description": "This endpoint requires the `userOnboarding.read` permission."
+      },
+      "put": {
+        "operationId": "setUserOnboarding",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "x-immich-permission": "userOnboarding.update",
+        "description": "This endpoint requires the `userOnboarding.update` permission."
       }
     },
     "/users/me/preferences": {
@@ -7919,7 +9180,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "userPreference.read",
+        "description": "This endpoint requires the `userPreference.read` permission."
       },
       "put": {
         "operationId": "updateMyPreferences",
@@ -7959,7 +9222,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "userPreference.update",
+        "description": "This endpoint requires the `userPreference.update` permission."
       }
     },
     "/users/profile-image": {
@@ -7984,7 +9249,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "userProfileImage.delete",
+        "description": "This endpoint requires the `userProfileImage.delete` permission."
       },
       "post": {
         "operationId": "createProfileImage",
@@ -8025,7 +9292,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "userProfileImage.update",
+        "description": "This endpoint requires the `userProfileImage.update` permission."
       }
     },
     "/users/{id}": {
@@ -8067,7 +9336,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "user.read",
+        "description": "This endpoint requires the `user.read` permission."
       }
     },
     "/users/{id}/profile-image": {
@@ -8110,7 +9381,9 @@
         ],
         "tags": [
           "Users"
-        ]
+        ],
+        "x-immich-permission": "userProfileImage.read",
+        "description": "This endpoint requires the `userProfileImage.read` permission."
       }
     },
     "/view/folder": {
@@ -8196,7 +9469,7 @@
   "info": {
     "title": "Immich",
     "description": "Immich API",
-    "version": "1.134.0",
+    "version": "1.137.3",
     "contact": {}
   },
   "tags": [],
@@ -8294,11 +9567,15 @@
         "properties": {
           "name": {
             "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "minItems": 1,
+            "type": "array"
           }
         },
-        "required": [
-          "name"
-        ],
         "type": "object"
       },
       "ActivityCreateDto": {
@@ -8369,10 +9646,14 @@
         "properties": {
           "comments": {
             "type": "integer"
+          },
+          "likes": {
+            "type": "integer"
           }
         },
         "required": [
-          "comments"
+          "comments",
+          "likes"
         ],
         "type": "object"
       },
@@ -8577,6 +9858,34 @@
           "viewer"
         ],
         "type": "string"
+      },
+      "AlbumsResponse": {
+        "properties": {
+          "defaultAssetOrder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetOrder"
+              }
+            ],
+            "default": "desc"
+          }
+        },
+        "required": [
+          "defaultAssetOrder"
+        ],
+        "type": "object"
+      },
+      "AlbumsUpdate": {
+        "properties": {
+          "defaultAssetOrder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetOrder"
+              }
+            ]
+          }
+        },
+        "type": "object"
       },
       "AllJobStatusResponseDto": {
         "properties": {
@@ -9126,6 +10435,9 @@
             "format": "date-time",
             "type": "string"
           },
+          "filename": {
+            "type": "string"
+          },
           "isFavorite": {
             "type": "boolean"
           },
@@ -9175,6 +10487,9 @@
           },
           "fileModifiedAt": {
             "format": "date-time",
+            "type": "string"
+          },
+          "filename": {
             "type": "string"
           }
         },
@@ -9252,10 +10567,14 @@
             "$ref": "#/components/schemas/ExifResponseDto"
           },
           "fileCreatedAt": {
+            "description": "The actual UTC timestamp when the file was created/captured, preserving timezone information. This is the authoritative timestamp for chronological sorting within timeline groups. Combined with timezone data, this can be used to determine the exact moment the photo was taken.",
+            "example": "2024-01-15T19:30:00.000Z",
             "format": "date-time",
             "type": "string"
           },
           "fileModifiedAt": {
+            "description": "The UTC timestamp when the file was last modified on the filesystem. This reflects the last time the physical file was changed, which may be different from when the photo was originally taken.",
+            "example": "2024-01-16T10:15:00.000Z",
             "format": "date-time",
             "type": "string"
           },
@@ -9288,6 +10607,8 @@
             "type": "string"
           },
           "localDateTime": {
+            "description": "The local date and time when the photo/video was taken, derived from EXIF metadata. This represents the photographer's local time regardless of timezone, stored as a timezone-agnostic timestamp. Used for timeline grouping by \"local\" days and months.",
+            "example": "2024-01-15T14:30:00.000Z",
             "format": "date-time",
             "type": "string"
           },
@@ -9349,6 +10670,8 @@
             "type": "array"
           },
           "updatedAt": {
+            "description": "The UTC timestamp when the asset record was last updated in the database. This is automatically maintained by the database and reflects when any field in the asset was last modified.",
+            "example": "2024-01-16T12:45:30.000Z",
             "format": "date-time",
             "type": "string"
           },
@@ -9547,6 +10870,26 @@
           "icq"
         ],
         "type": "string"
+      },
+      "CastResponse": {
+        "properties": {
+          "gCastEnabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "gCastEnabled"
+        ],
+        "type": "object"
+      },
+      "CastUpdate": {
+        "properties": {
+          "gCastEnabled": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
       },
       "ChangePasswordDto": {
         "properties": {
@@ -10358,6 +11701,9 @@
           "isAdmin": {
             "type": "boolean"
           },
+          "isOnboarded": {
+            "type": "boolean"
+          },
           "name": {
             "type": "string"
           },
@@ -10377,6 +11723,7 @@
         "required": [
           "accessToken",
           "isAdmin",
+          "isOnboarded",
           "name",
           "profileImagePath",
           "shouldChangePassword",
@@ -10596,6 +11943,17 @@
         ],
         "type": "object"
       },
+      "MemoryStatisticsResponseDto": {
+        "properties": {
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total"
+        ],
+        "type": "object"
+      },
       "MemoryType": {
         "enum": [
           "on_this_day"
@@ -10635,6 +11993,13 @@
       },
       "MetadataSearchDto": {
         "properties": {
+          "albumIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "checksum": {
             "type": "string"
           },
@@ -10748,6 +12113,7 @@
               "format": "uuid",
               "type": "string"
             },
+            "nullable": true,
             "type": "array"
           },
           "takenAfter": {
@@ -11021,6 +12387,28 @@
         ],
         "type": "object"
       },
+      "OnboardingDto": {
+        "properties": {
+          "isOnboarded": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isOnboarded"
+        ],
+        "type": "object"
+      },
+      "OnboardingResponseDto": {
+        "properties": {
+          "isOnboarded": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isOnboarded"
+        ],
+        "type": "object"
+      },
       "PartnerDirection": {
         "enum": [
           "shared-by",
@@ -11188,25 +12576,35 @@
           "asset.read",
           "asset.update",
           "asset.delete",
+          "asset.statistics",
           "asset.share",
           "asset.view",
           "asset.download",
           "asset.upload",
+          "asset.replace",
           "album.create",
           "album.read",
           "album.update",
           "album.delete",
           "album.statistics",
-          "album.addAsset",
-          "album.removeAsset",
           "album.share",
           "album.download",
+          "albumAsset.create",
+          "albumAsset.delete",
+          "albumUser.create",
+          "albumUser.update",
+          "albumUser.delete",
+          "auth.changePassword",
           "authDevice.delete",
           "archive.read",
+          "duplicate.read",
+          "duplicate.delete",
           "face.create",
           "face.read",
           "face.update",
           "face.delete",
+          "job.create",
+          "job.read",
           "library.create",
           "library.read",
           "library.update",
@@ -11218,6 +12616,9 @@
           "memory.read",
           "memory.update",
           "memory.delete",
+          "memory.statistics",
+          "memoryAsset.create",
+          "memoryAsset.delete",
           "notification.create",
           "notification.read",
           "notification.update",
@@ -11233,6 +12634,16 @@
           "person.statistics",
           "person.merge",
           "person.reassign",
+          "pinCode.create",
+          "pinCode.update",
+          "pinCode.delete",
+          "server.about",
+          "server.apkLinks",
+          "server.storage",
+          "server.statistics",
+          "serverLicense.read",
+          "serverLicense.update",
+          "serverLicense.delete",
           "session.create",
           "session.read",
           "session.update",
@@ -11246,6 +12657,10 @@
           "stack.read",
           "stack.update",
           "stack.delete",
+          "sync.stream",
+          "syncCheckpoint.read",
+          "syncCheckpoint.update",
+          "syncCheckpoint.delete",
           "systemConfig.read",
           "systemConfig.update",
           "systemMetadata.read",
@@ -11255,10 +12670,25 @@
           "tag.update",
           "tag.delete",
           "tag.asset",
-          "admin.user.create",
-          "admin.user.read",
-          "admin.user.update",
-          "admin.user.delete"
+          "user.read",
+          "user.update",
+          "userLicense.create",
+          "userLicense.read",
+          "userLicense.update",
+          "userLicense.delete",
+          "userOnboarding.read",
+          "userOnboarding.update",
+          "userOnboarding.delete",
+          "userPreference.read",
+          "userPreference.update",
+          "userProfileImage.create",
+          "userProfileImage.read",
+          "userProfileImage.update",
+          "userProfileImage.delete",
+          "adminUser.create",
+          "adminUser.read",
+          "adminUser.update",
+          "adminUser.delete"
         ],
         "type": "string"
       },
@@ -11532,6 +12962,13 @@
       },
       "RandomSearchDto": {
         "properties": {
+          "albumIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "city": {
             "nullable": true,
             "type": "string"
@@ -11608,6 +13045,7 @@
               "format": "uuid",
               "type": "string"
             },
+            "nullable": true,
             "type": "array"
           },
           "takenAfter": {
@@ -11858,6 +13296,17 @@
         ],
         "type": "object"
       },
+      "SearchStatisticsResponseDto": {
+        "properties": {
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total"
+        ],
+        "type": "object"
+      },
       "SearchSuggestionType": {
         "enum": [
           "country",
@@ -11938,6 +13387,29 @@
           "licensed",
           "version",
           "versionUrl"
+        ],
+        "type": "object"
+      },
+      "ServerApkLinksDto": {
+        "properties": {
+          "arm64v8a": {
+            "type": "string"
+          },
+          "armeabiv7a": {
+            "type": "string"
+          },
+          "universal": {
+            "type": "string"
+          },
+          "x86_64": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "arm64v8a",
+          "armeabiv7a",
+          "universal",
+          "x86_64"
         ],
         "type": "object"
       },
@@ -12270,6 +13742,9 @@
           "id": {
             "type": "string"
           },
+          "isPendingSyncReset": {
+            "type": "boolean"
+          },
           "token": {
             "type": "string"
           },
@@ -12283,6 +13758,7 @@
           "deviceOS",
           "deviceType",
           "id",
+          "isPendingSyncReset",
           "token",
           "updatedAt"
         ],
@@ -12308,6 +13784,9 @@
           "id": {
             "type": "string"
           },
+          "isPendingSyncReset": {
+            "type": "boolean"
+          },
           "updatedAt": {
             "type": "string"
           }
@@ -12318,6 +13797,7 @@
           "deviceOS",
           "deviceType",
           "id",
+          "isPendingSyncReset",
           "updatedAt"
         ],
         "type": "object"
@@ -12330,6 +13810,14 @@
           "pinCode": {
             "example": "123456",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SessionUpdateDto": {
+        "properties": {
+          "isPendingSyncReset": {
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -12355,6 +13843,7 @@
             "type": "array"
           },
           "description": {
+            "nullable": true,
             "type": "string"
           },
           "expiresAt": {
@@ -12364,11 +13853,16 @@
             "type": "string"
           },
           "password": {
+            "nullable": true,
             "type": "string"
           },
           "showMetadata": {
             "default": true,
             "type": "boolean"
+          },
+          "slug": {
+            "nullable": true,
+            "type": "string"
           },
           "type": {
             "allOf": [
@@ -12396,6 +13890,7 @@
             "type": "boolean"
           },
           "description": {
+            "nullable": true,
             "type": "string"
           },
           "expiresAt": {
@@ -12404,10 +13899,15 @@
             "type": "string"
           },
           "password": {
+            "nullable": true,
             "type": "string"
           },
           "showMetadata": {
             "type": "boolean"
+          },
+          "slug": {
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -12455,6 +13955,10 @@
           "showMetadata": {
             "type": "boolean"
           },
+          "slug": {
+            "nullable": true,
+            "type": "string"
+          },
           "token": {
             "nullable": true,
             "type": "string"
@@ -12481,6 +13985,7 @@
           "key",
           "password",
           "showMetadata",
+          "slug",
           "type",
           "userId"
         ],
@@ -12546,6 +14051,13 @@
       },
       "SmartSearchDto": {
         "properties": {
+          "albumIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "city": {
             "nullable": true,
             "type": "string"
@@ -12632,6 +14144,7 @@
               "format": "uuid",
               "type": "string"
             },
+            "nullable": true,
             "type": "array"
           },
           "takenAfter": {
@@ -12740,6 +14253,133 @@
         },
         "type": "object"
       },
+      "StatisticsSearchDto": {
+        "properties": {
+          "albumIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "city": {
+            "nullable": true,
+            "type": "string"
+          },
+          "country": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAfter": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBefore": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "isEncoded": {
+            "type": "boolean"
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "isMotion": {
+            "type": "boolean"
+          },
+          "isNotInAlbum": {
+            "type": "boolean"
+          },
+          "isOffline": {
+            "type": "boolean"
+          },
+          "lensModel": {
+            "nullable": true,
+            "type": "string"
+          },
+          "libraryId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "make": {
+            "type": "string"
+          },
+          "model": {
+            "nullable": true,
+            "type": "string"
+          },
+          "personIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rating": {
+            "maximum": 5,
+            "minimum": -1,
+            "type": "number"
+          },
+          "state": {
+            "nullable": true,
+            "type": "string"
+          },
+          "tagIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "takenAfter": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "takenBefore": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "trashedAfter": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "trashedBefore": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetTypeEnum"
+              }
+            ]
+          },
+          "updatedAfter": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBefore": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetVisibility"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
       "SyncAckDeleteDto": {
         "properties": {
           "types": {
@@ -12776,12 +14416,17 @@
             "items": {
               "type": "string"
             },
+            "maxItems": 1000,
             "type": "array"
           }
         },
         "required": [
           "acks"
         ],
+        "type": "object"
+      },
+      "SyncAckV1": {
+        "properties": {},
         "type": "object"
       },
       "SyncAlbumDeleteV1": {
@@ -12792,6 +14437,36 @@
         },
         "required": [
           "albumId"
+        ],
+        "type": "object"
+      },
+      "SyncAlbumToAssetDeleteV1": {
+        "properties": {
+          "albumId": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "albumId",
+          "assetId"
+        ],
+        "type": "object"
+      },
+      "SyncAlbumToAssetV1": {
+        "properties": {
+          "albumId": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "albumId",
+          "assetId"
         ],
         "type": "object"
       },
@@ -12816,11 +14491,11 @@
             "type": "string"
           },
           "role": {
-            "enum": [
-              "editor",
-              "viewer"
-            ],
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumUserRole"
+              }
+            ]
           },
           "userId": {
             "type": "string"
@@ -12929,36 +14604,41 @@
             "type": "string"
           },
           "fNumber": {
+            "format": "double",
             "nullable": true,
-            "type": "integer"
+            "type": "number"
           },
           "fileSizeInByte": {
             "nullable": true,
             "type": "integer"
           },
           "focalLength": {
+            "format": "double",
             "nullable": true,
-            "type": "integer"
+            "type": "number"
           },
           "fps": {
+            "format": "double",
             "nullable": true,
-            "type": "integer"
+            "type": "number"
           },
           "iso": {
             "nullable": true,
             "type": "integer"
           },
           "latitude": {
+            "format": "double",
             "nullable": true,
-            "type": "integer"
+            "type": "number"
           },
           "lensModel": {
             "nullable": true,
             "type": "string"
           },
           "longitude": {
+            "format": "double",
             "nullable": true,
-            "type": "integer"
+            "type": "number"
           },
           "make": {
             "nullable": true,
@@ -13027,6 +14707,65 @@
         ],
         "type": "object"
       },
+      "SyncAssetFaceDeleteV1": {
+        "properties": {
+          "assetFaceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetFaceId"
+        ],
+        "type": "object"
+      },
+      "SyncAssetFaceV1": {
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "boundingBoxX1": {
+            "type": "integer"
+          },
+          "boundingBoxX2": {
+            "type": "integer"
+          },
+          "boundingBoxY1": {
+            "type": "integer"
+          },
+          "boundingBoxY2": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "imageHeight": {
+            "type": "integer"
+          },
+          "imageWidth": {
+            "type": "integer"
+          },
+          "personId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "boundingBoxX1",
+          "boundingBoxX2",
+          "boundingBoxY1",
+          "boundingBoxY2",
+          "id",
+          "imageHeight",
+          "imageWidth",
+          "personId",
+          "sourceType"
+        ],
+        "type": "object"
+      },
       "SyncAssetV1": {
         "properties": {
           "checksum": {
@@ -13034,6 +14773,10 @@
           },
           "deletedAt": {
             "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "duration": {
             "nullable": true,
             "type": "string"
           },
@@ -13053,12 +14796,27 @@
           "isFavorite": {
             "type": "boolean"
           },
+          "libraryId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "livePhotoVideoId": {
+            "nullable": true,
+            "type": "string"
+          },
           "localDateTime": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
           },
+          "originalFileName": {
+            "type": "string"
+          },
           "ownerId": {
+            "type": "string"
+          },
+          "stackId": {
+            "nullable": true,
             "type": "string"
           },
           "thumbhash": {
@@ -13066,57 +14824,267 @@
             "type": "string"
           },
           "type": {
-            "enum": [
-              "IMAGE",
-              "VIDEO",
-              "AUDIO",
-              "OTHER"
-            ],
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetTypeEnum"
+              }
+            ]
           },
           "visibility": {
-            "enum": [
-              "archive",
-              "timeline",
-              "hidden",
-              "locked"
-            ],
-            "type": "string"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetVisibility"
+              }
+            ]
           }
         },
         "required": [
           "checksum",
           "deletedAt",
+          "duration",
           "fileCreatedAt",
           "fileModifiedAt",
           "id",
           "isFavorite",
+          "libraryId",
+          "livePhotoVideoId",
           "localDateTime",
+          "originalFileName",
           "ownerId",
+          "stackId",
           "thumbhash",
           "type",
           "visibility"
         ],
         "type": "object"
       },
+      "SyncAuthUserV1": {
+        "properties": {
+          "avatarColor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserAvatarColor"
+              }
+            ],
+            "nullable": true
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "hasProfileImage": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "oauthId": {
+            "type": "string"
+          },
+          "pinCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "profileChangedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "quotaSizeInBytes": {
+            "nullable": true,
+            "type": "integer"
+          },
+          "quotaUsageInBytes": {
+            "type": "integer"
+          },
+          "storageLabel": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "avatarColor",
+          "deletedAt",
+          "email",
+          "hasProfileImage",
+          "id",
+          "isAdmin",
+          "name",
+          "oauthId",
+          "pinCode",
+          "profileChangedAt",
+          "quotaSizeInBytes",
+          "quotaUsageInBytes",
+          "storageLabel"
+        ],
+        "type": "object"
+      },
       "SyncEntityType": {
         "enum": [
+          "AuthUserV1",
           "UserV1",
           "UserDeleteV1",
-          "PartnerV1",
-          "PartnerDeleteV1",
           "AssetV1",
           "AssetDeleteV1",
           "AssetExifV1",
+          "PartnerV1",
+          "PartnerDeleteV1",
           "PartnerAssetV1",
+          "PartnerAssetBackfillV1",
           "PartnerAssetDeleteV1",
           "PartnerAssetExifV1",
+          "PartnerAssetExifBackfillV1",
+          "PartnerStackBackfillV1",
+          "PartnerStackDeleteV1",
+          "PartnerStackV1",
           "AlbumV1",
           "AlbumDeleteV1",
           "AlbumUserV1",
-          "AlbumUserDeleteV1"
+          "AlbumUserBackfillV1",
+          "AlbumUserDeleteV1",
+          "AlbumAssetV1",
+          "AlbumAssetBackfillV1",
+          "AlbumAssetExifV1",
+          "AlbumAssetExifBackfillV1",
+          "AlbumToAssetV1",
+          "AlbumToAssetDeleteV1",
+          "AlbumToAssetBackfillV1",
+          "MemoryV1",
+          "MemoryDeleteV1",
+          "MemoryToAssetV1",
+          "MemoryToAssetDeleteV1",
+          "StackV1",
+          "StackDeleteV1",
+          "PersonV1",
+          "PersonDeleteV1",
+          "AssetFaceV1",
+          "AssetFaceDeleteV1",
+          "UserMetadataV1",
+          "UserMetadataDeleteV1",
+          "SyncAckV1",
+          "SyncResetV1"
         ],
         "type": "string"
+      },
+      "SyncMemoryAssetDeleteV1": {
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "memoryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "memoryId"
+        ],
+        "type": "object"
+      },
+      "SyncMemoryAssetV1": {
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "memoryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "memoryId"
+        ],
+        "type": "object"
+      },
+      "SyncMemoryDeleteV1": {
+        "properties": {
+          "memoryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "memoryId"
+        ],
+        "type": "object"
+      },
+      "SyncMemoryV1": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "hideAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "memoryAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "seenAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "showAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemoryType"
+              }
+            ]
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt",
+          "data",
+          "deletedAt",
+          "hideAt",
+          "id",
+          "isSaved",
+          "memoryAt",
+          "ownerId",
+          "seenAt",
+          "showAt",
+          "type",
+          "updatedAt"
+        ],
+        "type": "object"
       },
       "SyncPartnerDeleteV1": {
         "properties": {
@@ -13152,21 +15120,143 @@
         ],
         "type": "object"
       },
+      "SyncPersonDeleteV1": {
+        "properties": {
+          "personId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "personId"
+        ],
+        "type": "object"
+      },
+      "SyncPersonV1": {
+        "properties": {
+          "birthDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "color": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "faceAssetId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "isHidden": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "birthDate",
+          "color",
+          "createdAt",
+          "faceAssetId",
+          "id",
+          "isFavorite",
+          "isHidden",
+          "name",
+          "ownerId",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
       "SyncRequestType": {
         "enum": [
-          "UsersV1",
-          "PartnersV1",
+          "AlbumsV1",
+          "AlbumUsersV1",
+          "AlbumToAssetsV1",
+          "AlbumAssetsV1",
+          "AlbumAssetExifsV1",
           "AssetsV1",
           "AssetExifsV1",
+          "AuthUsersV1",
+          "MemoriesV1",
+          "MemoryToAssetsV1",
+          "PartnersV1",
           "PartnerAssetsV1",
           "PartnerAssetExifsV1",
-          "AlbumsV1",
-          "AlbumUsersV1"
+          "PartnerStacksV1",
+          "StacksV1",
+          "UsersV1",
+          "PeopleV1",
+          "AssetFacesV1",
+          "UserMetadataV1"
         ],
         "type": "string"
       },
+      "SyncResetV1": {
+        "properties": {},
+        "type": "object"
+      },
+      "SyncStackDeleteV1": {
+        "properties": {
+          "stackId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "stackId"
+        ],
+        "type": "object"
+      },
+      "SyncStackV1": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "primaryAssetId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt",
+          "id",
+          "ownerId",
+          "primaryAssetId",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
       "SyncStreamDto": {
         "properties": {
+          "reset": {
+            "type": "boolean"
+          },
           "types": {
             "items": {
               "$ref": "#/components/schemas/SyncRequestType"
@@ -13190,8 +15280,58 @@
         ],
         "type": "object"
       },
+      "SyncUserMetadataDeleteV1": {
+        "properties": {
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserMetadataKey"
+              }
+            ]
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "userId"
+        ],
+        "type": "object"
+      },
+      "SyncUserMetadataV1": {
+        "properties": {
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserMetadataKey"
+              }
+            ]
+          },
+          "userId": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "key",
+          "userId",
+          "value"
+        ],
+        "type": "object"
+      },
       "SyncUserV1": {
         "properties": {
+          "avatarColor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserAvatarColor"
+              }
+            ],
+            "nullable": true
+          },
           "deletedAt": {
             "format": "date-time",
             "nullable": true,
@@ -13200,18 +15340,28 @@
           "email": {
             "type": "string"
           },
+          "hasProfileImage": {
+            "type": "boolean"
+          },
           "id": {
             "type": "string"
           },
           "name": {
             "type": "string"
+          },
+          "profileChangedAt": {
+            "format": "date-time",
+            "type": "string"
           }
         },
         "required": [
+          "avatarColor",
           "deletedAt",
           "email",
+          "hasProfileImage",
           "id",
-          "name"
+          "name",
+          "profileChangedAt"
         ],
         "type": "object"
       },
@@ -13258,6 +15408,9 @@
           "newVersionCheck": {
             "$ref": "#/components/schemas/SystemConfigNewVersionCheckDto"
           },
+          "nightlyTasks": {
+            "$ref": "#/components/schemas/SystemConfigNightlyTasksDto"
+          },
           "notifications": {
             "$ref": "#/components/schemas/SystemConfigNotificationsDto"
           },
@@ -13300,6 +15453,7 @@
           "map",
           "metadata",
           "newVersionCheck",
+          "nightlyTasks",
           "notifications",
           "oauth",
           "passwordLogin",
@@ -13730,6 +15884,37 @@
         ],
         "type": "object"
       },
+      "SystemConfigNightlyTasksDto": {
+        "properties": {
+          "clusterNewFaces": {
+            "type": "boolean"
+          },
+          "databaseCleanup": {
+            "type": "boolean"
+          },
+          "generateMemories": {
+            "type": "boolean"
+          },
+          "missingThumbnails": {
+            "type": "boolean"
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "syncQuotaUsage": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "clusterNewFaces",
+          "databaseCleanup",
+          "generateMemories",
+          "missingThumbnails",
+          "startTime",
+          "syncQuotaUsage"
+        ],
+        "type": "object"
+      },
       "SystemConfigNotificationsDto": {
         "properties": {
           "smtp": {
@@ -13759,8 +15944,10 @@
             "type": "string"
           },
           "defaultStorageQuota": {
+            "format": "int64",
             "minimum": 0,
-            "type": "number"
+            "nullable": true,
+            "type": "integer"
           },
           "enabled": {
             "type": "boolean"
@@ -13776,6 +15963,9 @@
             "type": "string"
           },
           "profileSigningAlgorithm": {
+            "type": "string"
+          },
+          "roleClaim": {
             "type": "string"
           },
           "scope": {
@@ -13814,6 +16004,7 @@
           "mobileOverrideEnabled",
           "mobileRedirectUri",
           "profileSigningAlgorithm",
+          "roleClaim",
           "scope",
           "signingAlgorithm",
           "storageLabelClaim",
@@ -14248,6 +16439,7 @@
       "TimeBucketAssetResponseDto": {
         "properties": {
           "city": {
+            "description": "Array of city names extracted from EXIF GPS data",
             "items": {
               "nullable": true,
               "type": "string"
@@ -14255,6 +16447,7 @@
             "type": "array"
           },
           "country": {
+            "description": "Array of country names extracted from EXIF GPS data",
             "items": {
               "nullable": true,
               "type": "string"
@@ -14262,56 +16455,72 @@
             "type": "array"
           },
           "duration": {
+            "description": "Array of video durations in HH:MM:SS format (null for images)",
             "items": {
               "nullable": true,
               "type": "string"
             },
             "type": "array"
           },
+          "fileCreatedAt": {
+            "description": "Array of file creation timestamps in UTC (ISO 8601 format, without timezone)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "id": {
+            "description": "Array of asset IDs in the time bucket",
             "items": {
               "type": "string"
             },
             "type": "array"
           },
           "isFavorite": {
+            "description": "Array indicating whether each asset is favorited",
             "items": {
               "type": "boolean"
             },
             "type": "array"
           },
           "isImage": {
+            "description": "Array indicating whether each asset is an image (false for videos)",
             "items": {
               "type": "boolean"
             },
             "type": "array"
           },
           "isTrashed": {
+            "description": "Array indicating whether each asset is in the trash",
             "items": {
               "type": "boolean"
             },
             "type": "array"
           },
           "livePhotoVideoId": {
+            "description": "Array of live photo video asset IDs (null for non-live photos)",
             "items": {
               "nullable": true,
               "type": "string"
             },
             "type": "array"
           },
-          "localDateTime": {
+          "localOffsetHours": {
+            "description": "Array of UTC offset hours at the time each photo was taken. Positive values are east of UTC, negative values are west of UTC. Values may be fractional (e.g., 5.5 for +05:30, -9.75 for -09:45). Applying this offset to 'fileCreatedAt' will give you the time the photo was taken from the photographer's perspective.",
             "items": {
-              "type": "string"
+              "type": "number"
             },
             "type": "array"
           },
           "ownerId": {
+            "description": "Array of owner IDs for each asset",
             "items": {
               "type": "string"
             },
             "type": "array"
           },
           "projectionType": {
+            "description": "Array of projection types for 360° content (e.g., \"EQUIRECTANGULAR\", \"CUBEFACE\", \"CYLINDRICAL\")",
             "items": {
               "nullable": true,
               "type": "string"
@@ -14319,13 +16528,14 @@
             "type": "array"
           },
           "ratio": {
+            "description": "Array of aspect ratios (width/height) for each asset",
             "items": {
               "type": "number"
             },
             "type": "array"
           },
           "stack": {
-            "description": "(stack ID, stack asset count) tuple",
+            "description": "Array of stack information as [stackId, assetCount] tuples (null for non-stacked assets)",
             "items": {
               "items": {
                 "type": "string"
@@ -14338,6 +16548,7 @@
             "type": "array"
           },
           "thumbhash": {
+            "description": "Array of BlurHash strings for generating asset previews (base64 encoded)",
             "items": {
               "nullable": true,
               "type": "string"
@@ -14345,6 +16556,7 @@
             "type": "array"
           },
           "visibility": {
+            "description": "Array of visibility statuses for each asset (e.g., ARCHIVE, TIMELINE, HIDDEN, LOCKED)",
             "items": {
               "$ref": "#/components/schemas/AssetVisibility"
             },
@@ -14355,12 +16567,13 @@
           "city",
           "country",
           "duration",
+          "fileCreatedAt",
           "id",
           "isFavorite",
           "isImage",
           "isTrashed",
           "livePhotoVideoId",
-          "localDateTime",
+          "localOffsetHours",
           "ownerId",
           "projectionType",
           "ratio",
@@ -14372,9 +16585,13 @@
       "TimeBucketsResponseDto": {
         "properties": {
           "count": {
+            "description": "Number of assets in this time bucket",
+            "example": 42,
             "type": "integer"
           },
           "timeBucket": {
+            "description": "Time bucket identifier in YYYY-MM-DD format representing the start of the time period",
+            "example": "2024-01-01",
             "type": "string"
           }
         },
@@ -14594,6 +16811,9 @@
             "format": "email",
             "type": "string"
           },
+          "isAdmin": {
+            "type": "boolean"
+          },
           "name": {
             "type": "string"
           },
@@ -14744,6 +16964,9 @@
             "format": "email",
             "type": "string"
           },
+          "isAdmin": {
+            "type": "boolean"
+          },
           "name": {
             "type": "string"
           },
@@ -14806,8 +17029,22 @@
         ],
         "type": "object"
       },
+      "UserMetadataKey": {
+        "enum": [
+          "preferences",
+          "license",
+          "onboarding"
+        ],
+        "type": "string"
+      },
       "UserPreferencesResponseDto": {
         "properties": {
+          "albums": {
+            "$ref": "#/components/schemas/AlbumsResponse"
+          },
+          "cast": {
+            "$ref": "#/components/schemas/CastResponse"
+          },
           "download": {
             "$ref": "#/components/schemas/DownloadResponse"
           },
@@ -14837,6 +17074,8 @@
           }
         },
         "required": [
+          "albums",
+          "cast",
           "download",
           "emailNotifications",
           "folders",
@@ -14851,8 +17090,14 @@
       },
       "UserPreferencesUpdateDto": {
         "properties": {
+          "albums": {
+            "$ref": "#/components/schemas/AlbumsUpdate"
+          },
           "avatar": {
             "$ref": "#/components/schemas/AvatarUpdate"
+          },
+          "cast": {
+            "$ref": "#/components/schemas/CastUpdate"
           },
           "download": {
             "$ref": "#/components/schemas/DownloadUpdate"

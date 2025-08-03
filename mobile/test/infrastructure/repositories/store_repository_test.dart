@@ -1,7 +1,4 @@
-// ignore_for_file: avoid-dynamic
-
 import 'package:flutter_test/flutter_test.dart';
-import 'package:immich_mobile/domain/interfaces/store.interface.dart';
 import 'package:immich_mobile/domain/models/store.model.dart';
 import 'package:immich_mobile/domain/models/user.model.dart';
 import 'package:immich_mobile/infrastructure/entities/store.entity.dart';
@@ -27,16 +24,8 @@ Future<void> _addStrStoreValue(Isar db, StoreKey key, String? value) async {
 
 Future<void> _populateStore(Isar db) async {
   await db.writeTxn(() async {
-    await _addIntStoreValue(
-      db,
-      StoreKey.colorfulInterface,
-      _kTestColorfulInterface ? 1 : 0,
-    );
-    await _addIntStoreValue(
-      db,
-      StoreKey.backupFailedSince,
-      _kTestBackupFailed.millisecondsSinceEpoch,
-    );
+    await _addIntStoreValue(db, StoreKey.colorfulInterface, _kTestColorfulInterface ? 1 : 0);
+    await _addIntStoreValue(db, StoreKey.backupFailedSince, _kTestBackupFailed.millisecondsSinceEpoch);
     await _addStrStoreValue(db, StoreKey.accessToken, _kTestAccessToken);
     await _addIntStoreValue(db, StoreKey.version, _kTestVersion);
   });
@@ -44,7 +33,7 @@ Future<void> _populateStore(Isar db) async {
 
 void main() {
   late Isar db;
-  late IStoreRepository sut;
+  late IsarStoreRepository sut;
 
   setUp(() async {
     db = await TestUtils.initIsar();
@@ -69,8 +58,7 @@ void main() {
     });
 
     test('converts datetime', () async {
-      DateTime? backupFailedSince =
-          await sut.tryGet(StoreKey.backupFailedSince);
+      DateTime? backupFailedSince = await sut.tryGet(StoreKey.backupFailedSince);
       expect(backupFailedSince, isNull);
       await sut.insert(StoreKey.backupFailedSince, _kTestBackupFailed);
       backupFailedSince = await sut.tryGet(StoreKey.backupFailedSince);
@@ -146,33 +134,11 @@ void main() {
       expectLater(
         stream,
         emitsInAnyOrder([
-          emits(
-            const StoreUpdateEvent<dynamic>(StoreKey.version, _kTestVersion),
-          ),
-          emits(
-            StoreUpdateEvent<dynamic>(
-              StoreKey.backupFailedSince,
-              _kTestBackupFailed,
-            ),
-          ),
-          emits(
-            const StoreUpdateEvent<dynamic>(
-              StoreKey.accessToken,
-              _kTestAccessToken,
-            ),
-          ),
-          emits(
-            const StoreUpdateEvent<dynamic>(
-              StoreKey.colorfulInterface,
-              _kTestColorfulInterface,
-            ),
-          ),
-          emits(
-            const StoreUpdateEvent<dynamic>(
-              StoreKey.version,
-              _kTestVersion + 10,
-            ),
-          ),
+          emits(const StoreDto<Object>(StoreKey.version, _kTestVersion)),
+          emits(StoreDto<Object>(StoreKey.backupFailedSince, _kTestBackupFailed)),
+          emits(const StoreDto<Object>(StoreKey.accessToken, _kTestAccessToken)),
+          emits(const StoreDto<Object>(StoreKey.colorfulInterface, _kTestColorfulInterface)),
+          emits(const StoreDto<Object>(StoreKey.version, _kTestVersion + 10)),
         ]),
       );
       await sut.update(StoreKey.version, _kTestVersion + 10);

@@ -1,23 +1,19 @@
 import { goto } from '$app/navigation';
-import FormatBoldMessage from '$lib/components/i18n/format-bold-message.svelte';
-import type { InterpolationValues } from '$lib/components/i18n/format-message';
 import { notificationController, NotificationType } from '$lib/components/shared-components/notification/notification';
 import { AppRoute } from '$lib/constants';
 import { authManager } from '$lib/managers/auth-manager.svelte';
 import { downloadManager } from '$lib/managers/download-manager.svelte';
+import type { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
+import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
+import { assetsSnapshot } from '$lib/managers/timeline-manager/utils.svelte';
 import type { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
-import {
-  assetsSnapshot,
-  isSelectingAllAssets,
-  type AssetStore,
-  type TimelineAsset,
-} from '$lib/stores/assets-store.svelte';
+import { isSelectingAllAssets } from '$lib/stores/assets-store.svelte';
 import { preferences } from '$lib/stores/user.store';
 import { downloadRequest, withError } from '$lib/utils';
-import { createAlbum } from '$lib/utils/album-utils';
 import { getByteUnitString } from '$lib/utils/byte-units';
 import { getFormatter } from '$lib/utils/i18n';
 import { navigate } from '$lib/utils/navigation';
+import { asQueryString } from '$lib/utils/shared-links';
 import {
   addAssetsToAlbum as addAssets,
   AssetVisibility,
@@ -41,29 +37,33 @@ import {
   type UserResponseDto,
 } from '@immich/sdk';
 import { DateTime } from 'luxon';
-import { t, type Translations } from 'svelte-i18n';
+import { t } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import { handleError } from './handle-error';
 
 export const addAssetsToAlbum = async (albumId: string, assetIds: string[], showNotification = true) => {
   const result = await addAssets({
+    ...authManager.params,
     id: albumId,
     bulkIdsDto: {
       ids: assetIds,
     },
-    key: authManager.key,
   });
   const count = result.filter(({ success }) => success).length;
+  const duplicateErrorCount = result.filter(({ error }) => error === 'duplicate').length;
   const $t = get(t);
 
   if (showNotification) {
+    let message = $t('assets_cannot_be_added_to_album_count', { values: { count: assetIds.length } });
+    if (count > 0) {
+      message = $t('assets_added_to_album_count', { values: { count } });
+    } else if (duplicateErrorCount > 0) {
+      message = $t('assets_were_part_of_album_count', { values: { count: duplicateErrorCount } });
+    }
     notificationController.show({
       type: NotificationType.Info,
       timeout: 5000,
-      message:
-        count > 0
-          ? $t('assets_added_to_album_count', { values: { count } })
-          : $t('assets_were_part_of_album_count', { values: { count: assetIds.length } }),
+      message,
       button: {
         text: $t('view_album'),
         onClick() {
@@ -120,33 +120,6 @@ export const removeTag = async ({
   return assetIds;
 };
 
-export const addAssetsToNewAlbum = async (albumName: string, assetIds: string[]) => {
-  const album = await createAlbum(albumName, assetIds);
-  if (!album) {
-    return;
-  }
-  const $t = get(t);
-  // for reasons beyond me <ComponentProps<typeof FormatBoldMessage>> doesn't work, even though it's (afaik) exactly this object
-  notificationController.show<{ key: Translations; values: InterpolationValues }>({
-    type: NotificationType.Info,
-    timeout: 5000,
-    component: {
-      type: FormatBoldMessage,
-      props: {
-        key: 'assets_added_to_name_count',
-        values: { count: assetIds.length, name: albumName, hasName: !!albumName },
-      },
-    },
-    button: {
-      text: $t('view_album'),
-      onClick() {
-        return goto(`${AppRoute.ALBUMS}/${album.id}`);
-      },
-    },
-  });
-  return album;
-};
-
 export const downloadAlbum = async (album: AlbumResponseDto) => {
   await downloadArchive(`${album.albumName}.zip`, {
     albumId: album.id,
@@ -183,7 +156,7 @@ export const downloadArchive = async (fileName: string, options: Omit<DownloadIn
   const $preferences = get<UserPreferencesResponseDto | undefined>(preferences);
   const dto = { ...options, archiveSize: $preferences?.download.archiveSize };
 
-  const [error, downloadInfo] = await withError(() => getDownloadInfo({ downloadInfoDto: dto, key: authManager.key }));
+  const [error, downloadInfo] = await withError(() => getDownloadInfo({ ...authManager.params, downloadInfoDto: dto }));
   if (error) {
     const $t = get(t);
     handleError(error, $t('errors.unable_to_download_files'));
@@ -198,7 +171,7 @@ export const downloadArchive = async (fileName: string, options: Omit<DownloadIn
     const archive = downloadInfo.archives[index];
     const suffix = downloadInfo.archives.length > 1 ? `+${index + 1}` : '';
     const archiveName = fileName.replace('.zip', `${suffix}-${DateTime.now().toFormat('yyyyLLdd_HHmmss')}.zip`);
-    const key = authManager.key;
+    const queryParams = asQueryString(authManager.params);
 
     let downloadKey = `${archiveName} `;
     if (downloadInfo.archives.length > 1) {
@@ -212,7 +185,7 @@ export const downloadArchive = async (fileName: string, options: Omit<DownloadIn
       // TODO use sdk once it supports progress events
       const { data } = await downloadRequest({
         method: 'POST',
-        url: getBaseUrl() + '/download/archive' + (key ? `?key=${key}` : ''),
+        url: getBaseUrl() + '/download/archive' + (queryParams ? `?${queryParams}` : ''),
         data: { assetIds: archive.assetIds },
         signal: abort.signal,
         onDownloadProgress: (event) => downloadManager.update(downloadKey, event.loaded),
@@ -245,7 +218,7 @@ export const downloadFile = async (asset: AssetResponseDto) => {
   };
 
   if (asset.livePhotoVideoId) {
-    const motionAsset = await getAssetInfo({ id: asset.livePhotoVideoId, key: authManager.key });
+    const motionAsset = await getAssetInfo({ ...authManager.params, id: asset.livePhotoVideoId });
     if (!isAndroidMotionVideo(motionAsset) || get(preferences)?.download.includeEmbeddedVideos) {
       assets.push({
         filename: motionAsset.originalFileName,
@@ -255,16 +228,16 @@ export const downloadFile = async (asset: AssetResponseDto) => {
     }
   }
 
+  const queryParams = asQueryString(authManager.params);
+
   for (const { filename, id } of assets) {
     try {
-      const key = authManager.key;
-
       notificationController.show({
         type: NotificationType.Info,
         message: $t('downloading_asset_filename', { values: { filename: asset.originalFileName } }),
       });
 
-      downloadUrl(getBaseUrl() + `/assets/${id}/original` + (key ? `?key=${key}` : ''), filename);
+      downloadUrl(getBaseUrl() + `/assets/${id}/original` + (queryParams ? `?${queryParams}` : ''), filename);
     } catch (error) {
       handleError(error, $t('errors.error_downloading', { values: { filename } }));
     }
@@ -302,9 +275,9 @@ export function isFlipped(orientation?: string | null) {
   return value && (isRotated270CW(value) || isRotated90CW(value));
 }
 
-export function getFileSize(asset: AssetResponseDto): string {
+export function getFileSize(asset: AssetResponseDto, maxPrecision = 4): string {
   const size = asset.exifInfo?.fileSizeInByte || 0;
-  return size > 0 ? getByteUnitString(size, undefined, 4) : 'Invalid Data';
+  return size > 0 ? getByteUnitString(size, undefined, maxPrecision) : 'Invalid Data';
 }
 
 export function getAssetResolution(asset: AssetResponseDto): string {
@@ -468,7 +441,7 @@ export const keepThisDeleteOthers = async (keepAsset: AssetResponseDto, stack: S
   }
 };
 
-export const selectAllAssets = async (assetStore: AssetStore, assetInteraction: AssetInteraction) => {
+export const selectAllAssets = async (timelineManager: TimelineManager, assetInteraction: AssetInteraction) => {
   if (get(isSelectingAllAssets)) {
     // Selection is already ongoing
     return;
@@ -476,16 +449,16 @@ export const selectAllAssets = async (assetStore: AssetStore, assetInteraction: 
   isSelectingAllAssets.set(true);
 
   try {
-    for (const bucket of assetStore.buckets) {
-      await assetStore.loadBucket(bucket.bucketDate);
+    for (const monthGroup of timelineManager.months) {
+      await timelineManager.loadMonthGroup(monthGroup.yearMonth);
 
       if (!get(isSelectingAllAssets)) {
         assetInteraction.clearMultiselect();
         break; // Cancelled
       }
-      assetInteraction.selectAssets(assetsSnapshot(bucket.getAssets()));
+      assetInteraction.selectAssets(assetsSnapshot([...monthGroup.assetsIterator()]));
 
-      for (const dateGroup of bucket.dateGroups) {
+      for (const dateGroup of monthGroup.dayGroups) {
         assetInteraction.addGroupToMultiselectGroup(dateGroup.groupTitle);
       }
     }

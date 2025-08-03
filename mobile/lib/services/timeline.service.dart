@@ -2,7 +2,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/domain/services/user.service.dart';
 import 'package:immich_mobile/entities/album.entity.dart';
 import 'package:immich_mobile/entities/asset.entity.dart';
-import 'package:immich_mobile/interfaces/timeline.interface.dart';
 import 'package:immich_mobile/providers/app_settings.provider.dart';
 import 'package:immich_mobile/providers/infrastructure/user.provider.dart';
 import 'package:immich_mobile/repositories/timeline.repository.dart';
@@ -18,15 +17,11 @@ final timelineServiceProvider = Provider<TimelineService>((ref) {
 });
 
 class TimelineService {
-  final ITimelineRepository _timelineRepository;
+  final TimelineRepository _timelineRepository;
   final AppSettingsService _appSettingsService;
   final UserService _userService;
 
-  const TimelineService(
-    this._timelineRepository,
-    this._appSettingsService,
-    this._userService,
-  );
+  const TimelineService(this._timelineRepository, this._appSettingsService, this._userService);
 
   Future<List<String>> getTimelineUserIds() async {
     final me = _userService.getMyUser();
@@ -43,10 +38,7 @@ class TimelineService {
   }
 
   Stream<RenderList> watchMultiUsersTimeline(List<String> userIds) {
-    return _timelineRepository.watchMultiUsersTimeline(
-      userIds,
-      _getGroupByOption(),
-    );
+    return _timelineRepository.watchMultiUsersTimeline(userIds, _getGroupByOption());
   }
 
   Stream<RenderList> watchArchiveTimeline() async* {
@@ -62,10 +54,7 @@ class TimelineService {
   }
 
   Stream<RenderList> watchAlbumTimeline(Album album) async* {
-    yield* _timelineRepository.watchAlbumTimeline(
-      album,
-      _getGroupByOption(),
-    );
+    yield* _timelineRepository.watchAlbumTimeline(album, _getGroupByOption());
   }
 
   Stream<RenderList> watchTrashTimeline() async* {
@@ -75,13 +64,12 @@ class TimelineService {
   }
 
   Stream<RenderList> watchAllVideosTimeline() {
-    return _timelineRepository.watchAllVideosTimeline();
+    final user = _userService.getMyUser();
+
+    return _timelineRepository.watchAllVideosTimeline(user.id);
   }
 
-  Future<RenderList> getTimelineFromAssets(
-    List<Asset> assets,
-    GroupAssetsBy? groupBy,
-  ) {
+  Future<RenderList> getTimelineFromAssets(List<Asset> assets, GroupAssetsBy? groupBy) {
     GroupAssetsBy groupOption = GroupAssetsBy.none;
     if (groupBy == null) {
       groupOption = _getGroupByOption();
@@ -89,10 +77,7 @@ class TimelineService {
       groupOption = groupBy;
     }
 
-    return _timelineRepository.getTimelineFromAssets(
-      assets,
-      groupOption,
-    );
+    return _timelineRepository.getTimelineFromAssets(assets, groupOption);
   }
 
   Stream<RenderList> watchAssetSelectionTimeline() async* {
@@ -102,16 +87,12 @@ class TimelineService {
   }
 
   GroupAssetsBy _getGroupByOption() {
-    return GroupAssetsBy
-        .values[_appSettingsService.getSetting(AppSettingsEnum.groupAssetsBy)];
+    return GroupAssetsBy.values[_appSettingsService.getSetting(AppSettingsEnum.groupAssetsBy)];
   }
 
   Stream<RenderList> watchLockedTimelineProvider() async* {
     final user = _userService.getMyUser();
 
-    yield* _timelineRepository.watchLockedTimeline(
-      user.id,
-      _getGroupByOption(),
-    );
+    yield* _timelineRepository.watchLockedTimeline(user.id, _getGroupByOption());
   }
 }

@@ -8,6 +8,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/extensions/build_context_extensions.dart';
 import 'package:immich_mobile/extensions/theme_extensions.dart';
+import 'package:immich_mobile/extensions/translate_extensions.dart';
 import 'package:immich_mobile/models/albums/album_search.model.dart';
 import 'package:immich_mobile/pages/common/large_leading_tile.dart';
 import 'package:immich_mobile/providers/album/album.provider.dart';
@@ -25,8 +26,7 @@ class AlbumsPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final albums =
-        ref.watch(albumProvider).where((album) => album.isRemote).toList();
+    final albums = ref.watch(albumProvider).where((album) => album.isRemote).toList();
     final albumSortOption = ref.watch(albumSortByOptionsProvider);
     final albumSortIsReverse = ref.watch(albumSortOrderProvider);
     final sorted = albumSortOption.sortFn(albums, albumSortIsReverse);
@@ -52,21 +52,18 @@ class AlbumsPage extends HookConsumerWidget {
       filterMode.value = mode;
     }
 
-    useEffect(
-      () {
-        searchController.addListener(() {
+    useEffect(() {
+      searchController.addListener(() {
+        onSearch(searchController.text, filterMode.value);
+      });
+
+      return () {
+        searchController.removeListener(() {
           onSearch(searchController.text, filterMode.value);
         });
-
-        return () {
-          searchController.removeListener(() {
-            onSearch(searchController.text, filterMode.value);
-          });
-          debounceTimer.value?.cancel();
-        };
-      },
-      [],
-    );
+        debounceTimer.value?.cancel();
+      };
+    }, []);
 
     clearSearch() {
       filterMode.value = QuickFilterMode.all;
@@ -79,13 +76,8 @@ class AlbumsPage extends HookConsumerWidget {
         showUploadButton: false,
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.add_rounded,
-              size: 28,
-            ),
-            onPressed: () => context.pushRoute(
-              CreateAlbumRoute(),
-            ),
+            icon: const Icon(Icons.add_rounded, size: 28),
+            onPressed: () => context.pushRoute(CreateAlbumRoute()),
           ),
         ],
       ),
@@ -100,11 +92,8 @@ class AlbumsPage extends HookConsumerWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: context.colorScheme.onSurface.withAlpha(0),
-                  width: 0,
-                ),
-                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: context.colorScheme.onSurface.withAlpha(0), width: 0),
+                borderRadius: const BorderRadius.all(Radius.circular(24)),
                 gradient: LinearGradient(
                   colors: [
                     context.colorScheme.primary.withValues(alpha: 0.075),
@@ -122,14 +111,10 @@ class AlbumsPage extends HookConsumerWidget {
                 hintText: 'search_albums'.tr(),
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded),
-                        onPressed: clearSearch,
-                      )
+                    ? IconButton(icon: const Icon(Icons.clear_rounded), onPressed: clearSearch)
                     : null,
                 controller: searchController,
-                onChanged: (_) =>
-                    onSearch(searchController.text, filterMode.value),
+                onChanged: (_) => onSearch(searchController.text, filterMode.value),
                 focusNode: searchFocusNode,
                 onTapOutside: (_) => searchFocusNode.unfocus(),
               ),
@@ -152,10 +137,7 @@ class AlbumsPage extends HookConsumerWidget {
                   isSelected: filterMode.value == QuickFilterMode.sharedWithMe,
                   onTap: () {
                     changeFilter(QuickFilterMode.sharedWithMe);
-                    onSearch(
-                      searchController.text,
-                      QuickFilterMode.sharedWithMe,
-                    );
+                    onSearch(searchController.text, QuickFilterMode.sharedWithMe);
                   },
                 ),
                 QuickFilterButton(
@@ -163,10 +145,7 @@ class AlbumsPage extends HookConsumerWidget {
                   isSelected: filterMode.value == QuickFilterMode.myAlbums,
                   onTap: () {
                     changeFilter(QuickFilterMode.myAlbums);
-                    onSearch(
-                      searchController.text,
-                      QuickFilterMode.myAlbums,
-                    );
+                    onSearch(searchController.text, QuickFilterMode.myAlbums);
                   },
                 ),
               ],
@@ -176,12 +155,7 @@ class AlbumsPage extends HookConsumerWidget {
               children: [
                 const SortButton(),
                 IconButton(
-                  icon: Icon(
-                    isGrid.value
-                        ? Icons.view_list_outlined
-                        : Icons.grid_view_outlined,
-                    size: 24,
-                  ),
+                  icon: Icon(isGrid.value ? Icons.view_list_outlined : Icons.grid_view_outlined, size: 24),
                   onPressed: toggleViewMode,
                 ),
               ],
@@ -193,8 +167,7 @@ class AlbumsPage extends HookConsumerWidget {
                   ? GridView.builder(
                       shrinkWrap: true,
                       physics: const ClampingScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                         maxCrossAxisExtent: 250,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
@@ -203,9 +176,7 @@ class AlbumsPage extends HookConsumerWidget {
                       itemBuilder: (context, index) {
                         return AlbumThumbnailCard(
                           album: sorted[index],
-                          onTap: () => context.pushRoute(
-                            AlbumViewerRoute(albumId: sorted[index].id),
-                          ),
+                          onTap: () => context.pushRoute(AlbumViewerRoute(albumId: sorted[index].id)),
                           showOwner: true,
                         );
                       },
@@ -223,42 +194,22 @@ class AlbumsPage extends HookConsumerWidget {
                               sorted[index].name,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: context.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             subtitle: sorted[index].ownerId != null
                                 ? Text(
-                                    '${(sorted[index].assetCount == 1 ? 'album_thumbnail_card_item'.tr() : 'album_thumbnail_card_items'.tr(
-                                        namedArgs: {
-                                          'count': sorted[index]
-                                              .assetCount
-                                              .toString(),
-                                        },
-                                      ))} • ${sorted[index].ownerId != userId ? 'album_thumbnail_shared_by'.tr(namedArgs: {'user': sorted[index].ownerName!}) : 'owned'.tr()}',
+                                    '${'items_count'.t(context: context, args: {'count': sorted[index].assetCount})} • ${sorted[index].ownerId != userId ? 'shared_by_user'.t(context: context, args: {'user': sorted[index].ownerName!}) : 'owned'.t(context: context)}',
                                     overflow: TextOverflow.ellipsis,
-                                    style:
-                                        context.textTheme.bodyMedium?.copyWith(
-                                      color: context
-                                          .colorScheme.onSurfaceSecondary,
+                                    style: context.textTheme.bodyMedium?.copyWith(
+                                      color: context.colorScheme.onSurfaceSecondary,
                                     ),
                                   )
                                 : null,
-                            onTap: () => context.pushRoute(
-                              AlbumViewerRoute(albumId: sorted[index].id),
-                            ),
-                            leadingPadding: const EdgeInsets.only(
-                              right: 16,
-                            ),
+                            onTap: () => context.pushRoute(AlbumViewerRoute(albumId: sorted[index].id)),
+                            leadingPadding: const EdgeInsets.only(right: 16),
                             leading: ClipRRect(
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(15),
-                              ),
-                              child: ImmichThumbnail(
-                                asset: sorted[index].thumbnail.value,
-                                width: 80,
-                                height: 80,
-                              ),
+                              borderRadius: const BorderRadius.all(Radius.circular(15)),
+                              child: ImmichThumbnail(asset: sorted[index].thumbnail.value, width: 80, height: 80),
                             ),
                             // minVerticalPadding: 1,
                           ),
@@ -275,12 +226,7 @@ class AlbumsPage extends HookConsumerWidget {
 }
 
 class QuickFilterButton extends StatelessWidget {
-  const QuickFilterButton({
-    super.key,
-    required this.isSelected,
-    required this.onTap,
-    required this.label,
-  });
+  const QuickFilterButton({super.key, required this.isSelected, required this.onTap, required this.label});
 
   final bool isSelected;
   final VoidCallback onTap;
@@ -291,25 +237,18 @@ class QuickFilterButton extends StatelessWidget {
     return TextButton(
       onPressed: onTap,
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.all(
-          isSelected ? context.colorScheme.primary : Colors.transparent,
-        ),
+        backgroundColor: WidgetStateProperty.all(isSelected ? context.colorScheme.primary : Colors.transparent),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: context.colorScheme.onSurface.withAlpha(25),
-              width: 1,
-            ),
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
+            side: BorderSide(color: context.colorScheme.onSurface.withAlpha(25), width: 1),
           ),
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: isSelected
-              ? context.colorScheme.onPrimary
-              : context.colorScheme.onSurface,
+          color: isSelected ? context.colorScheme.onPrimary : context.colorScheme.onSurface,
           fontSize: 14,
         ),
       ),
@@ -329,13 +268,9 @@ class SortButton extends ConsumerWidget {
       style: MenuStyle(
         elevation: const WidgetStatePropertyAll(1),
         shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
+          const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(24))),
         ),
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.all(4),
-        ),
+        padding: const WidgetStatePropertyAll(EdgeInsets.all(4)),
       ),
       consumeOutsideTap: true,
       menuChildren: AlbumSortMode.values
@@ -343,45 +278,35 @@ class SortButton extends ConsumerWidget {
             (mode) => MenuItemButton(
               leadingIcon: albumSortOption == mode
                   ? albumSortIsReverse
-                      ? Icon(
-                          Icons.keyboard_arrow_down,
-                          color: albumSortOption == mode
-                              ? context.colorScheme.onPrimary
-                              : context.colorScheme.onSurface,
-                        )
-                      : Icon(
-                          Icons.keyboard_arrow_up_rounded,
-                          color: albumSortOption == mode
-                              ? context.colorScheme.onPrimary
-                              : context.colorScheme.onSurface,
-                        )
+                        ? Icon(
+                            Icons.keyboard_arrow_down,
+                            color: albumSortOption == mode
+                                ? context.colorScheme.onPrimary
+                                : context.colorScheme.onSurface,
+                          )
+                        : Icon(
+                            Icons.keyboard_arrow_up_rounded,
+                            color: albumSortOption == mode
+                                ? context.colorScheme.onPrimary
+                                : context.colorScheme.onSurface,
+                          )
                   : const Icon(Icons.abc, color: Colors.transparent),
               onPressed: () {
                 final selected = albumSortOption == mode;
                 // Switch direction
                 if (selected) {
-                  ref
-                      .read(albumSortOrderProvider.notifier)
-                      .changeSortDirection(!albumSortIsReverse);
+                  ref.read(albumSortOrderProvider.notifier).changeSortDirection(!albumSortIsReverse);
                 } else {
-                  ref
-                      .read(albumSortByOptionsProvider.notifier)
-                      .changeSortMode(mode);
+                  ref.read(albumSortByOptionsProvider.notifier).changeSortMode(mode);
                 }
               },
               style: ButtonStyle(
-                padding: WidgetStateProperty.all(
-                  const EdgeInsets.fromLTRB(16, 16, 32, 16),
-                ),
+                padding: WidgetStateProperty.all(const EdgeInsets.fromLTRB(16, 16, 32, 16)),
                 backgroundColor: WidgetStateProperty.all(
-                  albumSortOption == mode
-                      ? context.colorScheme.primary
-                      : Colors.transparent,
+                  albumSortOption == mode ? context.colorScheme.primary : Colors.transparent,
                 ),
                 shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
+                  const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(24))),
                 ),
               ),
               child: Text(

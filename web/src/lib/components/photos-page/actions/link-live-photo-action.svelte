@@ -1,13 +1,12 @@
 <script lang="ts">
-  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import { getAssetControlContext } from '$lib/components/photos-page/asset-select-control-bar.svelte';
-  import type { TimelineAsset } from '$lib/stores/assets-store.svelte';
-
   import { authManager } from '$lib/managers/auth-manager.svelte';
+  import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
   import type { OnLink, OnUnlink } from '$lib/utils/actions';
   import { handleError } from '$lib/utils/handle-error';
   import { toTimelineAsset } from '$lib/utils/timeline-util';
   import { getAssetInfo, updateAsset } from '@immich/sdk';
+  import { IconButton } from '@immich/ui';
   import { mdiLinkOff, mdiMotionPlayOutline, mdiTimerSand } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import MenuOption from '../../shared-components/context-menu/menu-option.svelte';
@@ -60,7 +59,7 @@
     try {
       loading = true;
       const stillResponse = await updateAsset({ id: still.id, updateAssetDto: { livePhotoVideoId: null } });
-      const motionResponse = await getAssetInfo({ id: motionId, key: authManager.key });
+      const motionResponse = await getAssetInfo({ ...authManager.params, id: motionId });
       onUnlink({ still: toTimelineAsset(stillResponse), motion: toTimelineAsset(motionResponse) });
       clearSelect();
     } catch (error) {
@@ -77,8 +76,15 @@
 
 {#if !menuItem}
   {#if loading}
-    <CircleIconButton title={$t('loading')} icon={mdiTimerSand} onclick={() => {}} />
+    <IconButton
+      shape="round"
+      color="secondary"
+      variant="ghost"
+      aria-label={$t('loading')}
+      icon={mdiTimerSand}
+      onclick={() => {}}
+    />
   {:else}
-    <CircleIconButton title={text} {icon} onclick={onClick} />
+    <IconButton shape="round" color="secondary" variant="ghost" aria-label={text} {icon} onclick={onClick} />
   {/if}
 {/if}

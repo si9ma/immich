@@ -40,8 +40,8 @@ export class OAuthRepository {
       redirect_uri: redirectUrl,
       scope: config.scope,
       state,
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
+      code_challenge: client.serverMetadata().supportsPKCE() ? codeChallenge : '',
+      code_challenge_method: client.serverMetadata().supportsPKCE() ? 'S256' : '',
     }).toString();
     return { url, state, codeVerifier };
   }
@@ -138,11 +138,11 @@ export class OAuthRepository {
     }
 
     switch (tokenEndpointAuthMethod) {
-      case OAuthTokenEndpointAuthMethod.CLIENT_SECRET_POST: {
+      case OAuthTokenEndpointAuthMethod.ClientSecretPost: {
         return ClientSecretPost(clientSecret);
       }
 
-      case OAuthTokenEndpointAuthMethod.CLIENT_SECRET_BASIC: {
+      case OAuthTokenEndpointAuthMethod.ClientSecretBasic: {
         return ClientSecretBasic(clientSecret);
       }
 

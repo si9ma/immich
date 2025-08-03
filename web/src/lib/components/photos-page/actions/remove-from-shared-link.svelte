@@ -1,9 +1,8 @@
 <script lang="ts">
-  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
-  import { modalManager } from '$lib/managers/modal-manager.svelte';
   import { handleError } from '$lib/utils/handle-error';
   import { removeSharedLinkAssets, type SharedLinkResponseDto } from '@immich/sdk';
+  import { IconButton, modalManager } from '@immich/ui';
   import { mdiDeleteOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import { NotificationType, notificationController } from '../../shared-components/notification/notification';
@@ -30,11 +29,11 @@
 
     try {
       const results = await removeSharedLinkAssets({
+        ...authManager.params,
         id: sharedLink.id,
         assetIdsDto: {
           assetIds: [...getAssets()].map((asset) => asset.id),
         },
-        key: authManager.key,
       });
 
       for (const result of results) {
@@ -59,4 +58,11 @@
   };
 </script>
 
-<CircleIconButton title={$t('remove_from_shared_link')} onclick={handleRemove} icon={mdiDeleteOutline} />
+<IconButton
+  shape="round"
+  color="secondary"
+  variant="ghost"
+  aria-label={$t('remove_from_shared_link')}
+  onclick={handleRemove}
+  icon={mdiDeleteOutline}
+/>

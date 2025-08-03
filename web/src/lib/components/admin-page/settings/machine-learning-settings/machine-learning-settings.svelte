@@ -1,5 +1,4 @@
 <script lang="ts">
-  import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import FormatMessage from '$lib/components/i18n/format-message.svelte';
   import SettingAccordion from '$lib/components/shared-components/settings/setting-accordion.svelte';
   import SettingButtonsRow from '$lib/components/shared-components/settings/setting-buttons-row.svelte';
@@ -9,7 +8,7 @@
   import { SettingInputFieldType } from '$lib/constants';
   import { featureFlags } from '$lib/stores/server-config.store';
   import type { SystemConfigDto } from '@immich/sdk';
-  import { Button } from '@immich/ui';
+  import { Button, IconButton } from '@immich/ui';
   import { mdiMinusCircle } from '@mdi/js';
   import { isEqual } from 'lodash-es';
   import { t } from 'svelte-i18n';
@@ -49,12 +48,11 @@
           {#each config.machineLearning.urls as _, i (i)}
             {#snippet removeButton()}
               {#if config.machineLearning.urls.length > 1}
-                <CircleIconButton
-                  size="24"
-                  class="ms-2"
-                  padding="2"
-                  color="red"
-                  title=""
+                <IconButton
+                  size="large"
+                  shape="round"
+                  color="danger"
+                  aria-label=""
                   onclick={() => config.machineLearning.urls.splice(i, 1)}
                   icon={mdiMinusCircle}
                 />
@@ -185,7 +183,7 @@
             label={$t('admin.machine_learning_min_detection_score')}
             description={$t('admin.machine_learning_min_detection_score_description')}
             bind:value={config.machineLearning.facialRecognition.minScore}
-            step="0.1"
+            step="0.01"
             min={0.1}
             max={1}
             disabled={disabled || !config.machineLearning.enabled || !config.machineLearning.facialRecognition.enabled}
@@ -198,7 +196,7 @@
             label={$t('admin.machine_learning_max_recognition_distance')}
             description={$t('admin.machine_learning_max_recognition_distance_description')}
             bind:value={config.machineLearning.facialRecognition.maxDistance}
-            step="0.1"
+            step="0.01"
             min={0.1}
             max={2}
             disabled={disabled || !config.machineLearning.enabled || !config.machineLearning.facialRecognition.enabled}

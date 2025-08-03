@@ -4,22 +4,22 @@
   import type { Action } from '$lib/components/asset-viewer/actions/action';
   import Thumbnail from '$lib/components/assets/thumbnail/thumbnail.svelte';
   import { AppRoute, AssetAction } from '$lib/constants';
-  import { modalManager } from '$lib/managers/modal-manager.svelte';
+  import type { TimelineAsset, Viewport } from '$lib/managers/timeline-manager/types';
   import ShortcutsModal from '$lib/modals/ShortcutsModal.svelte';
   import type { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
-  import type { TimelineAsset, Viewport } from '$lib/stores/assets-store.svelte';
   import { showDeleteModal } from '$lib/stores/preferences.store';
   import { featureFlags } from '$lib/stores/server-config.store';
   import { handlePromiseError } from '$lib/utils';
   import { deleteAssets } from '$lib/utils/actions';
   import { archiveAssets, cancelMultiselect } from '$lib/utils/asset-utils';
-  import { focusNext } from '$lib/utils/focus-util';
+  import { moveFocus } from '$lib/utils/focus-util';
   import { handleError } from '$lib/utils/handle-error';
   import { getJustifiedLayoutFromAssets, type CommonJustifiedLayout } from '$lib/utils/layout-utils';
   import { navigate } from '$lib/utils/navigation';
   import { isTimelineAsset, toTimelineAsset } from '$lib/utils/timeline-util';
   import { AssetVisibility, type AssetResponseDto } from '@immich/sdk';
+  import { modalManager } from '@immich/ui';
   import { debounce } from 'lodash-es';
   import { t } from 'svelte-i18n';
   import AssetViewer from '../../asset-viewer/asset-viewer.svelte';
@@ -27,6 +27,7 @@
   import Portal from '../portal/portal.svelte';
 
   interface Props {
+    initialAssetId?: string;
     assets: (TimelineAsset | AssetResponseDto)[];
     assetInteraction: AssetInteraction;
     disableAssetSelect?: boolean;
@@ -38,11 +39,13 @@
     onPrevious?: (() => Promise<{ id: string } | undefined>) | undefined;
     onNext?: (() => Promise<{ id: string } | undefined>) | undefined;
     onRandom?: (() => Promise<{ id: string } | undefined>) | undefined;
+    onReload?: (() => void) | undefined;
     pageHeaderOffset?: number;
     slidingWindowOffset?: number;
   }
 
   let {
+    initialAssetId = undefined,
     assets = $bindable(),
     assetInteraction,
     disableAssetSelect = false,
@@ -54,6 +57,7 @@
     onPrevious = undefined,
     onNext = undefined,
     onRandom = undefined,
+    onReload = undefined,
     slidingWindowOffset = 0,
     pageHeaderOffset = 0,
   }: Props = $props();
@@ -115,7 +119,14 @@
     };
   });
 
-  let currentViewAssetIndex = 0;
+  let currentIndex = 0;
+  if (initialAssetId && assets.length > 0) {
+    const index = assets.findIndex(({ id }) => id === initialAssetId);
+    if (index !== -1) {
+      currentIndex = index;
+    }
+  }
+
   let shiftKeyIsDown = $state(false);
   let lastAssetMouseEvent: TimelineAsset | null = $state(null);
   let slidingWindow = $state({ top: 0, bottom: 0 });
@@ -148,8 +159,8 @@
     }
   });
   const viewAssetHandler = async (asset: TimelineAsset) => {
-    currentViewAssetIndex = assets.findIndex((a) => a.id == asset.id);
-    await setAssetId(assets[currentViewAssetIndex].id);
+    currentIndex = assets.findIndex((a) => a.id == asset.id);
+    await setAssetId(assets[currentIndex].id);
     await navigate({ targetRoute: 'current', assetId: $viewingAsset.id });
   };
 
@@ -255,7 +266,8 @@
     await deleteAssets(
       !(isTrashEnabled && !force),
       (assetIds) => (assets = assets.filter((asset) => !assetIds.includes(asset.id))),
-      idsSelectedAssets,
+      assetInteraction.selectedAssets,
+      onReload,
     );
     assetInteraction.clearMultiselect();
   };
@@ -271,8 +283,9 @@
     }
   };
 
-  const focusNextAsset = () => focusNext((element) => element.dataset.thumbnailFocusContainer !== undefined, true);
-  const focusPreviousAsset = () => focusNext((element) => element.dataset.thumbnailFocusContainer !== undefined, false);
+  const focusNextAsset = () => moveFocus((element) => element.dataset.thumbnailFocusContainer !== undefined, 'next');
+  const focusPreviousAsset = () =>
+    moveFocus((element) => element.dataset.thumbnailFocusContainer !== undefined, 'previous');
 
   let isShortcutModalOpen = false;
 
@@ -320,12 +333,12 @@
       if (onNext) {
         asset = await onNext();
       } else {
-        if (currentViewAssetIndex >= assets.length - 1) {
+        if (currentIndex >= assets.length - 1) {
           return false;
         }
 
-        currentViewAssetIndex = currentViewAssetIndex + 1;
-        asset = currentViewAssetIndex < assets.length ? assets[currentViewAssetIndex] : undefined;
+        currentIndex = currentIndex + 1;
+        asset = currentIndex < assets.length ? assets[currentIndex] : undefined;
       }
 
       if (!asset) {
@@ -370,12 +383,12 @@
       if (onPrevious) {
         asset = await onPrevious();
       } else {
-        if (currentViewAssetIndex <= 0) {
+        if (currentIndex <= 0) {
           return false;
         }
 
-        currentViewAssetIndex = currentViewAssetIndex - 1;
-        asset = currentViewAssetIndex >= 0 ? assets[currentViewAssetIndex] : undefined;
+        currentIndex = currentIndex - 1;
+        asset = currentIndex >= 0 ? assets[currentIndex] : undefined;
       }
 
       if (!asset) {
@@ -408,10 +421,10 @@
         );
         if (assets.length === 0) {
           await goto(AppRoute.PHOTOS);
-        } else if (currentViewAssetIndex === assets.length) {
+        } else if (currentIndex === assets.length) {
           await handlePrevious();
         } else {
-          await setAssetId(assets[currentViewAssetIndex].id);
+          await setAssetId(assets[currentIndex].id);
         }
         break;
       }
@@ -425,7 +438,6 @@
   };
 
   let isTrashEnabled = $derived($featureFlags.loaded && $featureFlags.trash);
-  let idsSelectedAssets = $derived(assetInteraction.selectedAssets.map((selectedAsset) => selectedAsset.id));
 
   $effect(() => {
     if (!lastAssetMouseEvent) {
@@ -497,7 +509,7 @@
           />
           {#if showAssetName && !isTimelineAsset(currentAsset)}
             <div
-              class="absolute text-center p-1 text-xs font-mono font-semibold w-full bottom-0 bg-linear-to-t bg-slate-50/75 overflow-clip text-ellipsis whitespace-pre-wrap"
+              class="absolute text-center p-1 text-xs font-mono font-semibold w-full bottom-0 bg-linear-to-t bg-slate-50/75 dark:bg-slate-800/75 overflow-clip text-ellipsis whitespace-pre-wrap"
             >
               {currentAsset.originalFileName}
             </div>

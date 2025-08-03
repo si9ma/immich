@@ -36,16 +36,12 @@ class AlbumSharedUserIcons extends HookConsumerWidget {
       child: SizedBox(
         height: 50,
         child: ListView.builder(
-          padding: const EdgeInsets.only(left: 16),
+          padding: const EdgeInsets.only(left: 16, bottom: 8),
           scrollDirection: Axis.horizontal,
           itemBuilder: ((context, index) {
             return Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: UserCircleAvatar(
-                user: sharedUsers.value[index],
-                radius: 18,
-                size: 36,
-              ),
+              child: UserCircleAvatar(user: sharedUsers.value[index], radius: 18, size: 36),
             );
           }),
           itemCount: sharedUsers.value.length,

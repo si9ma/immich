@@ -13,6 +13,8 @@ import 'package:immich_mobile/providers/infrastructure/user.provider.dart';
 import 'package:immich_mobile/services/api.service.dart';
 import 'package:immich_mobile/services/auth.service.dart';
 import 'package:immich_mobile/services/secure_storage.service.dart';
+import 'package:immich_mobile/services/upload.service.dart';
+import 'package:immich_mobile/services/widget.service.dart';
 import 'package:immich_mobile/utils/hash.dart';
 import 'package:logging/logging.dart';
 import 'package:openapi/api.dart';
@@ -22,7 +24,9 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
     ref.watch(authServiceProvider),
     ref.watch(apiServiceProvider),
     ref.watch(userServiceProvider),
+    ref.watch(uploadServiceProvider),
     ref.watch(secureStorageServiceProvider),
+    ref.watch(widgetServiceProvider),
   );
 });
 
@@ -30,7 +34,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final ApiService _apiService;
   final UserService _userService;
+  final UploadService _uploadService;
   final SecureStorageService _secureStorageService;
+  final WidgetService _widgetService;
   final _log = Logger("AuthenticationNotifier");
 
   static const Duration _timeoutDuration = Duration(seconds: 7);
@@ -39,18 +45,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     this._authService,
     this._apiService,
     this._userService,
+    this._uploadService,
     this._secureStorageService,
+    this._widgetService,
   ) : super(
-          AuthState(
-            deviceId: "",
-            userId: "",
-            userEmail: "",
-            name: '',
-            profileImagePath: '',
-            isAdmin: false,
-            isAuthenticated: false,
-          ),
-        );
+        const AuthState(
+          deviceId: "",
+          userId: "",
+          userEmail: "",
+          name: '',
+          profileImagePath: '',
+          isAdmin: false,
+          isAuthenticated: false,
+        ),
+      );
 
   Future<String> validateServerUrl(String url) {
     return _authService.validateServerUrl(url);
@@ -76,14 +84,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     try {
       await _secureStorageService.delete(kSecuredPinCode);
+      await _widgetService.clearCredentials();
+
       await _authService.logout();
+      await _uploadService.cancelBackup();
     } finally {
       await _cleanUp();
     }
   }
 
   Future<void> _cleanUp() async {
-    state = AuthState(
+    state = const AuthState(
       deviceId: "",
       userId: "",
       userEmail: "",
@@ -107,20 +118,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<bool> saveAuthInfo({
-    required String accessToken,
-  }) async {
+  Future<bool> saveAuthInfo({required String accessToken}) async {
     await _apiService.setAccessToken(accessToken);
 
+    await _widgetService.writeCredentials(Store.get(StoreKey.serverEndpoint), accessToken);
+
     // Get the deviceid from the store if it exists, otherwise generate a new one
-    String deviceId =
-        Store.tryGet(StoreKey.deviceId) ?? await FlutterUdid.consistentUdid;
+    String deviceId = Store.tryGet(StoreKey.deviceId) ?? await FlutterUdid.consistentUdid;
 
     UserDto? user = _userService.tryGetMyUser();
 
     try {
-      final serverUser =
-          await _userService.refreshMyUser().timeout(_timeoutDuration);
+      final serverUser = await _userService.refreshMyUser().timeout(_timeoutDuration);
       if (serverUser == null) {
         _log.severe("Unable to get user information from the server.");
       } else {
@@ -136,21 +145,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         _log.severe("Unauthorized access, token likely expired. Logging out.");
         return false;
       }
-      _log.severe(
-        "Error getting user information from the server [API EXCEPTION]",
-        stackTrace,
-      );
+      _log.severe("Error getting user information from the server [API EXCEPTION]", stackTrace);
     } catch (error, stackTrace) {
-      _log.severe(
-        "Error getting user information from the server [CATCH ALL]",
-        error,
-        stackTrace,
-      );
+      _log.severe("Error getting user information from the server [CATCH ALL]", error, stackTrace);
 
       if (kDebugMode) {
-        debugPrint(
-          "Error getting user information from the server [CATCH ALL] $error $stackTrace",
-        );
+        debugPrint("Error getting user information from the server [CATCH ALL] $error $stackTrace");
       }
     }
 
@@ -167,7 +167,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       isAuthenticated: true,
       name: user.name,
       isAdmin: user.isAdmin,
-      profileImagePath: user.profileImagePath,
     );
 
     return true;

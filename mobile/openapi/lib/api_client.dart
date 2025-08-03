@@ -212,6 +212,10 @@ class ApiClient {
           return AlbumUserResponseDto.fromJson(value);
         case 'AlbumUserRole':
           return AlbumUserRoleTypeTransformer().decode(value);
+        case 'AlbumsResponse':
+          return AlbumsResponse.fromJson(value);
+        case 'AlbumsUpdate':
+          return AlbumsUpdate.fromJson(value);
         case 'AllJobStatusResponseDto':
           return AllJobStatusResponseDto.fromJson(value);
         case 'AssetBulkDeleteDto':
@@ -284,6 +288,10 @@ class ApiClient {
           return CLIPConfig.fromJson(value);
         case 'CQMode':
           return CQModeTypeTransformer().decode(value);
+        case 'CastResponse':
+          return CastResponse.fromJson(value);
+        case 'CastUpdate':
+          return CastUpdate.fromJson(value);
         case 'ChangePasswordDto':
           return ChangePasswordDto.fromJson(value);
         case 'CheckExistingAssetsDto':
@@ -374,6 +382,8 @@ class ApiClient {
           return MemoryCreateDto.fromJson(value);
         case 'MemoryResponseDto':
           return MemoryResponseDto.fromJson(value);
+        case 'MemoryStatisticsResponseDto':
+          return MemoryStatisticsResponseDto.fromJson(value);
         case 'MemoryType':
           return MemoryTypeTypeTransformer().decode(value);
         case 'MemoryUpdateDto':
@@ -406,6 +416,10 @@ class ApiClient {
           return OAuthTokenEndpointAuthMethodTypeTransformer().decode(value);
         case 'OnThisDayDto':
           return OnThisDayDto.fromJson(value);
+        case 'OnboardingDto':
+          return OnboardingDto.fromJson(value);
+        case 'OnboardingResponseDto':
+          return OnboardingResponseDto.fromJson(value);
         case 'PartnerDirection':
           return PartnerDirectionTypeTransformer().decode(value);
         case 'PartnerResponseDto':
@@ -472,10 +486,14 @@ class ApiClient {
           return SearchFacetResponseDto.fromJson(value);
         case 'SearchResponseDto':
           return SearchResponseDto.fromJson(value);
+        case 'SearchStatisticsResponseDto':
+          return SearchStatisticsResponseDto.fromJson(value);
         case 'SearchSuggestionType':
           return SearchSuggestionTypeTypeTransformer().decode(value);
         case 'ServerAboutResponseDto':
           return ServerAboutResponseDto.fromJson(value);
+        case 'ServerApkLinksDto':
+          return ServerApkLinksDto.fromJson(value);
         case 'ServerConfigDto':
           return ServerConfigDto.fromJson(value);
         case 'ServerFeaturesDto':
@@ -502,6 +520,8 @@ class ApiClient {
           return SessionResponseDto.fromJson(value);
         case 'SessionUnlockDto':
           return SessionUnlockDto.fromJson(value);
+        case 'SessionUpdateDto':
+          return SessionUpdateDto.fromJson(value);
         case 'SharedLinkCreateDto':
           return SharedLinkCreateDto.fromJson(value);
         case 'SharedLinkEditDto':
@@ -526,6 +546,8 @@ class ApiClient {
           return StackResponseDto.fromJson(value);
         case 'StackUpdateDto':
           return StackUpdateDto.fromJson(value);
+        case 'StatisticsSearchDto':
+          return StatisticsSearchDto.fromJson(value);
         case 'SyncAckDeleteDto':
           return SyncAckDeleteDto.fromJson(value);
         case 'SyncAckDto':
@@ -534,6 +556,10 @@ class ApiClient {
           return SyncAckSetDto.fromJson(value);
         case 'SyncAlbumDeleteV1':
           return SyncAlbumDeleteV1.fromJson(value);
+        case 'SyncAlbumToAssetDeleteV1':
+          return SyncAlbumToAssetDeleteV1.fromJson(value);
+        case 'SyncAlbumToAssetV1':
+          return SyncAlbumToAssetV1.fromJson(value);
         case 'SyncAlbumUserDeleteV1':
           return SyncAlbumUserDeleteV1.fromJson(value);
         case 'SyncAlbumUserV1':
@@ -544,20 +570,46 @@ class ApiClient {
           return SyncAssetDeleteV1.fromJson(value);
         case 'SyncAssetExifV1':
           return SyncAssetExifV1.fromJson(value);
+        case 'SyncAssetFaceDeleteV1':
+          return SyncAssetFaceDeleteV1.fromJson(value);
+        case 'SyncAssetFaceV1':
+          return SyncAssetFaceV1.fromJson(value);
         case 'SyncAssetV1':
           return SyncAssetV1.fromJson(value);
+        case 'SyncAuthUserV1':
+          return SyncAuthUserV1.fromJson(value);
         case 'SyncEntityType':
           return SyncEntityTypeTypeTransformer().decode(value);
+        case 'SyncMemoryAssetDeleteV1':
+          return SyncMemoryAssetDeleteV1.fromJson(value);
+        case 'SyncMemoryAssetV1':
+          return SyncMemoryAssetV1.fromJson(value);
+        case 'SyncMemoryDeleteV1':
+          return SyncMemoryDeleteV1.fromJson(value);
+        case 'SyncMemoryV1':
+          return SyncMemoryV1.fromJson(value);
         case 'SyncPartnerDeleteV1':
           return SyncPartnerDeleteV1.fromJson(value);
         case 'SyncPartnerV1':
           return SyncPartnerV1.fromJson(value);
+        case 'SyncPersonDeleteV1':
+          return SyncPersonDeleteV1.fromJson(value);
+        case 'SyncPersonV1':
+          return SyncPersonV1.fromJson(value);
         case 'SyncRequestType':
           return SyncRequestTypeTypeTransformer().decode(value);
+        case 'SyncStackDeleteV1':
+          return SyncStackDeleteV1.fromJson(value);
+        case 'SyncStackV1':
+          return SyncStackV1.fromJson(value);
         case 'SyncStreamDto':
           return SyncStreamDto.fromJson(value);
         case 'SyncUserDeleteV1':
           return SyncUserDeleteV1.fromJson(value);
+        case 'SyncUserMetadataDeleteV1':
+          return SyncUserMetadataDeleteV1.fromJson(value);
+        case 'SyncUserMetadataV1':
+          return SyncUserMetadataV1.fromJson(value);
         case 'SyncUserV1':
           return SyncUserV1.fromJson(value);
         case 'SystemConfigBackupsDto':
@@ -592,6 +644,8 @@ class ApiClient {
           return SystemConfigMetadataDto.fromJson(value);
         case 'SystemConfigNewVersionCheckDto':
           return SystemConfigNewVersionCheckDto.fromJson(value);
+        case 'SystemConfigNightlyTasksDto':
+          return SystemConfigNightlyTasksDto.fromJson(value);
         case 'SystemConfigNotificationsDto':
           return SystemConfigNotificationsDto.fromJson(value);
         case 'SystemConfigOAuthDto':
@@ -678,6 +732,8 @@ class ApiClient {
           return UserAvatarColorTypeTransformer().decode(value);
         case 'UserLicense':
           return UserLicense.fromJson(value);
+        case 'UserMetadataKey':
+          return UserMetadataKeyTypeTransformer().decode(value);
         case 'UserPreferencesResponseDto':
           return UserPreferencesResponseDto.fromJson(value);
         case 'UserPreferencesUpdateDto':

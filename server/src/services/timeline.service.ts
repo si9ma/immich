@@ -4,6 +4,7 @@ import { TimeBucketAssetDto, TimeBucketDto, TimeBucketsResponseDto } from 'src/d
 import { AssetVisibility, Permission } from 'src/enum';
 import { TimeBucketOptions } from 'src/repositories/asset.repository';
 import { BaseService } from 'src/services/base.service';
+import { requireElevatedPermission } from 'src/utils/access';
 import { getMyPartnerIds } from 'src/utils/asset.util';
 
 @Injectable()
@@ -44,25 +45,29 @@ export class TimelineService extends BaseService {
   }
 
   private async timeBucketChecks(auth: AuthDto, dto: TimeBucketDto) {
+    if (dto.visibility === AssetVisibility.Locked) {
+      requireElevatedPermission(auth);
+    }
+
     if (dto.albumId) {
-      await this.requireAccess({ auth, permission: Permission.ALBUM_READ, ids: [dto.albumId] });
+      await this.requireAccess({ auth, permission: Permission.AlbumRead, ids: [dto.albumId] });
     } else {
       dto.userId = dto.userId || auth.user.id;
     }
 
     if (dto.userId) {
-      await this.requireAccess({ auth, permission: Permission.TIMELINE_READ, ids: [dto.userId] });
-      if (dto.visibility === AssetVisibility.ARCHIVE) {
-        await this.requireAccess({ auth, permission: Permission.ARCHIVE_READ, ids: [dto.userId] });
+      await this.requireAccess({ auth, permission: Permission.TimelineRead, ids: [dto.userId] });
+      if (dto.visibility === AssetVisibility.Archive) {
+        await this.requireAccess({ auth, permission: Permission.ArchiveRead, ids: [dto.userId] });
       }
     }
 
     if (dto.tagId) {
-      await this.requireAccess({ auth, permission: Permission.TAG_READ, ids: [dto.tagId] });
+      await this.requireAccess({ auth, permission: Permission.TagRead, ids: [dto.tagId] });
     }
 
     if (dto.withPartners) {
-      const requestedArchived = dto.visibility === AssetVisibility.ARCHIVE || dto.visibility === undefined;
+      const requestedArchived = dto.visibility === AssetVisibility.Archive || dto.visibility === undefined;
       const requestedFavorite = dto.isFavorite === true || dto.isFavorite === false;
       const requestedTrash = dto.isTrashed === true;
 

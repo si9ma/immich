@@ -1,4 +1,3 @@
-// ignore_for_file: library_private_types_in_public_api
 // Based on https://stackoverflow.com/a/52625182
 
 import 'dart:async';
@@ -66,8 +65,7 @@ class _AssetDragRegionState extends State<AssetDragRegion> {
   Widget build(BuildContext context) {
     return RawGestureDetector(
       gestures: {
-        _CustomLongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<
-            _CustomLongPressGestureRecognizer>(
+        _CustomLongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<_CustomLongPressGestureRecognizer>(
           () => _CustomLongPressGestureRecognizer(),
           _registerCallbacks,
         ),
@@ -90,9 +88,7 @@ class _AssetDragRegionState extends State<AssetDragRegion> {
     final local = box.globalToLocal(position);
     if (!box.hitTest(hitTestResult, position: local)) return null;
 
-    return (hitTestResult.path
-            .firstWhereOrNull((hit) => hit.target is _AssetIndexProxy)
-            ?.target as _AssetIndexProxy?)
+    return (hitTestResult.path.firstWhereOrNull((hit) => hit.target is _AssetIndexProxy)?.target as _AssetIndexProxy?)
         ?.index;
   }
 
@@ -100,8 +96,7 @@ class _AssetDragRegionState extends State<AssetDragRegion> {
     /// Calculate widget height and scroll offset when long press starting instead of in [initState]
     /// or [didChangeDependencies] as the grid might still be rendering into view to get the actual size
     final height = context.size?.height;
-    if (height != null &&
-        (topScrollOffset == null || bottomScrollOffset == null)) {
+    if (height != null && (topScrollOffset == null || bottomScrollOffset == null)) {
       topScrollOffset = height * scrollOffset;
       bottomScrollOffset = height - topScrollOffset!;
     }
@@ -164,19 +159,14 @@ class _CustomLongPressGestureRecognizer extends LongPressGestureRecognizer {
   }
 }
 
-// ignore: prefer-single-widget-per-file
 class AssetIndexWrapper extends SingleChildRenderObjectWidget {
   final int rowIndex;
   final int sectionIndex;
 
-  const AssetIndexWrapper({
-    required Widget super.child,
-    required this.rowIndex,
-    required this.sectionIndex,
-    super.key,
-  });
+  const AssetIndexWrapper({required Widget super.child, required this.rowIndex, required this.sectionIndex, super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AssetIndexProxy createRenderObject(BuildContext context) {
     return _AssetIndexProxy(
       index: AssetIndex(rowIndex: rowIndex, sectionIndex: sectionIndex),
@@ -186,29 +176,24 @@ class AssetIndexWrapper extends SingleChildRenderObjectWidget {
   @override
   void updateRenderObject(
     BuildContext context,
+    // ignore: library_private_types_in_public_api
     _AssetIndexProxy renderObject,
   ) {
-    renderObject.index =
-        AssetIndex(rowIndex: rowIndex, sectionIndex: sectionIndex);
+    renderObject.index = AssetIndex(rowIndex: rowIndex, sectionIndex: sectionIndex);
   }
 }
 
 class _AssetIndexProxy extends RenderProxyBox {
   AssetIndex index;
 
-  _AssetIndexProxy({
-    required this.index,
-  });
+  _AssetIndexProxy({required this.index});
 }
 
 class AssetIndex {
   final int rowIndex;
   final int sectionIndex;
 
-  const AssetIndex({
-    required this.rowIndex,
-    required this.sectionIndex,
-  });
+  const AssetIndex({required this.rowIndex, required this.sectionIndex});
 
   @override
   bool operator ==(covariant AssetIndex other) {

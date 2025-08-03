@@ -13,16 +13,18 @@ export const isExternalUrl = (url: string): boolean => {
 };
 
 export const isPhotosRoute = (route?: string | null) => !!route?.startsWith('/(user)/photos/[[assetId=id]]');
-export const isSharedLinkRoute = (route?: string | null) => !!route?.startsWith('/(user)/share/[key]');
+export const isSharedLinkRoute = (route?: string | null) =>
+  !!route?.startsWith('/(user)/share/[key]') || !!route?.startsWith('/(user)/s/[slug]');
 export const isSearchRoute = (route?: string | null) => !!route?.startsWith('/(user)/search');
 export const isAlbumsRoute = (route?: string | null) => !!route?.startsWith('/(user)/albums/[albumId=id]');
 export const isPeopleRoute = (route?: string | null) => !!route?.startsWith('/(user)/people/[personId]');
+export const isLockedFolderRoute = (route?: string | null) => !!route?.startsWith('/(user)/locked');
 
 export const isAssetViewerRoute = (target?: NavigationTarget | null) =>
   !!(target?.route.id?.endsWith('/[[assetId=id]]') && 'assetId' in (target?.params || {}));
 
 export function getAssetInfoFromParam({ assetId, key }: { assetId?: string; key?: string }) {
-  return assetId && getAssetInfo({ id: assetId, key });
+  return assetId ? getAssetInfo({ id: assetId, key }) : undefined;
 }
 
 function currentUrlWithoutAsset() {
@@ -39,7 +41,8 @@ export function currentUrlReplaceAssetId(assetId: string) {
   const params = new URLSearchParams($page.url.search);
   // always remove the assetGridScrollTargetParams
   params.delete('at');
-  const searchparams = params.size > 0 ? '?' + params.toString() : '';
+  const paramsString = params.toString();
+  const searchparams = paramsString == '' ? '' : '?' + params.toString();
   // this contains special casing for the /photos/:assetId photos route, which hangs directly
   // off / instead of a subpath, unlike every other asset-containing route.
   return isPhotosRoute($page.route.id)

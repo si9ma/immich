@@ -5,6 +5,7 @@ import { OnEvent } from 'src/decorators';
 import { LicenseKeyDto, LicenseResponseDto } from 'src/dtos/license.dto';
 import {
   ServerAboutResponseDto,
+  ServerApkLinksDto,
   ServerConfigDto,
   ServerFeaturesDto,
   ServerMediaTypesResponseDto,
@@ -22,11 +23,11 @@ import { isDuplicateDetectionEnabled, isFacialRecognitionEnabled, isSmartSearchE
 
 @Injectable()
 export class ServerService extends BaseService {
-  @OnEvent({ name: 'app.bootstrap' })
+  @OnEvent({ name: 'AppBootstrap' })
   async onBootstrap(): Promise<void> {
     const featureFlags = await this.getFeatures();
     if (featureFlags.configFile) {
-      await this.systemMetadataRepository.set(SystemMetadataKey.ADMIN_ONBOARDING, {
+      await this.systemMetadataRepository.set(SystemMetadataKey.AdminOnboarding, {
         isOnboarded: true,
       });
     }
@@ -37,7 +38,7 @@ export class ServerService extends BaseService {
     const version = `v${serverVersion.toString()}`;
     const { buildMetadata } = this.configRepository.getEnv();
     const buildVersions = await this.serverInfoRepository.getBuildVersions();
-    const licensed = await this.systemMetadataRepository.get(SystemMetadataKey.LICENSE);
+    const licensed = await this.systemMetadataRepository.get(SystemMetadataKey.License);
 
     return {
       version,
@@ -48,8 +49,18 @@ export class ServerService extends BaseService {
     };
   }
 
+  getApkLinks(): ServerApkLinksDto {
+    const baseUrl = `https://github.com/immich-app/immich/releases/download/v${serverVersion.toString()}`;
+    return {
+      arm64v8a: `${baseUrl}/app-arm64-v8a-release.apk`,
+      armeabiv7a: `${baseUrl}/app-armeabi-v7a-release.apk`,
+      universal: `${baseUrl}/app-release.apk`,
+      x86_64: `${baseUrl}/app-x86_64-release.apk`,
+    };
+  }
+
   async getStorage(): Promise<ServerStorageResponseDto> {
-    const libraryBase = StorageCore.getBaseFolder(StorageFolder.LIBRARY);
+    const libraryBase = StorageCore.getBaseFolder(StorageFolder.Library);
     const diskInfo = await this.storageRepository.checkDiskUsage(libraryBase);
 
     const usagePercentage = (((diskInfo.total - diskInfo.free) / diskInfo.total) * 100).toFixed(2);
@@ -100,7 +111,7 @@ export class ServerService extends BaseService {
   async getSystemConfig(): Promise<ServerConfigDto> {
     const config = await this.getConfig({ withCache: false });
     const isInitialized = await this.userRepository.hasAdmin();
-    const onboarding = await this.systemMetadataRepository.get(SystemMetadataKey.ADMIN_ONBOARDING);
+    const onboarding = await this.systemMetadataRepository.get(SystemMetadataKey.AdminOnboarding);
 
     return {
       loginPageMessage: config.server.loginPageMessage,
@@ -152,11 +163,11 @@ export class ServerService extends BaseService {
   }
 
   async deleteLicense(): Promise<void> {
-    await this.systemMetadataRepository.delete(SystemMetadataKey.LICENSE);
+    await this.systemMetadataRepository.delete(SystemMetadataKey.License);
   }
 
   async getLicense(): Promise<LicenseResponseDto> {
-    const license = await this.systemMetadataRepository.get(SystemMetadataKey.LICENSE);
+    const license = await this.systemMetadataRepository.get(SystemMetadataKey.License);
     if (!license) {
       throw new NotFoundException();
     }
@@ -175,7 +186,7 @@ export class ServerService extends BaseService {
 
     const licenseData = { ...dto, activatedAt: new Date() };
 
-    await this.systemMetadataRepository.set(SystemMetadataKey.LICENSE, licenseData);
+    await this.systemMetadataRepository.set(SystemMetadataKey.License, licenseData);
 
     return licenseData;
   }

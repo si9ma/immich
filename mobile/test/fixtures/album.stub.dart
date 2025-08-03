@@ -1,3 +1,4 @@
+import 'package:immich_mobile/domain/models/album/local_album.model.dart';
 import 'package:immich_mobile/entities/album.entity.dart';
 import 'package:immich_mobile/infrastructure/entities/user.entity.dart';
 
@@ -41,20 +42,21 @@ final class AlbumStub {
     endDate: DateTime(2023),
   )..assets.addAll([AssetStub.image1]);
 
-  static final twoAsset = Album(
-    name: "album-with-two-assets",
-    localId: "album-with-two-assets-local",
-    remoteId: "album-with-two-assets-remote",
-    createdAt: DateTime(2001),
-    modifiedAt: DateTime(2010),
-    shared: false,
-    activityEnabled: false,
-    startDate: DateTime(2019),
-    endDate: DateTime(2020),
-  )
-    ..assets.addAll([AssetStub.image1, AssetStub.image2])
-    ..activityEnabled = true
-    ..owner.value = User.fromDto(UserStub.admin);
+  static final twoAsset =
+      Album(
+          name: "album-with-two-assets",
+          localId: "album-with-two-assets-local",
+          remoteId: "album-with-two-assets-remote",
+          createdAt: DateTime(2001),
+          modifiedAt: DateTime(2010),
+          shared: false,
+          activityEnabled: false,
+          startDate: DateTime(2019),
+          endDate: DateTime(2020),
+        )
+        ..assets.addAll([AssetStub.image1, AssetStub.image2])
+        ..activityEnabled = true
+        ..owner.value = User.fromDto(UserStub.admin);
 
   static final create2020end2020Album = Album(
     name: "create2020update2020Album",
@@ -99,5 +101,18 @@ final class AlbumStub {
     activityEnabled: false,
     startDate: DateTime(2020),
     endDate: DateTime(2026),
+  );
+}
+
+abstract final class LocalAlbumStub {
+  const LocalAlbumStub._();
+
+  static final recent = LocalAlbum(
+    id: "recent-local-id",
+    name: "Recent",
+    updatedAt: DateTime(2023),
+    assetCount: 1000,
+    backupSelection: BackupSelection.none,
+    isIosSharedAlbum: false,
   );
 }

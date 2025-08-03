@@ -16,7 +16,9 @@ class ServerApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'DELETE /server/license' operation and returns the [Response].
+  /// This endpoint is an admin-only route, and requires the `serverLicense.delete` permission.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> deleteServerLicenseWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/server/license';
@@ -42,6 +44,7 @@ class ServerApi {
     );
   }
 
+  /// This endpoint is an admin-only route, and requires the `serverLicense.delete` permission.
   Future<void> deleteServerLicense() async {
     final response = await deleteServerLicenseWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -49,7 +52,9 @@ class ServerApi {
     }
   }
 
-  /// Performs an HTTP 'GET /server/about' operation and returns the [Response].
+  /// This endpoint requires the `server.about` permission.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getAboutInfoWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/server/about';
@@ -75,6 +80,7 @@ class ServerApi {
     );
   }
 
+  /// This endpoint requires the `server.about` permission.
   Future<ServerAboutResponseDto?> getAboutInfo() async {
     final response = await getAboutInfoWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -85,6 +91,50 @@ class ServerApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'ServerAboutResponseDto',) as ServerAboutResponseDto;
+    
+    }
+    return null;
+  }
+
+  /// This endpoint requires the `server.apkLinks` permission.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  Future<Response> getApkLinksWithHttpInfo() async {
+    // ignore: prefer_const_declarations
+    final apiPath = r'/server/apk-links';
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      apiPath,
+      'GET',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// This endpoint requires the `server.apkLinks` permission.
+  Future<ServerApkLinksDto?> getApkLinks() async {
+    final response = await getApkLinksWithHttpInfo();
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'ServerApkLinksDto',) as ServerApkLinksDto;
     
     }
     return null;
@@ -172,7 +222,9 @@ class ServerApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /server/license' operation and returns the [Response].
+  /// This endpoint is an admin-only route, and requires the `serverLicense.read` permission.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getServerLicenseWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/server/license';
@@ -198,6 +250,7 @@ class ServerApi {
     );
   }
 
+  /// This endpoint is an admin-only route, and requires the `serverLicense.read` permission.
   Future<LicenseResponseDto?> getServerLicense() async {
     final response = await getServerLicenseWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -213,7 +266,9 @@ class ServerApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /server/statistics' operation and returns the [Response].
+  /// This endpoint is an admin-only route, and requires the `server.statistics` permission.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getServerStatisticsWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/server/statistics';
@@ -239,6 +294,7 @@ class ServerApi {
     );
   }
 
+  /// This endpoint is an admin-only route, and requires the `server.statistics` permission.
   Future<ServerStatsResponseDto?> getServerStatistics() async {
     final response = await getServerStatisticsWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -295,7 +351,9 @@ class ServerApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /server/storage' operation and returns the [Response].
+  /// This endpoint requires the `server.storage` permission.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getStorageWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/server/storage';
@@ -321,6 +379,7 @@ class ServerApi {
     );
   }
 
+  /// This endpoint requires the `server.storage` permission.
   Future<ServerStorageResponseDto?> getStorage() async {
     final response = await getStorageWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -544,7 +603,10 @@ class ServerApi {
     return null;
   }
 
-  /// Performs an HTTP 'PUT /server/license' operation and returns the [Response].
+  /// This endpoint is an admin-only route, and requires the `serverLicense.update` permission.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [LicenseKeyDto] licenseKeyDto (required):
@@ -573,6 +635,8 @@ class ServerApi {
     );
   }
 
+  /// This endpoint is an admin-only route, and requires the `serverLicense.update` permission.
+  ///
   /// Parameters:
   ///
   /// * [LicenseKeyDto] licenseKeyDto (required):

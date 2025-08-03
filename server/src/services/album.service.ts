@@ -19,6 +19,7 @@ import { Permission } from 'src/enum';
 import { AlbumAssetCount, AlbumInfoOptions } from 'src/repositories/album.repository';
 import { BaseService } from 'src/services/base.service';
 import { addAssets, removeAssets } from 'src/utils/asset.util';
+import { getPreferences } from 'src/utils/preferences';
 
 @Injectable()
 export class AlbumService extends BaseService {
@@ -70,7 +71,7 @@ export class AlbumService extends BaseService {
   }
 
   async get(auth: AuthDto, id: string, dto: AlbumInfoDto): Promise<AlbumResponseDto> {
-    await this.requireAccess({ auth, permission: Permission.ALBUM_READ, ids: [id] });
+    await this.requireAccess({ auth, permission: Permission.AlbumRead, ids: [id] });
     await this.albumRepository.updateThumbnails();
     const withAssets = dto.withoutAssets === undefined ? true : !dto.withoutAssets;
     const album = await this.findOrFail(id, { withAssets });
@@ -93,14 +94,20 @@ export class AlbumService extends BaseService {
       if (!exists) {
         throw new BadRequestException('User not found');
       }
+
+      if (userId == auth.user.id) {
+        throw new BadRequestException('Cannot share album with owner');
+      }
     }
 
     const allowedAssetIdsSet = await this.checkAccess({
       auth,
-      permission: Permission.ASSET_SHARE,
+      permission: Permission.AssetShare,
       ids: dto.assetIds || [],
     });
     const assetIds = [...allowedAssetIdsSet].map((id) => id);
+
+    const userMetadata = await this.userRepository.getMetadata(auth.user.id);
 
     const album = await this.albumRepository.create(
       {
@@ -108,20 +115,21 @@ export class AlbumService extends BaseService {
         albumName: dto.albumName,
         description: dto.description,
         albumThumbnailAssetId: assetIds[0] || null,
+        order: getPreferences(userMetadata).albums.defaultAssetOrder,
       },
       assetIds,
       albumUsers,
     );
 
     for (const { userId } of albumUsers) {
-      await this.eventRepository.emit('album.invite', { id: album.id, userId });
+      await this.eventRepository.emit('AlbumInvite', { id: album.id, userId });
     }
 
     return mapAlbumWithAssets(album);
   }
 
   async update(auth: AuthDto, id: string, dto: UpdateAlbumDto): Promise<AlbumResponseDto> {
-    await this.requireAccess({ auth, permission: Permission.ALBUM_UPDATE, ids: [id] });
+    await this.requireAccess({ auth, permission: Permission.AlbumUpdate, ids: [id] });
 
     const album = await this.findOrFail(id, { withAssets: true });
 
@@ -144,13 +152,13 @@ export class AlbumService extends BaseService {
   }
 
   async delete(auth: AuthDto, id: string): Promise<void> {
-    await this.requireAccess({ auth, permission: Permission.ALBUM_DELETE, ids: [id] });
+    await this.requireAccess({ auth, permission: Permission.AlbumDelete, ids: [id] });
     await this.albumRepository.delete(id);
   }
 
   async addAssets(auth: AuthDto, id: string, dto: BulkIdsDto): Promise<BulkIdResponseDto[]> {
     const album = await this.findOrFail(id, { withAssets: false });
-    await this.requireAccess({ auth, permission: Permission.ALBUM_ADD_ASSET, ids: [id] });
+    await this.requireAccess({ auth, permission: Permission.AlbumAssetCreate, ids: [id] });
 
     const results = await addAssets(
       auth,
@@ -171,7 +179,7 @@ export class AlbumService extends BaseService {
       );
 
       for (const recipientId of allUsersExceptUs) {
-        await this.eventRepository.emit('album.update', { id, recipientId });
+        await this.eventRepository.emit('AlbumUpdate', { id, recipientId });
       }
     }
 
@@ -179,13 +187,13 @@ export class AlbumService extends BaseService {
   }
 
   async removeAssets(auth: AuthDto, id: string, dto: BulkIdsDto): Promise<BulkIdResponseDto[]> {
-    await this.requireAccess({ auth, permission: Permission.ALBUM_REMOVE_ASSET, ids: [id] });
+    await this.requireAccess({ auth, permission: Permission.AlbumAssetDelete, ids: [id] });
 
     const album = await this.findOrFail(id, { withAssets: false });
     const results = await removeAssets(
       auth,
       { access: this.accessRepository, bulk: this.albumRepository },
-      { parentId: id, assetIds: dto.ids, canAlwaysRemove: Permission.ALBUM_DELETE },
+      { parentId: id, assetIds: dto.ids, canAlwaysRemove: Permission.AlbumDelete },
     );
 
     const removedIds = results.filter(({ success }) => success).map(({ id }) => id);
@@ -197,7 +205,7 @@ export class AlbumService extends BaseService {
   }
 
   async addUsers(auth: AuthDto, id: string, { albumUsers }: AddUsersDto): Promise<AlbumResponseDto> {
-    await this.requireAccess({ auth, permission: Permission.ALBUM_SHARE, ids: [id] });
+    await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [id] });
 
     const album = await this.findOrFail(id, { withAssets: false });
 
@@ -217,7 +225,7 @@ export class AlbumService extends BaseService {
       }
 
       await this.albumUserRepository.create({ usersId: userId, albumsId: id, role });
-      await this.eventRepository.emit('album.invite', { id, userId });
+      await this.eventRepository.emit('AlbumInvite', { id, userId });
     }
 
     return this.findOrFail(id, { withAssets: true }).then(mapAlbumWithoutAssets);
@@ -241,14 +249,14 @@ export class AlbumService extends BaseService {
 
     // non-admin can remove themselves
     if (auth.user.id !== userId) {
-      await this.requireAccess({ auth, permission: Permission.ALBUM_SHARE, ids: [id] });
+      await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [id] });
     }
 
     await this.albumUserRepository.delete({ albumsId: id, usersId: userId });
   }
 
   async updateUser(auth: AuthDto, id: string, userId: string, dto: UpdateAlbumUserDto): Promise<void> {
-    await this.requireAccess({ auth, permission: Permission.ALBUM_SHARE, ids: [id] });
+    await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [id] });
     await this.albumUserRepository.update({ albumsId: id, usersId: userId }, { role: dto.role });
   }
 

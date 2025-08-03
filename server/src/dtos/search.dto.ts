@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
 import { Place } from 'src/database';
 import { PropertyLifecycle } from 'src/decorators';
 import { AlbumResponseDto } from 'src/dtos/album.dto';
 import { AssetResponseDto } from 'src/dtos/asset-response.dto';
 import { AssetOrder, AssetType, AssetVisibility } from 'src/enum';
-import { Optional, ValidateAssetVisibility, ValidateBoolean, ValidateDate, ValidateUUID } from 'src/validation';
+import { Optional, ValidateBoolean, ValidateDate, ValidateEnum, ValidateUUID } from 'src/validation';
 
 class BaseSearchDto {
   @ValidateUUID({ optional: true, nullable: true })
@@ -17,9 +17,7 @@ class BaseSearchDto {
   @Optional()
   deviceId?: string;
 
-  @IsEnum(AssetType)
-  @Optional()
-  @ApiProperty({ enumName: 'AssetTypeEnum', enum: AssetType })
+  @ValidateEnum({ enum: AssetType, name: 'AssetTypeEnum', optional: true })
   type?: AssetType;
 
   @ValidateBoolean({ optional: true })
@@ -34,14 +32,8 @@ class BaseSearchDto {
   @ValidateBoolean({ optional: true })
   isOffline?: boolean;
 
-  @ValidateAssetVisibility({ optional: true })
+  @ValidateEnum({ enum: AssetVisibility, name: 'AssetVisibility', optional: true })
   visibility?: AssetVisibility;
-
-  @ValidateBoolean({ optional: true })
-  withDeleted?: boolean;
-
-  @ValidateBoolean({ optional: true })
-  withExif?: boolean;
 
   @ValidateDate({ optional: true })
   createdBefore?: Date;
@@ -92,21 +84,17 @@ class BaseSearchDto {
   @Optional({ nullable: true, emptyToNull: true })
   lensModel?: string | null;
 
-  @IsInt()
-  @Min(1)
-  @Max(1000)
-  @Type(() => Number)
-  @Optional()
-  size?: number;
-
   @ValidateBoolean({ optional: true })
   isNotInAlbum?: boolean;
 
   @ValidateUUID({ each: true, optional: true })
   personIds?: string[];
 
+  @ValidateUUID({ each: true, optional: true, nullable: true })
+  tagIds?: string[] | null;
+
   @ValidateUUID({ each: true, optional: true })
-  tagIds?: string[];
+  albumIds?: string[];
 
   @Optional()
   @IsInt()
@@ -115,12 +103,36 @@ class BaseSearchDto {
   rating?: number;
 }
 
-export class RandomSearchDto extends BaseSearchDto {
+class BaseSearchWithResultsDto extends BaseSearchDto {
+  @ValidateBoolean({ optional: true })
+  withDeleted?: boolean;
+
+  @ValidateBoolean({ optional: true })
+  withExif?: boolean;
+
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  @Type(() => Number)
+  @Optional()
+  size?: number;
+}
+
+export class RandomSearchDto extends BaseSearchWithResultsDto {
   @ValidateBoolean({ optional: true })
   withStacked?: boolean;
 
   @ValidateBoolean({ optional: true })
   withPeople?: boolean;
+}
+
+export class LargeAssetSearchDto extends BaseSearchWithResultsDto {
+  @Optional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  @ApiProperty({ type: 'integer' })
+  minFileSize?: number;
 }
 
 export class MetadataSearchDto extends RandomSearchDto {
@@ -167,9 +179,7 @@ export class MetadataSearchDto extends RandomSearchDto {
   @Optional()
   encodedVideoPath?: string;
 
-  @IsEnum(AssetOrder)
-  @Optional()
-  @ApiProperty({ enumName: 'AssetOrder', enum: AssetOrder, default: AssetOrder.DESC })
+  @ValidateEnum({ enum: AssetOrder, name: 'AssetOrder', optional: true, default: AssetOrder.Desc })
   order?: AssetOrder;
 
   @IsInt()
@@ -179,7 +189,14 @@ export class MetadataSearchDto extends RandomSearchDto {
   page?: number;
 }
 
-export class SmartSearchDto extends BaseSearchDto {
+export class StatisticsSearchDto extends BaseSearchDto {
+  @IsString()
+  @IsNotEmpty()
+  @Optional()
+  description?: string;
+}
+
+export class SmartSearchDto extends BaseSearchWithResultsDto {
   @IsString()
   @IsNotEmpty()
   query!: string;
@@ -238,9 +255,7 @@ export enum SearchSuggestionType {
 }
 
 export class SearchSuggestionRequestDto {
-  @IsEnum(SearchSuggestionType)
-  @IsNotEmpty()
-  @ApiProperty({ enumName: 'SearchSuggestionType', enum: SearchSuggestionType })
+  @ValidateEnum({ enum: SearchSuggestionType, name: 'SearchSuggestionType' })
   type!: SearchSuggestionType;
 
   @IsString()
@@ -297,6 +312,11 @@ class SearchAssetResponseDto {
 export class SearchResponseDto {
   albums!: SearchAlbumResponseDto;
   assets!: SearchAssetResponseDto;
+}
+
+export class SearchStatisticsResponseDto {
+  @ApiProperty({ type: 'integer' })
+  total!: number;
 }
 
 class SearchExploreItem {

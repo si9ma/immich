@@ -5,15 +5,15 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/domain/models/store.model.dart';
 import 'package:immich_mobile/domain/utils/background_sync.dart';
 import 'package:immich_mobile/entities/store.entity.dart';
-import 'package:immich_mobile/interfaces/auth.interface.dart';
-import 'package:immich_mobile/interfaces/auth_api.interface.dart';
 import 'package:immich_mobile/models/auth/auxilary_endpoint.model.dart';
 import 'package:immich_mobile/models/auth/login_response.model.dart';
 import 'package:immich_mobile/providers/api.provider.dart';
+import 'package:immich_mobile/providers/app_settings.provider.dart';
 import 'package:immich_mobile/providers/background_sync.provider.dart';
 import 'package:immich_mobile/repositories/auth.repository.dart';
 import 'package:immich_mobile/repositories/auth_api.repository.dart';
 import 'package:immich_mobile/services/api.service.dart';
+import 'package:immich_mobile/services/app_settings.service.dart';
 import 'package:immich_mobile/services/network.service.dart';
 import 'package:logging/logging.dart';
 import 'package:openapi/api.dart';
@@ -25,16 +25,17 @@ final authServiceProvider = Provider(
     ref.watch(apiServiceProvider),
     ref.watch(networkServiceProvider),
     ref.watch(backgroundSyncProvider),
+    ref.watch(appSettingsServiceProvider),
   ),
 );
 
 class AuthService {
-  final IAuthApiRepository _authApiRepository;
-  final IAuthRepository _authRepository;
+  final AuthApiRepository _authApiRepository;
+  final AuthRepository _authRepository;
   final ApiService _apiService;
   final NetworkService _networkService;
   final BackgroundSyncManager _backgroundSyncManager;
-
+  final AppSettingsService _appSettingsService;
   final _log = Logger("AuthService");
 
   AuthService(
@@ -43,6 +44,7 @@ class AuthService {
     this._apiService,
     this._networkService,
     this._backgroundSyncManager,
+    this._appSettingsService,
   );
 
   /// Validates the provided server URL by resolving and setting the endpoint.
@@ -108,6 +110,8 @@ class AuthService {
       await clearLocalData().catchError((error, stackTrace) {
         _log.severe("Error clearing local data", error, stackTrace);
       });
+
+      await _appSettingsService.setSetting(AppSettingsEnum.enableBackup, false);
     }
   }
 
