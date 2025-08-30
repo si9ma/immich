@@ -18,6 +18,7 @@
   import { t } from 'svelte-i18n';
   import AssetViewer from '../asset-viewer/asset-viewer.svelte';
   import DownloadAction from '../photos-page/actions/download-action.svelte';
+  import PathCollectAction from '../photos-page/actions/path-collect-action.svelte';
   import RemoveFromSharedLink from '../photos-page/actions/remove-from-shared-link.svelte';
   import AssetSelectControlBar from '../photos-page/asset-select-control-bar.svelte';
   import ControlAppBar from '../shared-components/control-app-bar.svelte';
@@ -106,6 +107,7 @@
         {#if sharedLink?.allowDownload}
           <DownloadAction filename="immich-shared.zip" />
         {/if}
+        <PathCollectAction />
         {#if isOwned}
           <RemoveFromSharedLink bind:sharedLink />
         {/if}

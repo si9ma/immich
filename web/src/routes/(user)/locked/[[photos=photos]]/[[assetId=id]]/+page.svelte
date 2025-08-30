@@ -5,6 +5,7 @@
   import ChangeLocation from '$lib/components/photos-page/actions/change-location-action.svelte';
   import DeleteAssets from '$lib/components/photos-page/actions/delete-assets.svelte';
   import DownloadAction from '$lib/components/photos-page/actions/download-action.svelte';
+  import PathCollectAction from '$lib/components/photos-page/actions/path-collect-action.svelte';
   import SelectAllAssets from '$lib/components/photos-page/actions/select-all-assets.svelte';
   import SetVisibilityAction from '$lib/components/photos-page/actions/set-visibility-action.svelte';
   import AssetGrid from '$lib/components/photos-page/asset-grid.svelte';
@@ -81,6 +82,7 @@
     <SetVisibilityAction unlock onVisibilitySet={handleMoveOffLockedFolder} />
     <ButtonContextMenu icon={mdiDotsVertical} title={$t('menu')}>
       <DownloadAction menuItem />
+      <PathCollectAction menuItem />
       <ChangeDate menuItem />
       <ChangeLocation menuItem />
       <DeleteAssets menuItem force onAssetDelete={(assetIds) => timelineManager.removeAssets(assetIds)} />

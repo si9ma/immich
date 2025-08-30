@@ -2075,5 +2075,6 @@
   "yes": "是",
   "you_dont_have_any_shared_links": "您没有任何共享链接",
   "your_wifi_name": "您的 Wi-Fi 名称",
-  "zoom_image": "缩放图像"
+  "zoom_image": "缩放图像",
+  "copy_files_path": "复制原始文件路径"
 }

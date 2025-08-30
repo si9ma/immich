@@ -5,6 +5,7 @@
   import CreateSharedLink from '$lib/components/photos-page/actions/create-shared-link.svelte';
   import DeleteAssets from '$lib/components/photos-page/actions/delete-assets.svelte';
   import DownloadAction from '$lib/components/photos-page/actions/download-action.svelte';
+  import PathCollectAction from '$lib/components/photos-page/actions/path-collect-action.svelte';
   import FavoriteAction from '$lib/components/photos-page/actions/favorite-action.svelte';
   import SelectAllAssets from '$lib/components/photos-page/actions/select-all-assets.svelte';
   import AssetGrid from '$lib/components/photos-page/asset-grid.svelte';
@@ -89,6 +90,7 @@
     />
     <ButtonContextMenu icon={mdiDotsVertical} title={$t('menu')}>
       <DownloadAction menuItem />
+      <PathCollectAction menuItem />
       <SetVisibilityAction menuItem onVisibilitySet={handleSetVisibility} />
       <DeleteAssets menuItem onAssetDelete={(assetIds) => timelineManager.removeAssets(assetIds)} />
     </ButtonContextMenu>

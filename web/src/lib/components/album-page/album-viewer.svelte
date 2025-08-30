@@ -18,6 +18,7 @@
   import { onDestroy } from 'svelte';
   import { t } from 'svelte-i18n';
   import DownloadAction from '../photos-page/actions/download-action.svelte';
+  import PathCollectAction from '../photos-page/actions/path-collect-action.svelte';
   import AssetGrid from '../photos-page/asset-grid.svelte';
   import ControlAppBar from '../shared-components/control-app-bar.svelte';
   import ImmichLogoSmallLink from '../shared-components/immich-logo-small-link.svelte';
@@ -97,6 +98,7 @@
       {#if sharedLink.allowDownload}
         <DownloadAction filename="{album.albumName}.zip" />
       {/if}
+      <PathCollectAction />
     </AssetSelectControlBar>
   {:else}
     <ControlAppBar showBackButton={false}>

@@ -3,6 +3,7 @@
   import AddToAlbum from '$lib/components/photos-page/actions/add-to-album.svelte';
   import CreateSharedLink from '$lib/components/photos-page/actions/create-shared-link.svelte';
   import DownloadAction from '$lib/components/photos-page/actions/download-action.svelte';
+  import PathCollectAction from '$lib/components/photos-page/actions/path-collect-action.svelte';
   import AssetGrid from '$lib/components/photos-page/asset-grid.svelte';
   import AssetSelectControlBar from '$lib/components/photos-page/asset-select-control-bar.svelte';
   import ButtonContextMenu from '$lib/components/shared-components/context-menu/button-context-menu.svelte';
@@ -57,6 +58,7 @@
       <AddToAlbum shared />
     </ButtonContextMenu>
     <DownloadAction />
+    <PathCollectAction />
   </AssetSelectControlBar>
 {:else}
   <ControlAppBar showBackButton backIcon={mdiArrowLeft} onClose={() => goto(AppRoute.SHARING)}>

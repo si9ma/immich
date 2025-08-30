@@ -17,6 +17,7 @@
   import CreateSharedLink from '$lib/components/photos-page/actions/create-shared-link.svelte';
   import DeleteAssets from '$lib/components/photos-page/actions/delete-assets.svelte';
   import DownloadAction from '$lib/components/photos-page/actions/download-action.svelte';
+  import PathCollectAction from '$lib/components/photos-page/actions/path-collect-action.svelte';
   import FavoriteAction from '$lib/components/photos-page/actions/favorite-action.svelte';
   import RemoveFromAlbum from '$lib/components/photos-page/actions/remove-from-album.svelte';
   import SelectAllAssets from '$lib/components/photos-page/actions/select-all-assets.svelte';
@@ -583,6 +584,7 @@
         {/if}
         <ButtonContextMenu icon={mdiDotsVertical} title={$t('menu')} offset={{ x: 175, y: 25 }}>
           <DownloadAction menuItem filename="{album.albumName}.zip" />
+          <PathCollectAction menuItem/>
           {#if assetInteraction.isAllUserOwned}
             <ChangeDate menuItem />
             <ChangeDescription menuItem />
