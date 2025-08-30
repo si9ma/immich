@@ -37,7 +37,7 @@ class BackgroundSyncManager {
     this.onHashingError,
   });
 
-  Future<void> cancel() {
+  Future<void> cancel() async {
     final futures = <Future>[];
 
     if (_syncTask != null) {
@@ -52,7 +52,33 @@ class BackgroundSyncManager {
     _syncWebsocketTask?.cancel();
     _syncWebsocketTask = null;
 
-    return Future.wait(futures);
+    try {
+      await Future.wait(futures);
+    } on CanceledError {
+      // Ignore cancellation errors
+    }
+  }
+
+  Future<void> cancelLocal() async {
+    final futures = <Future>[];
+
+    if (_hashTask != null) {
+      futures.add(_hashTask!.future);
+    }
+    _hashTask?.cancel();
+    _hashTask = null;
+
+    if (_deviceAlbumSyncTask != null) {
+      futures.add(_deviceAlbumSyncTask!.future);
+    }
+    _deviceAlbumSyncTask?.cancel();
+    _deviceAlbumSyncTask = null;
+
+    try {
+      await Future.wait(futures);
+    } on CanceledError {
+      // Ignore cancellation errors
+    }
   }
 
   // No need to cancel the task, as it can also be run when the user logs out
