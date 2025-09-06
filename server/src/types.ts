@@ -427,6 +427,7 @@ export type SyncAck = {
 
 export type StorageAsset = {
   id: string;
+  deviceId: string | null;
   ownerId: string;
   livePhotoVideoId: string | null;
   type: AssetType;

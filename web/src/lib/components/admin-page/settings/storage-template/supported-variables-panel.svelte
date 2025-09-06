@@ -37,6 +37,9 @@
           {`{{album-endDate-x}}`} - Album End Date and Time (e.g. album-endDate-MM).
           {$t('admin.storage_template_date_time_sample', { values: { date: '2023-05-06T09:15:17.100' } })}
         </li>
+        <li>
+          {`{{deviceId}}`} - Device ID
+        </li>
       </ul>
     </div>
   </div>

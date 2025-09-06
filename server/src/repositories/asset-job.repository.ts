@@ -284,6 +284,7 @@ export class AssetJobRepository {
       .select([
         'asset.id',
         'asset.ownerId',
+        'asset.deviceId',
         'asset.type',
         'asset.checksum',
         'asset.originalPath',

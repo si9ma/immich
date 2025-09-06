@@ -12,6 +12,10 @@ import { BaseService } from 'src/services/base.service';
 import { JobOf, StorageAsset } from 'src/types';
 import { getLivePhotoMotionFilename } from 'src/utils/file';
 
+handlebar.registerHelper('eq', function(a: unknown, b: unknown) {
+  return a === b;
+});
+
 const storageTokens = {
   secondOptions: ['s', 'ss', 'SSS'],
   minuteOptions: ['m', 'mm'],
@@ -360,6 +364,7 @@ export class StorageTemplateService extends BaseService {
       filetype: asset.type == AssetType.Image ? 'IMG' : 'VID',
       filetypefull: asset.type == AssetType.Image ? 'IMAGE' : 'VIDEO',
       assetId: asset.id,
+      deviceId: asset.deviceId || '',
       assetIdShort: asset.id.slice(-12),
       //just throw into the root if it doesn't belong to an album
       album: (albumName && sanitize(albumName.replaceAll(/\.+/g, ''))) || '',
