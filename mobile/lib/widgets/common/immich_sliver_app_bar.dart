@@ -157,7 +157,7 @@ class _ProfileIndicator extends ConsumerWidget {
 
     return InkWell(
       onTap: () => showDialog(context: context, useRootNavigator: false, builder: (ctx) => const ImmichAppBarDialog()),
-      onDoubleTap: () => toggleReadonlyMode(),
+      onLongPress: () => toggleReadonlyMode(),
       borderRadius: const BorderRadius.all(Radius.circular(12)),
       child: Badge(
         label: Container(
@@ -173,7 +173,7 @@ class _ProfileIndicator extends ConsumerWidget {
             ? const Icon(Icons.face_outlined, size: widgetSize)
             : Semantics(
                 label: "logged_in_as".tr(namedArgs: {"user": user.name}),
-                child: UserCircleAvatar(radius: 17, size: 31, user: user),
+                child: AbsorbPointer(child: UserCircleAvatar(radius: 17, size: 31, user: user)),
               ),
       ),
     );
@@ -296,7 +296,7 @@ class _SyncStatusIndicatorState extends ConsumerState<_SyncStatusIndicator> with
   @override
   Widget build(BuildContext context) {
     final syncStatus = ref.watch(syncStatusProvider);
-    final isSyncing = syncStatus.isRemoteSyncing;
+    final isSyncing = syncStatus.isRemoteSyncing || syncStatus.isLocalSyncing;
 
     // Control animations based on sync status
     if (isSyncing) {

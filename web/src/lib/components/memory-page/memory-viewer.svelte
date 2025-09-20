@@ -85,6 +85,7 @@
   let progressBarController: Tween<number> | undefined = $state(undefined);
   let videoPlayer: HTMLVideoElement | undefined = $state();
   const asHref = (asset: { id: string }) => `?${QueryParameter.ID}=${asset.id}`;
+
   const handleNavigate = async (asset?: { id: string }) => {
     if ($isViewing) {
       return asset;
@@ -96,6 +97,7 @@
 
     await goto(asHref(asset));
   };
+
   const setProgressDuration = (asset: TimelineAsset) => {
     if (asset.isVideo) {
       const timeParts = asset.duration!.split(':').map(Number);
@@ -109,6 +111,7 @@
       });
     }
   };
+
   const handleNextAsset = () => handleNavigate(current?.next?.asset);
   const handlePreviousAsset = () => handleNavigate(current?.previous?.asset);
   const handleNextMemory = () => handleNavigate(current?.nextMemory?.assets[0]);
@@ -116,6 +119,7 @@
   const handleEscape = async () => goto(AppRoute.PHOTOS);
   const handleSelectAll = () =>
     assetInteraction.selectAssets(current?.memory.assets.map((a) => toTimelineAsset(a)) || []);
+
   const handleAction = async (callingContext: string, action: 'reset' | 'pause' | 'play') => {
     // leaving these log statements here as comments. Very useful to figure out what's going on during dev!
     // console.log(`handleAction[${callingContext}] called with: ${action}`);
@@ -155,6 +159,7 @@
       }
     }
   };
+
   const handleProgress = async (progress: number) => {
     if (!progressBarController) {
       return;
@@ -185,6 +190,7 @@
     memoryStore.hideAssetsFromMemory(ids);
     init(page);
   };
+
   const handleDeleteMemoryAsset = async () => {
     if (!current) {
       return;
@@ -193,6 +199,7 @@
     await memoryStore.deleteAssetFromMemory(current.asset.id);
     init(page);
   };
+
   const handleDeleteMemory = async () => {
     if (!current) {
       return;
@@ -202,6 +209,7 @@
     notificationController.show({ message: $t('removed_memory'), type: NotificationType.Info });
     init(page);
   };
+
   const handleSaveMemory = async () => {
     if (!current) {
       return;
@@ -215,10 +223,12 @@
     });
     init(page);
   };
+
   const handleGalleryScrollsIntoView = () => {
     galleryInView = true;
     handlePromiseError(handleAction('galleryInView', 'pause'));
   };
+
   const handleGalleryScrollsOutOfView = () => {
     galleryInView = false;
     // only call play after the first page load. When page first loads the gallery will not be visible
@@ -247,16 +257,22 @@
     playerInitialized = false;
   };
 
+  const resetAndPlay = () => {
+    handlePromiseError(handleAction('resetAndPlay', 'reset'));
+    handlePromiseError(handleAction('resetAndPlay', 'play'));
+  };
+
   const initPlayer = () => {
-    const isVideoAssetButPlayerHasNotLoadedYet = current && current.asset.isVideo && !videoPlayer;
+    const isVideo = current && current.asset.isVideo;
+    const isVideoAssetButPlayerHasNotLoadedYet = isVideo && !videoPlayer;
     if (playerInitialized || isVideoAssetButPlayerHasNotLoadedYet) {
       return;
     }
     if ($isViewing) {
       handlePromiseError(handleAction('initPlayer[AssetViewOpen]', 'pause'));
-    } else {
-      handlePromiseError(handleAction('initPlayer[AssetViewClosed]', 'reset'));
-      handlePromiseError(handleAction('initPlayer[AssetViewClosed]', 'play'));
+    } else if (isVideo) {
+      // Image assets will start playing when the image is loaded. Only autostart video assets.
+      resetAndPlay();
     }
     playerInitialized = true;
   };
@@ -476,7 +492,7 @@
                   videoViewerVolume={$videoViewerVolume}
                 />
               {:else}
-                <MemoryPhotoViewer asset={current.asset} />
+                <MemoryPhotoViewer asset={current.asset} onImageLoad={resetAndPlay} />
               {/if}
             {/key}
 
@@ -648,6 +664,7 @@
         viewport={galleryViewport}
         {assetInteraction}
         slidingWindowOffset={viewerHeight}
+        arrowNavigation={false}
       />
     </div>
   </section>
