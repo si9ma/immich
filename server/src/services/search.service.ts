@@ -146,6 +146,24 @@ export class SearchService extends BaseService {
     const page = dto.page ?? 1;
     const size = dto.size || 250;
 
+    // if query start with ocr:, search by searchMetadata with ocr option
+    if (dto.query?.toLowerCase().startsWith('ocr:')) {
+      const ocrQuery = dto.query.slice(4).trim();
+      this.logger.log(`search by ocr: ${ocrQuery}`);
+
+      const { hasNextPage, items } = await this.searchRepository.searchMetadata(
+        { page, size },
+        {
+          ...dto,
+          ocr: ocrQuery,
+          userIds: await userIds,
+          orderDirection: 'desc',
+        },
+      );
+
+      return this.mapResponse(items, hasNextPage ? (page + 1).toString() : null, { auth });
+    }
+
     // split dto.query to array by ~, then parse to date Array
     if (dto.query) {
       try {
