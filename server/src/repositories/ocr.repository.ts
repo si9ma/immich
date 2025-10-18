@@ -59,6 +59,8 @@ export class OcrRepository {
             .values({ assetId, text: searchText })
             .onConflict((oc) => oc.column('assetId').doUpdateSet((eb) => ({ text: eb.ref('excluded.text') }))),
         );
+    } else {
+      (query as any) = query.with('deleted_search', (db) => db.deleteFrom('ocr_search').where('assetId', '=', assetId));
     }
 
     return query.selectNoFrom(sql`1`.as('dummy')).execute();
