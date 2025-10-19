@@ -121,28 +121,7 @@ export class SearchService extends BaseService {
     }
 
     const userIds = this.getUserIdsToSearch(auth);
-    let embedding;
-    if (dto.query) {
-      const key = machineLearning.clip.modelName + dto.query + dto.language;
-      embedding = this.embeddingCache.get(key);
-      if (!embedding) {
-        embedding = await this.machineLearningRepository.encodeText(dto.query, {
-          modelName: machineLearning.clip.modelName,
-          language: dto.language,
-        });
-        this.embeddingCache.set(key, embedding);
-      }
-    } else if (dto.queryAssetId) {
-      await this.requireAccess({ auth, permission: Permission.AssetRead, ids: [dto.queryAssetId] });
-      const getEmbeddingResponse = await this.searchRepository.getEmbedding(dto.queryAssetId);
-      const assetEmbedding = getEmbeddingResponse?.embedding;
-      if (!assetEmbedding) {
-        throw new BadRequestException(`Asset ${dto.queryAssetId} has no embedding`);
-      }
-      embedding = assetEmbedding;
-    } else {
-      throw new BadRequestException('Either `query` or `queryAssetId` must be set');
-    }
+
     const page = dto.page ?? 1;
     const size = dto.size || 250;
 
@@ -183,6 +162,29 @@ export class SearchService extends BaseService {
       } catch (error) {
         this.logger.log(`Error parsing date: ${dto.query}`);
       }
+    }
+
+    let embedding;
+    if (dto.query) {
+      const key = machineLearning.clip.modelName + dto.query + dto.language;
+      embedding = this.embeddingCache.get(key);
+      if (!embedding) {
+        embedding = await this.machineLearningRepository.encodeText(dto.query, {
+          modelName: machineLearning.clip.modelName,
+          language: dto.language,
+        });
+        this.embeddingCache.set(key, embedding);
+      }
+    } else if (dto.queryAssetId) {
+      await this.requireAccess({ auth, permission: Permission.AssetRead, ids: [dto.queryAssetId] });
+      const getEmbeddingResponse = await this.searchRepository.getEmbedding(dto.queryAssetId);
+      const assetEmbedding = getEmbeddingResponse?.embedding;
+      if (!assetEmbedding) {
+        throw new BadRequestException(`Asset ${dto.queryAssetId} has no embedding`);
+      }
+      embedding = assetEmbedding;
+    } else {
+      throw new BadRequestException('Either `query` or `queryAssetId` must be set');
     }
 
     const { hasNextPage, items } = await this.searchRepository.searchSmart(
