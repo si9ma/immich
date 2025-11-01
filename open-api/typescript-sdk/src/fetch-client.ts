@@ -1,6 +1,6 @@
 /**
  * Immich
- * 2.1.0
+ * 2.2.1
  * DO NOT MODIFY - This file has been generated using oazapfts.
  * See https://www.npmjs.com/package/oazapfts
  */
@@ -71,6 +71,7 @@ export type SystemConfigSmtpTransportDto = {
     ignoreCert: boolean;
     password: string;
     port: number;
+    secure: boolean;
     username: string;
 };
 export type SystemConfigSmtpDto = {
@@ -243,6 +244,17 @@ export type UserPreferencesUpdateDto = {
     sharedLinks?: SharedLinksUpdate;
     tags?: TagsUpdate;
 };
+export type SessionResponseDto = {
+    appVersion: string | null;
+    createdAt: string;
+    current: boolean;
+    deviceOS: string;
+    deviceType: string;
+    expiresAt?: string;
+    id: string;
+    isPendingSyncReset: boolean;
+    updatedAt: string;
+};
 export type AssetStatsResponseDto = {
     images: number;
     total: number;
@@ -356,12 +368,17 @@ export type AssetResponseDto = {
     updatedAt: string;
     visibility: AssetVisibility;
 };
+export type ContributorCountResponseDto = {
+    assetCount: number;
+    userId: string;
+};
 export type AlbumResponseDto = {
     albumName: string;
     albumThumbnailAssetId: string | null;
     albumUsers: AlbumUserResponseDto[];
     assetCount: number;
     assets: AssetResponseDto[];
+    contributorCounts?: ContributorCountResponseDto[];
     createdAt: string;
     description: string;
     endDate?: string;
@@ -500,6 +517,15 @@ export type AssetBulkUploadCheckResult = {
 export type AssetBulkUploadCheckResponseDto = {
     results: AssetBulkUploadCheckResult[];
 };
+export type AssetCopyDto = {
+    albums?: boolean;
+    favorite?: boolean;
+    sharedLinks?: boolean;
+    sidecar?: boolean;
+    sourceId: string;
+    stack?: boolean;
+    targetId: string;
+};
 export type CheckExistingAssetsDto = {
     deviceAssetIds: string[];
     deviceId: string;
@@ -529,6 +555,32 @@ export type AssetMetadataResponseDto = {
 export type AssetMetadataUpsertDto = {
     items: AssetMetadataUpsertItemDto[];
 };
+export type AssetOcrResponseDto = {
+    assetId: string;
+    /** Confidence score for text detection box */
+    boxScore: number;
+    id: string;
+    /** Recognized text */
+    text: string;
+    /** Confidence score for text recognition */
+    textScore: number;
+    /** Normalized x coordinate of box corner 1 (0-1) */
+    x1: number;
+    /** Normalized x coordinate of box corner 2 (0-1) */
+    x2: number;
+    /** Normalized x coordinate of box corner 3 (0-1) */
+    x3: number;
+    /** Normalized x coordinate of box corner 4 (0-1) */
+    x4: number;
+    /** Normalized y coordinate of box corner 1 (0-1) */
+    y1: number;
+    /** Normalized y coordinate of box corner 2 (0-1) */
+    y2: number;
+    /** Normalized y coordinate of box corner 3 (0-1) */
+    y3: number;
+    /** Normalized y coordinate of box corner 4 (0-1) */
+    y4: number;
+};
 export type AssetMediaReplaceDto = {
     assetData: Blob;
     deviceAssetId: string;
@@ -544,6 +596,7 @@ export type SignUpDto = {
     password: string;
 };
 export type ChangePasswordDto = {
+    invalidateSessions?: boolean;
     newPassword: string;
     password: string;
 };
@@ -1192,16 +1245,6 @@ export type ServerVersionHistoryResponseDto = {
     id: string;
     version: string;
 };
-export type SessionResponseDto = {
-    createdAt: string;
-    current: boolean;
-    deviceOS: string;
-    deviceType: string;
-    expiresAt?: string;
-    id: string;
-    isPendingSyncReset: boolean;
-    updatedAt: string;
-};
 export type SessionCreateDto = {
     deviceOS?: string;
     deviceType?: string;
@@ -1209,6 +1252,7 @@ export type SessionCreateDto = {
     duration?: number;
 };
 export type SessionCreateResponseDto = {
+    appVersion: string | null;
     createdAt: string;
     current: boolean;
     deviceOS: string;
@@ -1863,6 +1907,19 @@ export function restoreUserAdmin({ id }: {
     }));
 }
 /**
+ * This endpoint is an admin-only route, and requires the `adminSession.read` permission.
+ */
+export function getUserSessionsAdmin({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: SessionResponseDto[];
+    }>(`/admin/users/${encodeURIComponent(id)}/sessions`, {
+        ...opts
+    }));
+}
+/**
  * This endpoint is an admin-only route, and requires the `adminUser.read` permission.
  */
 export function getUserStatisticsAdmin({ id, isFavorite, isTrashed, visibility }: {
@@ -2209,6 +2266,18 @@ export function checkBulkUpload({ assetBulkUploadCheckDto }: {
     })));
 }
 /**
+ * This endpoint requires the `asset.copy` permission.
+ */
+export function copyAsset({ assetCopyDto }: {
+    assetCopyDto: AssetCopyDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText("/assets/copy", oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: assetCopyDto
+    })));
+}
+/**
  * getAllUserAssetsByDeviceId
  */
 export function getAllUserAssetsByDeviceId({ deviceId }: {
@@ -2365,6 +2434,19 @@ export function getAssetMetadataByKey({ id, key }: {
         status: 200;
         data: AssetMetadataResponseDto;
     }>(`/assets/${encodeURIComponent(id)}/metadata/${encodeURIComponent(key)}`, {
+        ...opts
+    }));
+}
+/**
+ * This endpoint requires the `asset.read` permission.
+ */
+export function getAssetOcr({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AssetOcrResponseDto[];
+    }>(`/assets/${encodeURIComponent(id)}/ocr`, {
         ...opts
     }));
 }
@@ -3562,9 +3644,10 @@ export function searchAssetStatistics({ statisticsSearchDto }: {
 /**
  * This endpoint requires the `asset.read` permission.
  */
-export function getSearchSuggestions({ country, includeNull, make, model, state, $type }: {
+export function getSearchSuggestions({ country, includeNull, lensModel, make, model, state, $type }: {
     country?: string;
     includeNull?: boolean;
+    lensModel?: string;
     make?: string;
     model?: string;
     state?: string;
@@ -3576,6 +3659,7 @@ export function getSearchSuggestions({ country, includeNull, make, model, state,
     }>(`/search/suggestions${QS.query(QS.explode({
         country,
         includeNull,
+        lensModel,
         make,
         model,
         state,
@@ -4733,6 +4817,7 @@ export enum Permission {
     AssetDownload = "asset.download",
     AssetUpload = "asset.upload",
     AssetReplace = "asset.replace",
+    AssetCopy = "asset.copy",
     AlbumCreate = "album.create",
     AlbumRead = "album.read",
     AlbumUpdate = "album.update",
@@ -4841,6 +4926,7 @@ export enum Permission {
     AdminUserRead = "adminUser.read",
     AdminUserUpdate = "adminUser.update",
     AdminUserDelete = "adminUser.delete",
+    AdminSessionRead = "adminSession.read",
     AdminAuthUnlinkAll = "adminAuth.unlinkAll"
 }
 export enum AssetMetadataKey {
@@ -4915,7 +5001,8 @@ export enum SearchSuggestionType {
     State = "state",
     City = "city",
     CameraMake = "camera-make",
-    CameraModel = "camera-model"
+    CameraModel = "camera-model",
+    CameraLensModel = "camera-lens-model"
 }
 export enum SharedLinkType {
     Album = "ALBUM",

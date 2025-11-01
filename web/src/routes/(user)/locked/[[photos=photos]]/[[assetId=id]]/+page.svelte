@@ -18,7 +18,6 @@
   import { AssetVisibility, lockAuthSession } from '@immich/sdk';
   import { Button } from '@immich/ui';
   import { mdiDotsVertical, mdiLockOutline } from '@mdi/js';
-  import { onDestroy } from 'svelte';
   import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
 
@@ -28,9 +27,8 @@
 
   let { data }: Props = $props();
 
-  const timelineManager = new TimelineManager();
-  void timelineManager.updateOptions({ visibility: AssetVisibility.Locked });
-  onDestroy(() => timelineManager.destroy());
+  let timelineManager = $state<TimelineManager>() as TimelineManager;
+  const options = { visibility: AssetVisibility.Locked };
 
   const assetInteraction = new AssetInteraction();
 
@@ -61,7 +59,8 @@
 
   <Timeline
     enableRouting={true}
-    {timelineManager}
+    bind:timelineManager
+    {options}
     {assetInteraction}
     onEscape={handleEscape}
     removeAction={AssetAction.SET_VISIBILITY_TIMELINE}

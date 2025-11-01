@@ -95,6 +95,7 @@ export enum Permission {
   AssetDownload = 'asset.download',
   AssetUpload = 'asset.upload',
   AssetReplace = 'asset.replace',
+  AssetCopy = 'asset.copy',
 
   AlbumCreate = 'album.create',
   AlbumRead = 'album.read',
@@ -235,6 +236,8 @@ export enum Permission {
   AdminUserRead = 'adminUser.read',
   AdminUserUpdate = 'adminUser.update',
   AdminUserDelete = 'adminUser.delete',
+
+  AdminSessionRead = 'adminSession.read',
 
   AdminAuthUnlinkAll = 'adminAuth.unlinkAll',
 }
