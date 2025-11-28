@@ -60,7 +60,7 @@
     onEscape={handleEscape}
   >
     {#snippet empty()}
-      <EmptyPlaceholder text={$t('no_favorites_message')} />
+      <EmptyPlaceholder text={$t('no_favorites_message')} class="mt-10 mx-auto" />
     {/snippet}
   </Timeline>
 </UserPageLayout>
@@ -96,7 +96,7 @@
       <DeleteAssets
         menuItem
         onAssetDelete={(assetIds) => timelineManager.removeAssets(assetIds)}
-        onUndoDelete={(assets) => timelineManager.addAssets(assets)}
+        onUndoDelete={(assets) => timelineManager.upsertAssets(assets)}
       />
     </ButtonContextMenu>
   </AssetSelectControlBar>
